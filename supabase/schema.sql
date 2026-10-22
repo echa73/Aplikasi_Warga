@@ -120,3 +120,20 @@ create policy "pemilik kelola profil" on public.profil
 do $$ begin
   alter publication supabase_realtime add table public.dokumen;
 exception when duplicate_object then null; end $$;
+
+-- 6. Reset password oleh Pemilik (semua akun) / pengurus (akun warga), dipanggil dari menu Admin
+create or replace function public.admin_reset_password(target uuid, pw text) returns void
+language plpgsql security definer set search_path = public, extensions as $$
+declare tp text;
+begin
+  if pw is null or length(pw) < 6 then raise exception 'Password minimal 6 karakter'; end if;
+  select peran into tp from public.profil where user_id = target;
+  if public.peran_saya() = 'pemilik' or (public.peran_saya() = 'pengurus' and tp = 'warga') then
+    update auth.users set encrypted_password = extensions.crypt(pw, extensions.gen_salt('bf')), updated_at = now() where id = target;
+    if not found then raise exception 'User tidak ditemukan'; end if;
+  else
+    raise exception 'Tidak diizinkan';
+  end if;
+end $$;
+revoke all on function public.admin_reset_password(uuid, text) from public, anon;
+grant execute on function public.admin_reset_password(uuid, text) to authenticated;

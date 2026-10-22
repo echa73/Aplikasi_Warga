@@ -1141,6 +1141,7 @@ const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  kunci: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3"/>',
   ringkasan: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
   warga: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.5 5.2"/>',
   iuran: '<rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19M16 15h2.5"/>',
@@ -1203,10 +1204,12 @@ function renderMode() {
     const p = pengurusSesi(), img = S.sesi === 'pemilik' && S.me && S.me.avatarUrl ? `<img src="${esc(S.me.avatarUrl)}" alt="">` : avatarHtml(p && p.userId, namaSesi());
     who.innerHTML = `${img}<div><div class="nm">${esc(namaSesi())}</div><div class="rl">${esc(isWarga() ? 'Warga · ' + ((wargaSaya() || {}).blok || '') : peranSaya())}</div></div>
       <button class="btn sm ghost tema-btn" data-act="tema-tukar" title="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}" aria-label="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}">${ico(temaGelapAktif() ? 'sun' : 'moon')}</button>
+      <button class="btn sm ghost tema-btn" data-act="ganti-pass" title="Ganti password" aria-label="Ganti password">${ico('kunci')}</button>
       <button class="btn sm" data-act="keluar" title="Keluar">Keluar</button>`;
   } else { who.hidden = true; m.hidden = S.mode === 'online'; }
 }
-function sudahMasuk() { return !!roleSaya(); }
+const wajibGanti = () => !!(S.profil && S.profil.wajib_ganti);
+function sudahMasuk() { return !!roleSaya() && !wajibGanti(); }
 
 function render() {
   const ae = document.activeElement, aid = ae && ae.id, sel = ae && 'selectionStart' in ae ? [ae.selectionStart, ae.selectionEnd] : null;
@@ -1666,6 +1669,15 @@ function vLoginKartu() {
       <button type="submit" class="btn pri">Kirim tautan reset</button>
       <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
       <p class="muted" style="margin:0;font-size:.82rem">Akun warga (username) tidak memakai email. Warga yang lupa password minta direset ke pengurus RT.</p></form>`}</div>`;
+  if (S.authUser && wajibGanti() && roleSaya()) return `<div class="login">${brand('Halo ' + esc(namaSesi().split(' ')[0]) + ', demi keamanan buat password baru dulu.')}
+    <div class="notice" style="background:var(--info-soft);color:var(--info)">Password Anda dibuat atau direset oleh Pemilik. Ganti dengan password pribadi sebelum memakai aplikasi.</div>
+    <form id="wajibForm" class="login-pin" style="border-top:0;padding-top:0">
+      <div class="fld"><label for="wgLama">Password saat ini</label><input type="password" id="wgLama" name="lama" autocomplete="current-password" style="letter-spacing:normal;text-align:left;font-size:1rem"></div>
+        <div class="fld"><label for="wgBaru">Password baru</label><input type="password" id="wgBaru" name="baru" autocomplete="new-password" style="letter-spacing:normal;text-align:left;font-size:1rem"><span class="hint">Minimal 8 karakter. Gunakan campuran huruf dan angka.</span></div>
+        <div class="fld"><label for="wgUlang">Ulangi password baru</label><input type="password" id="wgUlang" name="ulang" autocomplete="new-password" style="letter-spacing:normal;text-align:left;font-size:1rem"></div>
+      <span class="hint" id="wgPesan" style="color:var(--bad)"></span>
+      <button type="submit" class="btn pri">Simpan password baru</button>
+      <button type="button" class="btn ghost" data-act="keluar">Keluar</button></form></div>`;
   if (S.authUser) {
     const em = S.authUser.email || '', wargaAkun = em.endsWith('@' + WARGA_DOMAIN);
     const why = !S.profil ? 'Akun ini belum diberi akses ke aplikasi. Hubungi Pemilik atau pengurus RT.'
@@ -1694,6 +1706,41 @@ async function prosesLupa() {
   const {error} = await SB.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
   if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Kirim tautan reset'; } msg(pesanAuth(error)); return; }
   S.lupaTerkirim = email; S.lupaInfo = ''; render(); const k = $('#kKode'); if (k) k.focus();
+}
+const PESAN_GANTI = {salah: 'Password saat ini salah.', kunci: 'Terlalu banyak percobaan salah. Coba lagi 15 menit lagi.', pendek: 'Password baru minimal 8 karakter.', sama: 'Password baru harus berbeda dari password saat ini.', belum_login: 'Sesi Anda berakhir. Silakan masuk lagi.'};
+async function gantiPassword(lama, baru, ulang) {
+  if (!lama) return 'Isi password saat ini.';
+  if (String(baru).length < 8) return PESAN_GANTI.pendek;
+  if (baru !== ulang) return 'Kedua password baru tidak sama.';
+  if (baru === lama) return PESAN_GANTI.sama;
+  const {data, error} = await SB.rpc('ganti_password_saya', {lama, baru});
+  if (error) return pesanAuth(error);
+  if (data !== 'ok') return PESAN_GANTI[data] || 'Gagal mengganti password.';
+  try { await SB.auth.signOut({scope: 'others'}); } catch (e) {}
+  if (S.profil) S.profil.wajib_ganti = false;
+  return '';
+}
+function openGantiPass() {
+  openDlg({
+    title: 'Ganti password', submitLabel: 'Simpan password',
+    body: `<div class="fld"><label for="gpLama">Password saat ini</label><input type="password" id="gpLama" name="lama" autocomplete="current-password" style="letter-spacing:normal;text-align:left;font-size:1rem"></div>
+        <div class="fld"><label for="gpBaru">Password baru</label><input type="password" id="gpBaru" name="baru" autocomplete="new-password" style="letter-spacing:normal;text-align:left;font-size:1rem"><span class="hint">Minimal 8 karakter. Gunakan campuran huruf dan angka.</span></div>
+        <div class="fld"><label for="gpUlang">Ulangi password baru</label><input type="password" id="gpUlang" name="ulang" autocomplete="new-password" style="letter-spacing:normal;text-align:left;font-size:1rem"></div>
+      <p class="muted" style="margin:0;font-size:.84rem">Setelah diganti, login Anda di perangkat lain otomatis keluar.</p>`,
+    onSubmit: async d => {
+      const err = await gantiPassword(d.lama || '', d.baru || '', d.ulang || '');
+      if (err) { pesanDlg(err, /saat ini|percobaan/.test(err) ? 'gpLama' : 'gpBaru'); return false; }
+      toast('Password berhasil diganti.'); return true;
+    }
+  });
+}
+async function prosesWajib() {
+  const v = id => ($('#' + id) || {}).value || '';
+  const m = $('#wgPesan'), btn = $('#wajibForm button[type=submit]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan…'; }
+  const err = await gantiPassword(v('wgLama'), v('wgBaru'), v('wgUlang'));
+  if (err) { if (btn) { btn.disabled = false; btn.textContent = 'Simpan password baru'; } if (m) m.textContent = err; return; }
+  render(); window.scrollTo(0, 0); toast('Password baru tersimpan. Selamat datang, ' + namaSesi().split(' ')[0] + '.');
 }
 async function prosesKode() {
   const kode = String(($('#kKode') || {}).value || '').replace(/\s/g, ''), a = ($('#kBaru') || {}).value || '', b = ($('#kUlang') || {}).value || '';
@@ -1802,7 +1849,7 @@ function openAkun(id) {
       if (pw.length < 8) { pesanDlg('Password minimal 8 karakter.', 'ak_p'); return false; }
       let userId;
       try { userId = await buatAkunAuth(emailWarga(u), pw); } catch (e) { pesanDlg(pesanAuth(e), 'ak_u'); return false; }
-      try { await simpanProfil({user_id: userId, nama: w.nama, peran: 'warga', warga_id: w.id, pengurus_id: null}); }
+      try { await simpanProfil({user_id: userId, nama: w.nama, peran: 'warga', warga_id: w.id, pengurus_id: null, wajib_ganti: true}); }
       catch (e) { pesanDlg('Akun login terbuat, tetapi gagal memberi akses: ' + pesanAuth(e)); return false; }
       const ok = await put('akunWarga', uid(), {username: u, wargaId: w.id, userId, aktif: true, dibuat: todayISO(), diperbarui: todayISO()});
       if (ok) setTimeout(() => tampilKredensial(w, u, pw), 50);
@@ -1816,7 +1863,7 @@ function openAkun(id) {
   });
 }
 function tampilKredensial(w, u, pw) {
-  const teks = `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nBerikut akun aplikasi Warga ${lingk()} untuk melihat status iuran dan melaporkan keluhan:\n\nUsername: ${u}\nPassword: ${pw}\n\nBuka ${location.origin}${location.pathname.replace(/index\.html$/, '')}, pilih "Warga" di layar login, lalu masukkan username dan password di atas. Jangan berikan password ini kepada orang lain.\n\n${pengirim()}`;
+  const teks = `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nBerikut akun aplikasi Warga ${lingk()} untuk melihat status iuran dan melaporkan keluhan:\n\nUsername: ${u}\nPassword: ${pw}\n\nBuka ${location.origin}${location.pathname.replace(/index\.html$/, '')}, pilih "Warga" di layar login, lalu masukkan username dan password di atas. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.\n\n${pengirim()}`;
   const bisaWa = w.noHp && waNomor(w.noHp).length >= 10;
   openDlg({
     title: 'Akun warga siap',
@@ -1967,8 +2014,8 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
-const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad']};
+const LOG_KOL = {akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn']};
 async function muatLog() {
   S.logAkt = 'memuat'; render();
   const {data, error} = await SB.from('log_aktivitas').select('id,waktu,nama,aksi,koleksi,dok_id,data_lama').order('waktu', {ascending: false}).limit(200);
@@ -1981,7 +2028,7 @@ function vAdminLog() {
   const ringkas = d => d ? esc(d.nama || d.judul || d.uraian || d.username || d.blok || '') : '';
   const rows = S.logAkt.map(l => { const [lbl, cls] = LOG_AKSI[l.aksi] || [l.aksi, 'mute']; return `<div class="row"><div class="grow">
     <div class="t">${esc(l.nama || 'Sistem')} <span class="muted" style="font-weight:400">· ${esc(LOG_KOL[l.koleksi] || l.koleksi)}</span></div>
-    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? ' · ' + ringkas(l.data_lama) : ''}</div></div>
+    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? ' · ' + ringkas(l.data_lama) : ''}${l.aksi === 'reset_password' && l.dok_id ? ' · untuk ' + esc(l.dok_id) : ''}</div></div>
     <span class="chip ${cls} plain">${esc(lbl)}</span></div>`; }).join('');
   return `<div class="panel"><h3>Log aktivitas <small>200 terakhir</small></h3>
     <div class="toolbar" style="margin:-4px 0 8px"><button class="btn sm" data-act="log-muat">Muat ulang</button></div>
@@ -2060,14 +2107,15 @@ function openPengurus(id, prefill) {
         if (eb.endsWith('@' + WARGA_DOMAIN)) { pesanDlg('Gunakan email pribadi pengurus.', 'pg_email2'); return false; }
         try { await ubahEmail(row.userId, eb); row.email = eb; } catch (e) { pesanDlg('Gagal mengganti email: ' + pesanAuth(e), 'pg_email2'); return false; }
       }
+      let akunBaru = false;
       if (email && pw && !row.userId) {
-        try { row.userId = await buatAkunAuth(email, pw); row.email = email; } catch (e) { pesanDlg(pesanAuth(e), 'pg_email'); return false; }
+        try { row.userId = await buatAkunAuth(email, pw); row.email = email; akunBaru = true; } catch (e) { pesanDlg(pesanAuth(e), 'pg_email'); return false; }
       }
       const ok = await put('pengurus', pid, row);
       if (!ok) return false;
       if (row.userId) {
         try { await SB.rpc('admin_konfirmasi_user', {target: row.userId}); } catch (e) {}
-        try { if (row.aktif) await simpanProfil({user_id: row.userId, nama: row.nama, peran: 'pengurus', pengurus_id: pid, warga_id: row.wargaId || null}); else await hapusProfil(row.userId); }
+        try { if (row.aktif) await simpanProfil({user_id: row.userId, nama: row.nama, peran: 'pengurus', pengurus_id: pid, warga_id: row.wargaId || null, ...(akunBaru ? {wajib_ganti: true} : {})}); else await hapusProfil(row.userId); }
         catch (e) { pesanDlg('Data tersimpan, tetapi akses login gagal diatur: ' + pesanAuth(e)); return false; }
       }
       if (pb && row.userId) { try { await resetPassword(row.userId, pb); } catch (e) { pesanDlg('Data tersimpan, tetapi reset password gagal: ' + pesanAuth(e)); return false; } }
@@ -2084,7 +2132,7 @@ function openPengurus(id, prefill) {
   });
 }
 function tampilLoginPengurus(p, email, pw) {
-  const teks = `Halo ${p.nama},\n\nBerikut akun pengurus aplikasi Warga ${lingk()}:\n\nAlamat: ${location.origin}${location.pathname.replace(/index\.html$/, '')}\nEmail: ${email}\nPassword: ${pw}\n\nPilih "Pengurus" di layar login. Jangan berikan password ini kepada orang lain.`;
+  const teks = `Halo ${p.nama},\n\nBerikut akun pengurus aplikasi Warga ${lingk()}:\n\nAlamat: ${location.origin}${location.pathname.replace(/index\.html$/, '')}\nEmail: ${email}\nPassword: ${pw}\n\nPilih "Pengurus" di layar login. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.`;
   const bisaWa = p.noHp && waNomor(p.noHp).length >= 10;
   openDlg({
     title: 'Login pengurus siap',
@@ -3460,6 +3508,7 @@ document.addEventListener('click', async e => {
   else if (a === 'akun-edit') openAkun(b.dataset.id);
   else if (a === 'akun-acak') { const i = $('#ak_p') || $('#ak_pr'); if (i) i.value = passAcak(); }
   else if (a === 'lupa-pass') { S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
+  else if (a === 'ganti-pass') openGantiPass();
   else if (a === 'lupa-tutup') { S.lupa = false; S.lupaTerkirim = ''; S.lupaInfo = ''; render(); }
   else if (a === 'pulih-batal') { S.pulih = false; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); }
   else if (a === 'pg-acak2') { const i = $('#pg_reset'); if (i) i.value = passAcak(); }
@@ -3534,6 +3583,7 @@ document.addEventListener('submit', async e => {
   if (e.target.id === 'lupaForm') { e.preventDefault(); await prosesLupa(); return; }
   if (e.target.id === 'pulihForm') { e.preventDefault(); await prosesPulih(); return; }
   if (e.target.id === 'kodeForm') { e.preventDefault(); await prosesKode(); return; }
+  if (e.target.id === 'wajibForm') { e.preventDefault(); await prosesWajib(); return; }
   if (e.target.id !== 'setForm') return;
   e.preventDefault();
   const d = Object.fromEntries(new FormData(e.target));

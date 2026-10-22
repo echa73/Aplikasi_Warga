@@ -162,3 +162,48 @@ revoke all on function public.admin_buat_user(text, text), public.admin_reset_pa
   public.admin_konfirmasi_user(uuid), public.admin_ubah_email(uuid, text) from public, anon;
 grant execute on function public.admin_buat_user(text, text), public.admin_reset_password(uuid, text),
   public.admin_konfirmasi_user(uuid), public.admin_ubah_email(uuid, text) to authenticated;
+
+-- Ganti password sendiri (password lama dicek di server, maks 5 salah / 15 menit) & wajib ganti setelah reset
+alter table public.profil add column if not exists wajib_ganti boolean not null default false;
+create table if not exists privat.percobaan_password (user_id uuid not null, waktu timestamptz not null default now(), berhasil boolean not null default false);
+create index if not exists percobaan_password_idx on privat.percobaan_password (user_id, waktu);
+revoke all on privat.percobaan_password from public, anon, authenticated;
+create or replace function public.ganti_password_saya(lama text, baru text) returns text
+language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid(); h text; sejak timestamptz;
+begin
+  if uid is null then return 'belum_login'; end if;
+  select greatest(now() - interval '15 minutes', coalesce(max(waktu) filter (where berhasil), '-infinity')) into sejak
+    from privat.percobaan_password where user_id = uid;
+  if (select count(*) from privat.percobaan_password where user_id = uid and not berhasil and waktu > sejak) >= 5 then return 'kunci'; end if;
+  select encrypted_password into h from auth.users where id = uid;
+  if h is null or lama is null or extensions.crypt(lama, h) <> h then
+    insert into privat.percobaan_password (user_id) values (uid);
+    return 'salah';
+  end if;
+  if baru is null or length(baru) < 8 then return 'pendek'; end if;
+  if baru = lama then return 'sama'; end if;
+  update auth.users set encrypted_password = extensions.crypt(baru, extensions.gen_salt('bf')), updated_at = now() where id = uid;
+  update public.profil set wajib_ganti = false where user_id = uid;
+  insert into privat.percobaan_password (user_id, berhasil) values (uid, true);
+  insert into public.log_aktivitas (user_id, nama, aksi, koleksi) values (uid, (select nama from public.profil where user_id = uid), 'ganti_password', 'akun');
+  return 'ok';
+end $$;
+revoke all on function public.ganti_password_saya(text, text) from public, anon;
+grant execute on function public.ganti_password_saya(text, text) to authenticated;
+
+create or replace function public.admin_reset_password(target uuid, pw text) returns void
+language plpgsql security definer set search_path = public as $$
+declare tp text;
+begin
+  if pw is null or length(pw) < 8 then raise exception 'Password minimal 8 karakter'; end if;
+  select peran into tp from public.profil where user_id = target;
+  if privat.peran_saya() = 'pemilik' or (privat.peran_saya() = 'pengurus' and tp = 'warga' and privat.izin('warga') = 2) then
+    update auth.users set encrypted_password = extensions.crypt(pw, extensions.gen_salt('bf')), updated_at = now() where id = target;
+    if not found then raise exception 'User tidak ditemukan'; end if;
+    update public.profil set wajib_ganti = true where user_id = target;
+    update auth.refresh_tokens set revoked = true where user_id = target::text and not revoked;
+    insert into public.log_aktivitas (user_id, nama, aksi, koleksi, dok_id)
+      values (auth.uid(), (select nama from public.profil where user_id = auth.uid()), 'reset_password', 'akun', (select nama from public.profil where user_id = target));
+  else raise exception 'Tidak diizinkan'; end if;
+end $$;

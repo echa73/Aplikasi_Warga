@@ -4,8 +4,9 @@ Aplikasi data warga, iuran, kas, keluhan, pengumuman, surat, dan keamanan untuk 
 Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pages.
 
 ## Struktur
-- `index.html`: seluruh aplikasi (HTML + CSS + JS), memuat supabase-js dari jsDelivr.
-- `_headers`: header keamanan HTTP untuk Cloudflare.
+- `public/index.html`: seluruh aplikasi (HTML + CSS + JS), memuat supabase-js dari jsDelivr.
+- `public/_headers`: header keamanan HTTP untuk Cloudflare.
+- `wrangler.jsonc`: konfigurasi Cloudflare Worker (menyajikan folder `public/`).
 - `supabase/schema.sql`: tabel `dokumen` & `profil`, realtime, fungsi reset/ubah akun.
 - `supabase/keamanan.sql`: hak akses per role di server, skema `privat`, log aktivitas (jalankan setelah schema.sql).
 
@@ -17,8 +18,10 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
    insert into public.profil (user_id, nama, peran)
    select id, 'Nama Pemilik', 'pemilik' from auth.users where email = 'email@contoh.com';
    ```
-4. Ganti `SUPA_URL` dan `SUPA_KEY` (publishable key) di `index.html` bila memakai project lain.
-5. Cloudflare → Workers & Pages → Create → Pages → upload folder ini (atau hubungkan repo ini, tanpa build command, output directory `/`).
+4. Ganti `SUPA_URL` dan `SUPA_KEY` (publishable key) di `public/index.html` bila memakai project lain.
+5. Deploy ke Cloudflare Worker: Workers & Pages → Worker `aplikasi-warga` → Settings → Build → Connect repository ini.
+   Build command kosong, deploy command `npx wrangler deploy`. Setiap push ke `main` otomatis ter-deploy.
+   Alternatif manual: upload isi folder `public/` (index.html + _headers).
 
 ## Login
 - Pemilik & pengurus: email + password (dibuat di menu Admin).

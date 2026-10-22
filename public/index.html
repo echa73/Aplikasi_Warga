@@ -2837,7 +2837,7 @@ function vLaporan() {
   </div>
   <div class="toolbar lap-acts">
     <button class="btn pri" data-act="lap-dl">${ico('laporan')}Unduh PDF</button>
-    <button class="btn" data-act="lap-csv">Unduh Excel (CSV)</button>
+    <button class="btn" data-act="lap-csv">Unduh Excel</button>
     <a class="btn wa" href="${esc(waShare(teksLaporan(g, L)))}" target="_blank" rel="noopener">Bagikan ringkasan ke WhatsApp</a>
   </div>
   ${kurang ? `<div class="notice">Kop dan tanda tangan laporan memakai nomor RT/RW dan nama Ketua RT dari Pengaturan, yang belum lengkap.${bisa('pengaturan') ? ' <a href="#pengaturan" data-act="tab" data-k="pengaturan" style="color:inherit;font-weight:700">Lengkapi sekarang</a>.' : ''}</div>` : ''}
@@ -2856,13 +2856,172 @@ async function unduhLaporan(btn) {
   } catch (e) { toast('PDF gagal dibuat. Coba lagi.', 'bad'); }
   finally { if (btn) { btn.disabled = false; btn.innerHTML = asli; } }
 }
+/* ---------- XLSX sederhana (tanpa pustaka) ---------- */
+const MiniXlsx = (() => {
+  const T = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; T[n] = c >>> 0; }
+  const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = T[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const enc = new TextEncoder();
+  function zip(files) {
+    const parts = [], central = []; let off = 0;
+    for (const f of files) {
+      const nm = enc.encode(f.name), d = enc.encode(f.data), crc = crc32(d);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(12, 0x21, true);
+      h.setUint32(14, crc, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true); h.setUint16(26, nm.length, true);
+      parts.push(new Uint8Array(h.buffer), nm, d);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(14, 0x21, true);
+      c.setUint32(16, crc, true); c.setUint32(20, d.length, true); c.setUint32(24, d.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), nm); off += 30 + nm.length + d.length;
+    }
+    const csz = central.reduce((t, a) => t + a.length, 0), e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csz, true); e.setUint32(16, off, true);
+    return new Blob([...parts, ...central, new Uint8Array(e.buffer)], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+  const x = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+  const col = i => { let s = ''; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  // gaya sel (indeks xf)
+  const ST = {title: 1, bold: 2, head: 3, text: 4, rp: 5, totText: 6, totRp: 7, pct: 8, totPct: 9, akhirText: 10, akhirRp: 11, note: 12, center: 13, sub: 14, num: 15, totNum: 16, negRp: 17, headR: 18, kop: 19, subRow: 20, subNum: 21, headC: 22, sign: 23, signB: 24};
+  const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="4"><numFmt numFmtId="164" formatCode="&quot;Rp &quot;#,##0"/><numFmt numFmtId="165" formatCode="#,##0"/><numFmt numFmtId="166" formatCode="(&quot;Rp &quot;#,##0)"/><numFmt numFmtId="167" formatCode="0%"/></numFmts>
+<fonts count="5"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><name val="Arial"/></font><font><b/><sz val="14"/><name val="Arial"/></font><font><i/><sz val="9"/><color rgb="FF4A3B30"/><name val="Arial"/></font><font><b/><u/><sz val="10"/><name val="Arial"/></font></fonts>
+<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF3ECE0"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFAF6EF"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7F2E8"/></patternFill></fill></fills>
+<borders count="2"><border/><border><left style="thin"><color rgb="FFCDBFAE"/></left><right style="thin"><color rgb="FFCDBFAE"/></right><top style="thin"><color rgb="FFCDBFAE"/></top><bottom style="thin"><color rgb="FFCDBFAE"/></bottom></border></borders>
+<cellStyleXfs count="1"><xf/></cellStyleXfs>
+<cellXfs count="25">
+<xf/>
+<xf fontId="2" applyFont="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf fontId="1" applyFont="1"/>
+<xf fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf borderId="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
+<xf numFmtId="164" borderId="1" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>
+<xf fontId="1" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="167" borderId="1" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>
+<xf numFmtId="167" fontId="1" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf fontId="1" fillId="4" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="164" fontId="1" fillId="4" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf fontId="3" applyFont="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>
+<xf borderId="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="top"/></xf>
+<xf applyAlignment="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="165" borderId="1" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>
+<xf numFmtId="165" fontId="1" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="166" borderId="1" applyNumberFormat="1" applyBorder="1"/>
+<xf fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" wrapText="1"/></xf>
+<xf fontId="1" applyFont="1"/>
+<xf fontId="1" borderId="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="1" borderId="1" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf applyAlignment="1"><alignment horizontal="center" vertical="top" wrapText="1"/></xf>
+<xf fontId="4" applyFont="1" applyAlignment="1"><alignment horizontal="center"/></xf>
+</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  function sheet(widths) {
+    const rows = [], merges = [];
+    let r = 0;
+    const api = {
+      ST,
+      get row() { return r; },
+      skip(n = 1) { r += n; return api; },
+      // put(colIndex, value, style, span)
+      put(c, v, st = 0, span = 1) {
+        (rows[r] || (rows[r] = []))[c] = {v, st};
+        for (let k = 1; k < span; k++) rows[r][c + k] = {v: null, st};
+        if (span > 1) merges.push(`${col(c)}${r + 1}:${col(c + span - 1)}${r + 1}`);
+        return api;
+      },
+      next() { r++; return api; },
+      build(nama) {
+        const cols = widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('');
+        const data = rows.map((cells, ri) => cells ? `<row r="${ri + 1}">${cells.map((c, ci) => {
+          if (!c) return '';
+          const ref = col(ci) + (ri + 1), sa = c.st ? ` s="${c.st}"` : '';
+          if (c.v === null || c.v === undefined || c.v === '') return `<c r="${ref}"${sa}/>`;
+          if (typeof c.v === 'number' && isFinite(c.v)) return `<c r="${ref}"${sa}><v>${c.v}</v></c>`;
+          return `<c r="${ref}"${sa} t="inlineStr"><is><t xml:space="preserve">${x(c.v)}</t></is></c>`;
+        }).join('')}</row>` : '').join('');
+        const sh = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
+<cols>${cols}</cols><sheetData>${data}</sheetData>${merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : ''}
+<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+        return zip([
+          {name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+          {name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+          {name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${x(String(nama).slice(0, 31))}" sheetId="1" r:id="rId1"/></sheets></workbook>`},
+          {name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+          {name: 'xl/styles.xml', data: STYLES},
+          {name: 'xl/worksheets/sheet1.xml', data: sh}
+        ]);
+      }
+    };
+    return api;
+  }
+  return {sheet};
+})();
+// Ekspor laporan keuangan ke Excel: susunan sama persis dengan pratinjau laporan (bagian I–V + tanda tangan)
+function xlsxLaporan(g, L) {
+  const st = S.set, wil = [st.kelurahan && 'Kel. ' + st.kelurahan, st.kecamatan && 'Kec. ' + st.kecamatan, st.kota].filter(Boolean).join(', ');
+  const W = MiniXlsx.sheet([6, 14, 40, 20, 15, 15, 17]), K = W.ST;
+  const sec = t => W.skip().put(0, t, K.bold, 7).next();
+  W.put(0, `PENGURUS RT ${st.rt || '…'} / RW ${st.rw || '…'}`, K.kop, 7).next();
+  W.put(0, lingk() + (wil ? ' · ' + wil : ''), 0, 7).next().skip();
+  W.put(0, 'LAPORAN KEUANGAN KAS RT', K.title, 7).next();
+  W.put(0, 'Periode ' + g.lbl, K.sub, 7).next();
+  // I. Ringkasan
+  const akhirTgl = g.akhir > todayISO() && g.awal <= todayISO() ? todayISO() : g.akhir, sel = L.tMasuk - L.tKeluar;
+  sec('I. RINGKASAN');
+  W.put(0, 'Saldo awal per ' + tglSurat(g.awal), K.text, 5).put(5, L.awal, K.rp, 2).next();
+  W.put(0, 'Total penerimaan', K.text, 5).put(5, L.tMasuk, K.rp, 2).next();
+  W.put(0, 'Total pengeluaran', K.text, 5).put(5, L.tKeluar, K.negRp, 2).next();
+  W.put(0, 'Surplus / (defisit) periode ini', K.text, 5).put(5, Math.abs(sel), sel < 0 ? K.negRp : K.rp, 2).next();
+  W.put(0, 'Saldo akhir per ' + tglSurat(akhirTgl), K.akhirText, 5).put(5, L.akhir, K.akhirRp, 2).next();
+  // II & III
+  const kat = (judul, kolom, list, tot, lblTot) => {
+    sec(judul);
+    W.put(0, 'No', K.headC).put(1, kolom, K.head, 4).put(5, 'Jumlah', K.headR).put(6, '%', K.headR).next();
+    if (!list.length) W.put(0, 'Tidak ada', K.center, 7).next();
+    list.forEach(([k, v], i) => W.put(0, i + 1, K.center).put(1, k, K.text, 4).put(5, v, K.rp).put(6, tot ? v / tot : 0, K.pct).next());
+    W.put(0, '', K.totText).put(1, lblTot, K.totText, 4).put(5, tot, K.totRp).put(6, tot ? 1 : '', K.totPct).next();
+  };
+  kat('II. PENERIMAAN', 'Sumber', L.masuk, L.tMasuk, 'Total penerimaan');
+  kat('III. PENGELUARAN', 'Pos pengeluaran', L.keluar, L.tKeluar, 'Total pengeluaran');
+  // IV. Iuran
+  sec('IV. PENERIMAAN IURAN WARGA');
+  W.put(0, 'Bulan', K.head, 2).put(2, 'KK wajib', K.headR).put(3, 'KK lunas', K.headR).put(4, 'Kepatuhan', K.headR).put(5, 'Target', K.headR).put(6, 'Terkumpul', K.headR).next();
+  L.iuran.forEach(r => W.put(0, perLbl(r.per, true), K.text, 2).put(2, r.total, K.num).put(3, r.lunas, K.num).put(4, r.total ? r.lunas / r.total : 0, K.pct).put(5, r.target, K.rp).put(6, r.terkumpul, K.rp).next());
+  if (L.iuran.length > 1) {
+    const t = L.iuran.reduce((a, r) => ({total: a.total + r.total, lunas: a.lunas + r.lunas, t: a.t + r.terkumpul, g: a.g + r.target}), {total: 0, lunas: 0, t: 0, g: 0});
+    W.put(0, 'Jumlah', K.totText, 2).put(2, t.total, K.totNum).put(3, t.lunas, K.totNum).put(4, t.total ? t.lunas / t.total : 0, K.totPct).put(5, t.g, K.totRp).put(6, t.t, K.totRp).next();
+  }
+  const tb = L.tung.reduce((a, r) => a + r[1].length, 0);
+  W.put(0, `Tunggakan per ${tglSurat(todayISO())}: ${L.tung.length} KK, ${tb} bulan, sekitar ${rp(tb * nominal())}.`, K.note, 7).next();
+  // V. Rincian
+  sec('V. RINCIAN TRANSAKSI');
+  W.put(0, 'No', K.headC).put(1, 'Tanggal', K.head).put(2, 'Uraian', K.head).put(3, 'Kategori', K.head).put(4, 'Masuk', K.headR).put(5, 'Keluar', K.headR).put(6, 'Saldo', K.headR).next();
+  W.put(0, '', K.subRow).put(1, '', K.subRow).put(2, 'Saldo awal', K.subRow).put(3, '', K.subRow).put(4, '', K.subRow).put(5, '', K.subRow).put(6, L.awal, K.subNum).next();
+  let run = L.awal;
+  if (!L.tx.length) W.put(0, 'Tidak ada transaksi pada periode ini', K.center, 7).next();
+  L.tx.forEach((t, i) => {
+    run += nilai(t);
+    W.put(0, i + 1, K.center).put(1, tgl(t.tanggal), K.text).put(2, (t.uraian || '') + (t.penerima ? ' · ' + t.penerima : ''), K.text).put(3, t.kategori || '', K.text)
+      .put(4, t.jenis === 'masuk' ? Number(t.jumlah) || 0 : '', K.num).put(5, t.jenis !== 'masuk' ? Number(t.jumlah) || 0 : '', K.num).put(6, run, K.num).next();
+  });
+  W.put(0, '', K.totText).put(1, '', K.totText).put(2, 'Jumlah', K.totText).put(3, '', K.totText).put(4, L.tMasuk, K.totNum).put(5, L.tKeluar, K.totNum).put(6, L.akhir, K.totNum).next();
+  W.put(0, 'Pemasukan iuran dijumlahkan per tanggal bayar. Rincian per warga tersedia di menu Iuran.', K.note, 7).next();
+  // tanda tangan
+  W.skip();
+  W.put(0, 'Dibuat oleh,', K.sign, 3).put(4, `${st.kota || lingk()}, ${tglSurat(todayISO())}`, K.sign, 3).next();
+  W.put(0, 'Bendahara', K.sign, 3).put(4, `Mengetahui, Ketua RT ${st.rt || ''}`.trim(), K.sign, 3).next();
+  W.skip(3);
+  W.put(0, namaBendahara() || '(..............................)', K.signB, 3).put(4, namaKetua() || '(..............................)', K.signB, 3).next();
+  return W.build('Laporan ' + g.kode);
+}
 function csvLaporan() {
-  const g = lapRentang(), L = hitungLaporan(g); let run = L.awal;
-  const rows = [['LAPORAN KEUANGAN KAS RT', lingk()], ['Periode', g.lbl], [], ['RINGKASAN'], ['Saldo awal', L.awal], ['Total penerimaan', L.tMasuk], ['Total pengeluaran', L.tKeluar], ['Saldo akhir', L.akhir], [],
-    ['PENERIMAAN', 'Jumlah'], ...L.masuk, ['Total penerimaan', L.tMasuk], [], ['PENGELUARAN', 'Jumlah'], ...L.keluar, ['Total pengeluaran', L.tKeluar], [],
-    ['RINCIAN', '', '', '', '', '', ''], ['Tanggal', 'Uraian', 'Kategori', 'Penerima', 'Masuk', 'Keluar', 'Saldo'], ['', 'Saldo awal', '', '', '', '', L.awal],
-    ...L.tx.map(x => { run += nilai(x); return [x.tanggal, x.uraian, x.kategori, x.penerima || '', x.jenis === 'masuk' ? x.jumlah : '', x.jenis !== 'masuk' ? x.jumlah : '', run]; })];
-  unduh(`Laporan-Keuangan-${lingk().replace(/\s+/g, '-')}-${g.kode}.csv`, csv(rows));
+  const g = lapRentang(), L = hitungLaporan(g);
+  try { unduh(fname(`Laporan Keuangan ${lingk()} - ${g.kode}.xlsx`), xlsxLaporan(g, L)); }
+  catch (e) { toast('File Excel gagal dibuat. Coba lagi.', 'bad'); }
 }
 
 /* ---------- keamanan ---------- */
@@ -3334,7 +3493,7 @@ function unduhSurat(id) {
 }
 
 /* ---------- ekspor CSV ---------- */
-function csv(rows) { return '﻿' + rows.map(r => r.map(v => { const t = String(v ?? ''); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(';')).join('\r\n'); }
+function csv(rows) { return rows.map(r => r.map(v => { const t = String(v ?? ''); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(';')).join('\r\n'); }
 function ekspor(k, per) {
   const tag = lingk().replace(/\s+/g, '-');
   const W = [...S.warga].sort(sortHouse);

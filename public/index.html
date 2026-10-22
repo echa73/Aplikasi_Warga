@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>html,body{margin:0}[hidden]{display:none!important}.linkbtn{background:none;border:0;padding:4px 0;font:inherit;font-size:.86rem;font-weight:600;color:var(--accent);cursor:pointer;align-self:center}.linkbtn:hover{text-decoration:underline}</style>
+<style>.mz-tbl td{vertical-align:middle}.mz-tbl input[type=number]{width:120px}.mz-tbl select{min-width:0}.mz-tbl tr.off td{opacity:.55}.mz-tbl tr.pick td{background:var(--accent-soft)}.mz-bar{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:0 -6px 20px rgba(0,0,0,.06)}.mz-bar b{font-size:1.05rem}.mz-card{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.mz-card.pick{border-color:var(--accent);background:var(--accent-soft)}.mz-card .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mz-ck{width:20px;height:20px;accent-color:var(--accent)}@media(max-width:760px){.mz-bar{bottom:calc(64px + env(safe-area-inset-bottom))}}html,body{margin:0}[hidden]{display:none!important}.linkbtn{background:none;border:0;padding:4px 0;font:inherit;font-size:.86rem;font-weight:600;color:var(--accent);cursor:pointer;align-self:center}.linkbtn:hover{text-decoration:underline}</style>
 <title>Warga Kasuari</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -863,7 +863,7 @@ const S = {
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
-  per: nowPer(), q: '', blok: '', iurFilter: 'semua', kelFilter: 'terbuka', kelQ: '',
+  per: nowPer(), q: '', blok: '', iurFilter: 'semua', iurMode: 'daftar', mz: null, kelFilter: 'terbuka', kelQ: '',
   loaded: false,
   me: null, owner: false, admin: false, akses: [], minta: [], masuk: false, names: {}, hasil: [], qUser: '',
   pengurus: [], peran: [], admTab: 'pengurus',
@@ -1212,6 +1212,7 @@ const wajibGanti = () => !!(S.profil && S.profil.wajib_ganti);
 function sudahMasuk() { return !!roleSaya() && !wajibGanti(); }
 
 function render() {
+  setTimeout(() => { if (S.tab === 'iuran' && S.iurMode === 'massal') mzUpdBar(); }, 0);
   const ae = document.activeElement, aid = ae && ae.id, sel = ae && 'selectionStart' in ae ? [ae.selectionStart, ae.selectionEnd] : null;
   renderMode(); renderTabs();
   const main = $('#main');
@@ -1445,6 +1446,8 @@ function vIuran() {
     <div class="monthnav"><button class="btn sm" data-act="per" data-n="-1" aria-label="Bulan sebelumnya">‹</button><strong>${esc(perLbl(S.per))}</strong><button class="btn sm" data-act="per" data-n="1" aria-label="Bulan berikutnya">›</button>
     ${S.per !== nowPer() ? '<button class="btn ghost sm" data-act="per" data-n="0">Bulan ini</button>' : ''}</div></div>`;
   if (!S.warga.length) return head + emptyWarga();
+  const modeSeg = bisa('iuran') ? `<div class="toolbar" style="margin-bottom:-4px"><div class="seg" role="group" aria-label="Tampilan iuran"><button type="button" data-act="iurmode" data-k="daftar" aria-pressed="${S.iurMode !== 'massal'}">Daftar</button><button type="button" data-act="iurmode" data-k="massal" aria-pressed="${S.iurMode === 'massal'}">Entry massal</button></div></div>` : '';
+  if (S.iurMode === 'massal' && bisa('iuran')) return head + modeSeg + vIuranMassal();
   const r = rekapBulan(S.per), pct = r.total ? Math.round(r.lunas / r.total * 100) : 0;
   let list = r.list.sort(sortHouse);
   if (S.iurFilter === 'belum') list = list.filter(w => !r.pm.has(w.id));
@@ -1460,7 +1463,7 @@ function vIuran() {
   const rowsM = list.map(w => { const p = r.pm.get(w.id), t = tunggakan(w); return `<div class="row"><span class="house">${esc(w.blok)}</span>
       <div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${p ? `Lunas ${esc(tgl(p.tanggal))} · ${esc(rp(p.jumlah))}` : `Belum bayar${t ? ` · total ${t} bln` : ''}`}</div></div>
       <div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w, true)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat</button>` : ''}`}</div></div>`; }).join('');
-  return head + `
+  return head + modeSeg + `
   <div class="tiles">
     <div class="tile"><span class="lbl">Terkumpul</span><span class="val">${esc(rp(r.terkumpul))}</span><span class="sub">dari target ${esc(rp(r.target))}</span><div class="meter"><i style="width:${r.target ? Math.min(100, r.terkumpul / r.target * 100) : 0}%"></i></div></div>
     <div class="tile"><span class="lbl">KK lunas</span><span class="val">${r.lunas} / ${r.total}</span><span class="sub">${pct}% sudah membayar</span></div>
@@ -1469,6 +1472,96 @@ function vIuran() {
   <div class="toolbar"><div class="seg" role="group" aria-label="Saring status">${seg}</div></div>
   ${list.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th>Rumah</th><th>Kepala keluarga</th><th>Status</th><th>Pembayaran</th><th>Total tunggakan</th><th></th></tr></thead><tbody>${rowsT}</tbody></table></div>
   <div class="list-mobile">${rowsM}</div>` : `<div class="empty">${r.total ? 'Tidak ada KK pada saringan ini.' : 'Belum ada KK yang wajib iuran pada bulan ini.'}</div>`}`;
+}
+/* --- Entry iuran massal (bendahara) --- */
+function mzState() {
+  if (!S.mz || S.mz.per !== S.per) S.mz = {per: S.per, sel: new Set(), jml: {}, bln: {}, met: {}, tgl: todayISO(), metode: METODE[0], q: ''};
+  return S.mz;
+}
+function mzPeriode(w, mulai, n) {
+  const paid = new Set(S.iuran.filter(p => p.wargaId === w.id).map(p => p.periode)), out = [];
+  for (let i = 0, p = mulai; out.length < n && i < 36; i++, p = addM(p, 1)) if (!paid.has(p) && (mulaiPer(w) || '0000-00') <= p) out.push(p);
+  return out;
+}
+function mzRingkas() {
+  const z = mzState(); let kk = 0, bulan = 0, total = 0;
+  for (const id of z.sel) { const w = wById(id); if (!w) continue; const n = mzPeriode(w, z.per, Number(z.bln[id]) || 1).length; if (!n) continue; kk++; bulan += n; total += n * (Number(z.jml[id] ?? nominal()) || 0); }
+  return {kk, bulan, total};
+}
+function mzUpdBar() {
+  const r = mzRingkas(), el = $('#mzSum'), b = $('#mzSave');
+  if (el) el.innerHTML = r.kk ? `<b>${r.kk} KK</b> · ${r.bulan} bulan · <b>${esc(rp(r.total))}</b>` : '<span class="muted">Belum ada KK yang dipilih</span>';
+  if (b) { b.disabled = !r.kk; b.textContent = r.kk ? `Simpan ${r.kk} pembayaran` : 'Simpan pembayaran'; }
+}
+function vIuranMassal() {
+  const z = mzState(), pm = paidMap(S.per), q = z.q.trim().toLowerCase();
+  let list = S.warga.filter(w => wajib(w, S.per)).sort(sortHouse);
+  const belum = list.filter(w => !pm.has(w.id));
+  if (q) list = list.filter(w => (w.blok + ' ' + w.nama).toLowerCase().includes(q));
+  const semuaDipilih = belum.length && belum.every(w => z.sel.has(w.id));
+  const metOpt = (v, attrs) => `<select ${attrs}>${METODE.map(m => `<option ${m === v ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>`;
+  const blnOpt = (v, attrs) => `<select ${attrs}>${[1, 2, 3, 6, 12].map(n => `<option value="${n}" ${Number(v) === n ? 'selected' : ''}>${n} bln</option>`).join('')}</select>`;
+  const rowsT = list.map(w => {
+    const p = pm.get(w.id), on = z.sel.has(w.id), t = tunggakan(w);
+    if (p) return `<tr class="off"><td></td><td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td><td colspan="3"><span class="chip ok">Lunas</span> <span class="muted" style="font-size:.84rem">${esc(rp(p.jumlah))} · ${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}</span></td><td></td></tr>`;
+    return `<tr class="${on ? 'pick' : ''}" data-row="${esc(w.id)}"><td><input type="checkbox" class="mz-ck" data-mz="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''} aria-label="Pilih ${esc(w.nama)}"></td>
+      <td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td>
+      <td><input type="number" min="0" step="1000" data-mz="jml" data-id="${esc(w.id)}" value="${esc(z.jml[w.id] ?? nominal())}" aria-label="Nominal per bulan"></td>
+      <td>${blnOpt(z.bln[w.id] || 1, `data-mz="bln" data-id="${esc(w.id)}" aria-label="Jumlah bulan"`)}</td>
+      <td>${metOpt(z.met[w.id] || z.metode, `data-mz="met" data-id="${esc(w.id)}" aria-label="Metode"`)}</td>
+      <td>${t ? `<span class="chip ${t >= 3 ? 'bad' : 'warn'} plain">${t} bln</span>` : '<span class="muted">–</span>'}</td></tr>`;
+  }).join('');
+  const rowsM = list.map(w => {
+    const p = pm.get(w.id), on = z.sel.has(w.id);
+    if (p) return `<div class="mz-card" style="opacity:.6"><div class="row" style="padding:0;border:0"><span class="house">${esc(w.blok)}</span><div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">Lunas · ${esc(rp(p.jumlah))}</div></div></div></div>`;
+    return `<div class="mz-card ${on ? 'pick' : ''}" data-row="${esc(w.id)}"><label class="row" style="padding:0;border:0;cursor:pointer"><input type="checkbox" class="mz-ck" data-mz="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''}><span class="house">${esc(w.blok)}</span><span class="grow"><span class="t">${esc(w.nama)}</span><span class="s">${tunggakan(w) ? `Tunggakan ${tunggakan(w)} bln` : 'Tidak ada tunggakan'}</span></span></label>
+      <div class="g"><input type="number" min="0" step="1000" inputmode="numeric" data-mz="jml" data-id="${esc(w.id)}" value="${esc(z.jml[w.id] ?? nominal())}" aria-label="Nominal per bulan">${blnOpt(z.bln[w.id] || 1, `data-mz="bln" data-id="${esc(w.id)}" aria-label="Jumlah bulan"`)}</div>
+      ${metOpt(z.met[w.id] || z.metode, `data-mz="met" data-id="${esc(w.id)}" aria-label="Metode"`)}</div>`;
+  }).join('');
+  return `<div class="panel" style="display:grid;gap:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fld" style="margin:0"><label for="mzTgl">Tanggal bayar</label><input type="date" id="mzTgl" data-mz="tgl" value="${esc(z.tgl)}"></div>
+        <div class="fld" style="margin:0"><label for="mzMet">Metode (semua baris)</label>${metOpt(z.metode, 'id="mzMet" data-mz="metode"')}</div>
+        <div class="fld" style="margin:0;flex:1;min-width:180px"><label for="mzQ">Cari rumah / nama</label><input type="search" id="mzQ" data-mz="q" value="${esc(z.q)}" placeholder="mis. B-12"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button type="button" class="btn sm" data-act="mz-semua" ${belum.length ? '' : 'disabled'}>${semuaDipilih ? 'Batal pilih semua' : `Pilih semua belum bayar (${belum.length})`}</button>
+        <span class="muted" style="font-size:.84rem">Bulan ${esc(perLbl(S.per, true))} · ${list.length - list.filter(w => !pm.has(w.id)).length} lunas, ${belum.length} belum bayar. Pilih "2 bln" dst. untuk bayar beberapa bulan sekaligus (bulan yang sudah lunas dilewati).</span>
+      </div></div>
+    ${list.length ? `<div class="tbl-wrap hide-m"><table class="mz-tbl"><thead><tr><th style="width:36px"></th><th>Rumah</th><th>Kepala keluarga</th><th>Nominal/bln (Rp)</th><th>Bulan</th><th>Metode</th><th>Tunggakan</th></tr></thead><tbody>${rowsT}</tbody></table></div>
+    <div class="list-mobile"><div style="display:grid;gap:8px">${rowsM}</div></div>` : '<div class="empty">Tidak ada KK yang cocok.</div>'}
+    <div class="mz-bar"><span class="grow" id="mzSum"></span><button type="button" class="btn ghost" data-act="mz-reset">Kosongkan</button><button type="button" class="btn pri" id="mzSave" data-act="mz-simpan" disabled>Simpan pembayaran</button></div>`;
+}
+async function mzSimpan() {
+  const z = mzState(), rows = [], ringkas = [];
+  for (const id of z.sel) {
+    const w = wById(id); if (!w) continue;
+    const jumlah = Number(z.jml[id] ?? nominal()) || 0, pers = mzPeriode(w, z.per, Number(z.bln[id]) || 1);
+    for (const p of pers) rows.push({id: `${w.id}_${p}`, data: {wargaId: w.id, periode: p, jumlah, tanggal: z.tgl, metode: z.met[id] || z.metode, catatan: 'Entry massal', dicatat: todayISO(), oleh: (S.me && S.me.id) || '', olehSesi: S.sesi || ''}});
+    if (pers.length) ringkas.push(`${w.blok} · ${w.nama}: ${pers.length} bln × ${rp(jumlah)}`);
+  }
+  if (!rows.length) { toast('Tidak ada pembayaran baru untuk disimpan.', 'bad'); return; }
+  const total = rows.reduce((s, r) => s + r.data.jumlah, 0);
+  openDlg({
+    title: 'Simpan pembayaran massal?', submitLabel: `Simpan ${rows.length} catatan`, area: 'iuran',
+    body: `<p style="margin:0">Tanggal bayar <b>${esc(tgl(z.tgl))}</b>, total <b>${esc(rp(total))}</b> untuk ${ringkas.length} KK.</p>
+      <div class="panel" style="max-height:240px;overflow:auto;padding:10px 12px;background:var(--sunk);border:0;font-size:.86rem">${ringkas.map(t => `<div>${esc(t)}</div>`).join('')}</div>`,
+    onSubmit: async () => {
+      if (!bisa('iuran')) { pesanDlg('Peran Anda tidak bisa mengubah iuran.'); return false; }
+      if (!z.tgl) { pesanDlg('Isi tanggal bayar.'); return false; }
+      let simpan = 0;
+      for (let i = 0; i < rows.length; i += 200) {
+        const chunk = rows.slice(i, i + 200);
+        const {data, error} = await SB.from('dokumen').upsert(chunk.map(r => ({koleksi: 'iuran', id: r.id, data: r.data})), {onConflict: 'koleksi,id', ignoreDuplicates: true}).select('id,data');
+        if (error) { pesanDlg(`Gagal menyimpan${simpan ? ` (${simpan} catatan sudah tersimpan)` : ''}: ${sbErr(error).code === 'ditolak' ? 'role Anda tidak punya izin mengubah iuran.' : error.message}`); return false; }
+        for (const r of data || []) taruh('iuran', r.id, r.data);
+        simpan += (data || []).length;
+      }
+      sinkron('iuran'); S.mz = null; sbSched();
+      toast(`${simpan} pembayaran iuran tersimpan${simpan < rows.length ? ` (${rows.length - simpan} sudah tercatat sebelumnya)` : ''}.`);
+      return true;
+    }
+  });
 }
 function formBayar(w, per) {
   return `
@@ -3548,6 +3641,10 @@ document.addEventListener('click', async e => {
   else if (a === 'bayar-del') openBayarDel(b.dataset.id);
   else if (a === 'per') { const n = Number(b.dataset.n); S.per = n === 0 ? nowPer() : addM(S.per, n); render(); }
   else if (a === 'iurf') { S.iurFilter = b.dataset.k; render(); }
+  else if (a === 'iurmode') { S.iurMode = b.dataset.k; render(); if (S.iurMode === 'massal') mzUpdBar(); }
+  else if (a === 'mz-semua') { const z = mzState(), pm = paidMap(S.per), belum = S.warga.filter(w => wajib(w, S.per) && !pm.has(w.id)); const all = belum.length && belum.every(w => z.sel.has(w.id)); belum.forEach(w => all ? z.sel.delete(w.id) : z.sel.add(w.id)); render(); mzUpdBar(); }
+  else if (a === 'mz-reset') { S.mz = null; render(); mzUpdBar(); }
+  else if (a === 'mz-simpan') mzSimpan();
   else if (a === 'kelf') { S.kelFilter = b.dataset.k; render(); }
   else if (a === 'kel-new') openKel();
   else if (a === 'kel-edit') openKel(b.dataset.id);
@@ -3564,6 +3661,13 @@ document.addEventListener('click', async e => {
   }
 });
 document.addEventListener('input', e => {
+  const mz = e.target.dataset && e.target.dataset.mz;
+  if (mz) {
+    const z = mzState(), id = e.target.dataset.id;
+    if (mz === 'jml') { z.jml[id] = e.target.value; if (!z.sel.has(id) && e.target.value !== '') { z.sel.add(id); const r = e.target.closest('[data-row]'); if (r) r.classList.add('pick'); const c = r && r.querySelector('[data-mz=sel]'); if (c) c.checked = true; } mzUpdBar(); }
+    if (mz === 'q') { z.q = e.target.value; render(); mzUpdBar(); }
+    return;
+  }
   if (e.target.id === 'qPg') { S.pgQ = e.target.value; render(); }
   if (e.target.id === 'qKm') { S.kmQ = e.target.value; render(); }
   if (e.target.id === 'qSurat') { S.suratQ = e.target.value; render(); }
@@ -3571,6 +3675,17 @@ document.addEventListener('input', e => {
   if (e.target.id === 'qKel') { S.kelQ = e.target.value; render(); }
 });
 document.addEventListener('change', async e => {
+  const mz = e.target.dataset && e.target.dataset.mz;
+  if (mz && mz !== 'q' && mz !== 'jml') {
+    const z = mzState(), id = e.target.dataset.id;
+    if (mz === 'sel') { e.target.checked ? z.sel.add(id) : z.sel.delete(id); const r = e.target.closest('[data-row]'); if (r) r.classList.toggle('pick', e.target.checked); }
+    if (mz === 'bln') { z.bln[id] = e.target.value; z.sel.add(id); }
+    if (mz === 'met') { z.met[id] = e.target.value; }
+    if (mz === 'tgl') z.tgl = e.target.value;
+    if (mz === 'metode') { z.metode = e.target.value; z.met = {}; render(); }
+    if (mz === 'bln') render();
+    mzUpdBar(); return;
+  }
   if (e.target.id === 'fBlok') { S.blok = e.target.value; render(); }
   if (e.target.id === 'fPgKat') { S.pgKat = e.target.value; render(); }
   if (e.target.id === 'lapDari') { S.lapDari = e.target.value; render(); }

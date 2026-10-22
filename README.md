@@ -6,6 +6,7 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
 ## Struktur
 - `public/index.html`: seluruh aplikasi (HTML + CSS + JS), memuat supabase-js dari jsDelivr.
 - `public/_headers`: header keamanan HTTP untuk Cloudflare.
+- `public/manifest.webmanifest`, `public/sw.js`, `public/icons/`: PWA (bisa dipasang di HP, tetap terbuka saat offline).
 - `wrangler.jsonc`: konfigurasi Cloudflare Worker (menyajikan folder `public/`).
 - `supabase/schema.sql`: tabel `dokumen` & `profil`, realtime, fungsi reset/ubah akun.
 - `supabase/keamanan.sql`: hak akses per role di server, skema `privat`, log aktivitas (jalankan setelah schema.sql).
@@ -37,3 +38,8 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
 - Kolom `oleh` diisi server; setiap tambah/ubah/hapus tercatat di `log_aktivitas` (dibaca Pemilik di Admin → Log aktivitas).
 - Password minimal 8 karakter, logout otomatis setelah 30 menit tidak aktif, Content-Security-Policy & header keamanan.
 - Pengaturan dashboard Supabase yang disarankan: matikan *Allow new users to sign up* dan *Confirm email*, minimal password 8.
+
+## Aplikasi di HP (PWA)
+- Android (Chrome): buka alamat aplikasi, tombol **Pasang** muncul di bawah layar, atau menu ⋮ → *Instal aplikasi*.
+- iPhone (Safari): tombol Bagikan → *Tambah ke Layar Utama*.
+- Setiap deploy baru otomatis terdeteksi; aplikasi menawarkan *Muat ulang* untuk memakai versi terbaru.

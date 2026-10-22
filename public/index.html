@@ -4,10 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F7A4D">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.mz-tbl td{vertical-align:middle}.mz-tbl input[type=number]{width:120px}.mz-tbl select{min-width:0}.mz-tbl tr.off td{opacity:.55}.mz-tbl tr.pick td{background:var(--accent-soft)}.mz-bar{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:0 -6px 20px rgba(0,0,0,.06)}.mz-bar b{font-size:1.05rem}.mz-card{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.mz-card.pick{border-color:var(--accent);background:var(--accent-soft)}.mz-card .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mz-ck{width:20px;height:20px;accent-color:var(--accent)}@media(max-width:760px){.mz-bar{bottom:calc(64px + env(safe-area-inset-bottom))}}html,body{margin:0}[hidden]{display:none!important}.linkbtn{background:none;border:0;padding:4px 0;font:inherit;font-size:.86rem;font-weight:600;color:var(--accent);cursor:pointer;align-self:center}.linkbtn:hover{text-decoration:underline}</style>
+<style>.pwa-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:440px;margin:0 auto;display:flex;gap:12px;align-items:center;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 12px 32px rgba(0,0,0,.14);animation:pwaIn .25s ease-out}
+.pwa-bar img{width:40px;height:40px;border-radius:10px;object-fit:contain;background:#fff;flex:none}.pwa-bar .tx{flex:1;min-width:0;font-size:.86rem;line-height:1.35}.pwa-bar .tx b{display:block;font-size:.92rem}.pwa-bar .x{background:none;border:0;color:var(--muted);font-size:1.2rem;padding:4px 6px;cursor:pointer}
+@keyframes pwaIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@media(max-width:760px){body.in .pwa-bar{bottom:calc(78px + env(safe-area-inset-bottom))}}
+body.pwa-standalone{-webkit-user-select:none;user-select:none}body.pwa-standalone input,body.pwa-standalone textarea,body.pwa-standalone [contenteditable]{-webkit-user-select:text;user-select:text}
+.ios-step{display:flex;gap:10px;align-items:flex-start}.ios-step b{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.mz-tbl td{vertical-align:middle}.mz-tbl input[type=number]{width:120px}.mz-tbl select{min-width:0}.mz-tbl tr.off td{opacity:.55}.mz-tbl tr.pick td{background:var(--accent-soft)}.mz-bar{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:0 -6px 20px rgba(0,0,0,.06)}.mz-bar b{font-size:1.05rem}.mz-card{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.mz-card.pick{border-color:var(--accent);background:var(--accent-soft)}.mz-card .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mz-ck{width:20px;height:20px;accent-color:var(--accent)}@media(max-width:760px){.mz-bar{bottom:calc(64px + env(safe-area-inset-bottom))}}html,body{margin:0}[hidden]{display:none!important}.linkbtn{background:none;border:0;padding:4px 0;font:inherit;font-size:.86rem;font-weight:600;color:var(--accent);cursor:pointer;align-self:center}.linkbtn:hover{text-decoration:underline}</style>
 <title>Warga Kasuari</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Warga Kasuari">
+<meta name="application-name" content="Warga Kasuari">
+<meta name="description" content="Aplikasi warga Vila Nusa Indah 5 – Kluster Kasuari">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -1691,6 +1706,11 @@ function vPengaturan() {
     <div class="toolbar">${contoh ? `<button class="btn danger" data-act="sample-del" ${ro}>Hapus semua data contoh</button>` : `<button class="btn" data-act="sample-load" ${ro}>Isi data contoh</button>`}</div>
   </div>
   <div class="panel" style="display:grid;gap:6px;max-width:560px">
+    <h3>Aplikasi di HP</h3>
+    <p style="margin:0" class="muted">${PWA.standalone ? 'Anda sedang memakai aplikasi yang terpasang.' : 'Pasang Warga Kasuari di layar utama HP agar terbuka seperti aplikasi.'}</p>
+    ${PWA.standalone ? '' : '<div class="toolbar"><button class="btn" data-act="pwa-pasang">📲 Pasang aplikasi</button></div>'}
+  </div>
+  <div class="panel" style="display:grid;gap:6px;max-width:560px">
     <h3>Akses pengurus & warga</h3>
     <p style="margin:0" class="muted">Bagikan alamat aplikasi ini. Pengurus masuk dengan email & password, warga dengan username & password; semuanya dibuat Pemilik di menu Admin. Data tersimpan di Supabase.</p>
   </div>`;
@@ -1788,7 +1808,8 @@ function vLoginKartu() {
         <button type="button" class="btn sm" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password">Lihat</button></div>
         <span class="hint" id="lPesan" style="color:var(--bad)"></span></div>
       <button type="submit" class="btn pri">Masuk</button>
-      <button type="button" class="linkbtn" data-act="lupa-pass">Lupa password?</button></form></div>`;
+      <button type="button" class="linkbtn" data-act="lupa-pass">Lupa password?</button></form>
+    ${!PWA.standalone && (PWA.prompt || PWA.ios) ? '<button type="button" class="btn ghost" data-act="pwa-pasang" style="width:100%;margin-top:4px">📲 Pasang aplikasi di HP</button>' : ''}</div>`;
 }
 async function prosesLupa() {
   const email = String(($('#lupaEmail') || {}).value || '').trim().toLowerCase();
@@ -3781,6 +3802,8 @@ document.addEventListener('click', async e => {
   else if (a === 'akun-acak') { const i = $('#ak_p') || $('#ak_pr'); if (i) i.value = passAcak(); }
   else if (a === 'lupa-pass') { S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
   else if (a === 'ganti-pass') openGantiPass();
+  else if (a === 'pwa-pasang') pwaPasang();
+  else if (a === 'pwa-tutup') { try { localStorage.setItem(pwaTutupKey, String(Date.now() + 7 * 864e5)); } catch (err) {} const el = document.getElementById('pwaBar'); if (el) el.remove(); }
   else if (a === 'lupa-tutup') { S.lupa = false; S.lupaTerkirim = ''; S.lupaInfo = ''; render(); }
   else if (a === 'pulih-batal') { S.pulih = false; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); }
   else if (a === 'pg-acak2') { const i = $('#pg_reset'); if (i) i.value = passAcak(); }
@@ -3956,6 +3979,66 @@ function toast(msg, kind) {
 
 /* ---------- boot ---------- */
 (function () { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) S.tab = h; })();
+/* ---------- PWA: service worker & pasang aplikasi ---------- */
+const PWA = {prompt: null, standalone: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+  ios: /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)};
+if (PWA.standalone) document.body.classList.add('pwa-standalone');
+const pwaTutupKey = 'pwa-tutup-sampai';
+function pwaBolehTampil() {
+  if (PWA.standalone) return false;
+  try { if (Number(localStorage.getItem(pwaTutupKey) || 0) > Date.now()) return false; } catch (e) {}
+  return !!PWA.prompt || (PWA.ios && /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent));
+}
+function pwaBar() {
+  let el = document.getElementById('pwaBar');
+  if (!pwaBolehTampil()) { if (el) el.remove(); return; }
+  if (el) return;
+  el = document.createElement('div'); el.id = 'pwaBar'; el.className = 'pwa-bar'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Pasang aplikasi');
+  el.innerHTML = `<img src="icons/icon-192.png" alt=""><div class="tx"><b>Pasang Warga Kasuari</b>Buka langsung dari layar HP, lebih cepat seperti aplikasi.</div>
+    <button type="button" class="btn sm pri" data-act="pwa-pasang">Pasang</button><button type="button" class="x" data-act="pwa-tutup" aria-label="Tutup">×</button>`;
+  document.body.appendChild(el);
+}
+async function pwaPasang() {
+  if (PWA.prompt) {
+    const p = PWA.prompt; PWA.prompt = null;
+    p.prompt();
+    try { const r = await p.userChoice; if (r && r.outcome === 'accepted') toast('Aplikasi sedang dipasang di HP Anda.'); } catch (e) {}
+    pwaBar(); return;
+  }
+  if (PWA.ios) {
+    openDlg({title: 'Pasang di iPhone / iPad', submitLabel: 'Mengerti',
+      body: `<div class="ios-step"><b>1</b><div>Buka halaman ini di <b>Safari</b>.</div></div>
+        <div class="ios-step"><b>2</b><div>Ketuk tombol <b>Bagikan</b> <span aria-hidden="true">(kotak dengan panah ke atas)</span> di bawah layar.</div></div>
+        <div class="ios-step"><b>3</b><div>Pilih <b>Tambah ke Layar Utama</b>, lalu ketuk <b>Tambah</b>.</div></div>
+        <p class="muted" style="margin:0;font-size:.84rem">Ikon Warga Kasuari akan muncul di layar utama dan terbuka seperti aplikasi.</p>`,
+      onSubmit: async () => true});
+    return;
+  }
+  openDlg({title: 'Pasang aplikasi', submitLabel: 'Mengerti',
+    body: `<p style="margin:0">Buka menu browser (ikon <b>⋮</b> di Chrome), lalu pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</p>`, onSubmit: async () => true});
+}
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); PWA.prompt = e; pwaBar(); render(); });
+addEventListener('appinstalled', () => { PWA.prompt = null; PWA.standalone = true; pwaBar(); toast('Warga Kasuari terpasang. Buka dari layar utama HP Anda.'); });
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  let muatUlang = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (muatUlang) return; muatUlang = true; location.reload(); });
+  addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js', {scope: './'});
+      const tawarkan = w => {
+        if (!w || !navigator.serviceWorker.controller) return;
+        const el = document.createElement('div'); el.className = 'pwa-bar'; el.style.zIndex = 61;
+        el.innerHTML = `<img src="icons/icon-192.png" alt=""><div class="tx"><b>Versi baru tersedia</b>Muat ulang untuk memakai pembaruan terbaru.</div><button type="button" class="btn sm pri">Muat ulang</button>`;
+        el.querySelector('button').onclick = () => w.postMessage('pakai-versi-baru');
+        document.body.appendChild(el);
+      };
+      if (reg.waiting) tawarkan(reg.waiting);
+      reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed') tawarkan(w); }); });
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+    } catch (e) {}
+  });
+}
+setTimeout(pwaBar, 1500);
 async function init() {
   $('#suratCss').textContent = SURAT_CSS + '\n' + LAP_CSS;
   SET0 = {...S.set};

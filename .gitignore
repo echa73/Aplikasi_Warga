@@ -1,0 +1,4 @@
+# data warga asli (NIK, no HP) jangan di-commit
+migrasi-*.sql
+*.env
+.DS_Store

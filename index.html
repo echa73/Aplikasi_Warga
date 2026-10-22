@@ -1033,8 +1033,9 @@ const pesanAuth = e => {
   if (/already registered|already been registered|exists/i.test(m)) return 'Email atau username ini sudah terdaftar.';
   if (/password should be at least|weak/i.test(m)) return 'Password terlalu pendek (minimal 6 karakter).';
   if (/invalid.*email|email.*invalid/i.test(m)) return 'Format email tidak valid.';
+  if (/email rate limit|over_email_send/i.test(m)) return 'Batas kirim email tercapai (layanan email gratis hanya beberapa email per jam). Coba lagi sekitar 1 jam lagi, atau minta Pemilik mereset password dari menu Admin.';
   if (/rate limit|too many/i.test(m)) return 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.';
-  if (/email not confirmed/i.test(m)) return 'Email belum dikonfirmasi. Matikan "Confirm email" di Supabase atau konfirmasi email ini.';
+  if (/email not confirmed/i.test(m)) return 'Akun ini belum aktif (email belum dikonfirmasi). Minta Pemilik membuka Admin lalu menyimpan ulang data Anda.';
   if (/fetch|network/i.test(m)) return 'Tidak bisa terhubung ke server. Periksa koneksi internet.';
   return m || 'Terjadi kesalahan.';
 };
@@ -1045,6 +1046,7 @@ async function buatAkunAuth(email, password) {
   if (!data || !data.user) throw new Error('Akun tidak terbuat');
   if (data.user.identities && data.user.identities.length === 0) throw new Error('User already registered');
   try { await c.auth.signOut(); } catch (e) {}
+  try { await SB.rpc('admin_konfirmasi_user', {target: data.user.id}); } catch (e) {}
   return data.user.id;
 }
 async function resetPassword(userId, pw) { const {error} = await SB.rpc('admin_reset_password', {target: userId, pw}); if (error) throw error; }
@@ -1994,6 +1996,7 @@ function openPengurus(id, prefill) {
       const ok = await put('pengurus', pid, row);
       if (!ok) return false;
       if (row.userId) {
+        try { await SB.rpc('admin_konfirmasi_user', {target: row.userId}); } catch (e) {}
         try { if (row.aktif) await simpanProfil({user_id: row.userId, nama: row.nama, peran: 'pengurus', pengurus_id: pid, warga_id: row.wargaId || null}); else await hapusProfil(row.userId); }
         catch (e) { pesanDlg('Data tersimpan, tetapi akses login gagal diatur: ' + pesanAuth(e)); return false; }
       }

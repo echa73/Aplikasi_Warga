@@ -137,3 +137,13 @@ begin
 end $$;
 revoke all on function public.admin_reset_password(uuid, text) from public, anon;
 grant execute on function public.admin_reset_password(uuid, text) to authenticated;
+
+-- 7. Aktifkan (konfirmasi) akun yang dibuat Pemilik dari menu Admin
+create or replace function public.admin_konfirmasi_user(target uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if public.peran_saya() is distinct from 'pemilik' then raise exception 'Tidak diizinkan'; end if;
+  update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now()) where id = target;
+end $$;
+revoke all on function public.admin_konfirmasi_user(uuid) from public, anon;
+grant execute on function public.admin_konfirmasi_user(uuid) to authenticated;

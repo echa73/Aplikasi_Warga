@@ -1651,9 +1651,16 @@ function vLoginKartu() {
       <button type="submit" class="btn pri">Simpan password</button>
       <button type="button" class="btn ghost" data-act="pulih-batal">Batal</button></form></div>`;
   if (S.lupa) return `<div class="login">${brand('Kami kirim tautan untuk membuat password baru ke email Anda.')}
-    ${S.lupaTerkirim ? `<div class="notice" style="background:var(--ok-soft);color:var(--ok)">Jika <b>${esc(S.lupaTerkirim)}</b> terdaftar, tautan reset sudah dikirim. Cek kotak masuk atau folder spam, lalu buka tautannya di perangkat ini.</div>
-      <button type="button" class="btn pri" data-act="lupa-tutup">Kembali ke login</button>`
-    : `<form id="lupaForm" class="login-pin" style="border-top:0;padding-top:0">
+    ${S.lupaTerkirim ? `<div class="notice" style="background:var(--ok-soft);color:var(--ok)">Email reset dikirim ke <b>${esc(S.lupaTerkirim)}</b> (cek juga folder spam). Klik tautan di email <b>paling baru</b>, atau ketik kode dari email di bawah ini.</div>
+      <form id="kodeForm" class="login-pin" style="border-top:0;padding-top:0">
+        <div class="fld"><label for="kKode">Kode dari email</label><input type="text" id="kKode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="6 angka" style="letter-spacing:.2em;text-align:center;font-size:1.1rem"></div>
+        <div class="fld"><label for="kBaru">Password baru</label><input type="password" id="kBaru" autocomplete="new-password" style="letter-spacing:normal;text-align:left;font-size:1rem"></div>
+        <div class="fld"><label for="kUlang">Ulangi password baru</label><input type="password" id="kUlang" autocomplete="new-password" style="letter-spacing:normal;text-align:left;font-size:1rem">
+          <span class="hint" id="kPesan" style="color:var(--bad)"></span></div>
+        <button type="submit" class="btn pri">Simpan password baru</button>
+        <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
+        <p class="muted" style="margin:0;font-size:.82rem">Setiap kali meminta reset, tautan dan kode sebelumnya tidak berlaku lagi. Selalu pakai email yang terakhir masuk.</p></form>`
+    : `${S.lupaInfo ? `<div class="notice">${esc(S.lupaInfo)}</div>` : ''}<form id="lupaForm" class="login-pin" style="border-top:0;padding-top:0">
       <div class="fld"><label for="lupaEmail">Email pengurus</label><input type="email" id="lupaEmail" autocomplete="username" autocapitalize="none" value="${esc(S.lEmailDraft || '')}">
         <span class="hint" id="lupaPesan" style="color:var(--bad)"></span></div>
       <button type="submit" class="btn pri">Kirim tautan reset</button>
@@ -1686,7 +1693,22 @@ async function prosesLupa() {
   const btn = $('#lupaForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Mengirim…'; }
   const {error} = await SB.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
   if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Kirim tautan reset'; } msg(pesanAuth(error)); return; }
-  S.lupaTerkirim = email; render();
+  S.lupaTerkirim = email; S.lupaInfo = ''; render(); const k = $('#kKode'); if (k) k.focus();
+}
+async function prosesKode() {
+  const kode = String(($('#kKode') || {}).value || '').replace(/\s/g, ''), a = ($('#kBaru') || {}).value || '', b = ($('#kUlang') || {}).value || '';
+  const msg = t => { const m = $('#kPesan'); if (m) m.textContent = t; };
+  if (!/^\d{6,10}$/.test(kode)) { msg('Masukkan kode angka dari email.'); return; }
+  if (a.length < 8) { msg('Password minimal 8 karakter.'); return; }
+  if (a !== b) { msg('Kedua password tidak sama.'); return; }
+  const btn = $('#kodeForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Memeriksa…'; }
+  const v = await SB.auth.verifyOtp({email: S.lupaTerkirim, token: kode, type: 'recovery'});
+  if (v.error) { if (btn) { btn.disabled = false; btn.textContent = 'Simpan password baru'; } msg(/expired|invalid|not found/i.test(v.error.message) ? 'Kode salah atau sudah tidak berlaku. Pakai kode dari email paling baru.' : pesanAuth(v.error)); return; }
+  const {data, error} = await SB.auth.updateUser({password: a});
+  if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Simpan password baru'; } msg(pesanAuth(error)); return; }
+  S.lupa = false; S.lupaTerkirim = ''; S.lupaInfo = '';
+  toast('Password baru tersimpan.');
+  await masukSesi(data.user);
 }
 async function prosesPulih() {
   const a = ($('#pBaru') || {}).value || '', b = ($('#pUlang') || {}).value || '';
@@ -3438,7 +3460,7 @@ document.addEventListener('click', async e => {
   else if (a === 'akun-edit') openAkun(b.dataset.id);
   else if (a === 'akun-acak') { const i = $('#ak_p') || $('#ak_pr'); if (i) i.value = passAcak(); }
   else if (a === 'lupa-pass') { S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
-  else if (a === 'lupa-tutup') { S.lupa = false; S.lupaTerkirim = ''; render(); }
+  else if (a === 'lupa-tutup') { S.lupa = false; S.lupaTerkirim = ''; S.lupaInfo = ''; render(); }
   else if (a === 'pulih-batal') { S.pulih = false; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); }
   else if (a === 'pg-acak2') { const i = $('#pg_reset'); if (i) i.value = passAcak(); }
   else if (a === 'pg-acak') { const i = $('#pg_pass'); if (i) i.value = passAcak(); }
@@ -3511,6 +3533,7 @@ document.addEventListener('submit', async e => {
   if (e.target.id === 'loginWargaForm') { e.preventDefault(); await prosesLoginWarga(); return; }
   if (e.target.id === 'lupaForm') { e.preventDefault(); await prosesLupa(); return; }
   if (e.target.id === 'pulihForm') { e.preventDefault(); await prosesPulih(); return; }
+  if (e.target.id === 'kodeForm') { e.preventDefault(); await prosesKode(); return; }
   if (e.target.id !== 'setForm') return;
   e.preventDefault();
   const d = Object.fromEntries(new FormData(e.target));
@@ -3605,9 +3628,9 @@ async function init() {
   let sesi = null;
   try { const r = await SB.auth.getSession(); sesi = r.data && r.data.session; } catch (e) {}
   if (dariReset || errReset) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
-  if (errReset) { S.loaded = true; S.lupa = true; S.lupaTerkirim = ''; render(); toast(/expired|invalid/i.test(errReset) ? 'Tautan reset sudah kedaluwarsa atau sudah dipakai. Minta tautan baru.' : 'Tautan reset tidak valid: ' + errReset, 'bad'); return; }
+  if (errReset) { S.loaded = true; S.lupa = true; S.lupaTerkirim = ''; S.lupaInfo = /expired|invalid/i.test(errReset) ? 'Tautan yang Anda buka sudah tidak berlaku. Biasanya karena membuka email reset yang lama: setiap permintaan baru membatalkan tautan sebelumnya. Buka email reset PALING BARU, atau minta lagi di bawah lalu ketik kodenya.' : 'Tautan reset tidak valid: ' + errReset; render(); return; }
   if (dariReset && sesi) { S.pulih = true; S.loaded = true; render(); return; }
-  if (dariReset && !sesi) { S.lupa = true; S.lupaTerkirim = ''; S.loaded = true; render(); toast('Tautan reset tidak valid lagi. Minta tautan baru.', 'bad'); return; }
+  if (dariReset && !sesi) { S.lupa = true; S.lupaTerkirim = ''; S.lupaInfo = 'Tautan reset tidak valid lagi. Minta lagi di bawah, lalu buka email paling baru atau ketik kodenya.'; S.loaded = true; render(); return; }
   if (S.pulih) return;
   if (sesi && sesi.user) await masukSesi(sesi.user); else { S.loaded = true; render(); }
 }

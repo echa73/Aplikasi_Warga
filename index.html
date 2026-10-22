@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F7A4D">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <style>html,body{margin:0}[hidden]{display:none!important}.linkbtn{background:none;border:0;padding:4px 0;font:inherit;font-size:.86rem;font-weight:600;color:var(--accent);cursor:pointer;align-self:center}.linkbtn:hover{text-decoration:underline}</style>
 <title>Warga Kasuari</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -817,7 +819,7 @@ body:not(.in) main.wrap{max-width:none;padding:0!important;margin:0;display:bloc
   </form>
 </dialog>
 <div id="toasts" aria-live="polite"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
 /* ---------- tema ---------- */
@@ -996,18 +998,30 @@ function langganan() {
     .subscribe();
 }
 async function muatProfil() {
-  if (!S.owner && !(S.profil && S.profil.peran === 'pengurus')) return;
+  if (!S.owner) return;
   const {data} = await SB.from('profil').select('user_id,nama,peran,pengurus_id,warga_id');
   S.profilList = data || [];
   for (const p of S.profilList) S.names[p.user_id] = {name: p.nama || ''};
   sbSched();
+}
+const IDLE_MS = 30 * 60 * 1000;
+let idleAkhir = Date.now(), idleTmr = null;
+['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, () => { idleAkhir = Date.now(); }, {passive: true}));
+function mulaiIdle() {
+  clearInterval(idleTmr);
+  idleTmr = setInterval(async () => {
+    if (!S.authUser || Date.now() - idleAkhir < IDLE_MS) return;
+    clearInterval(idleTmr);
+    try { await SB.auth.signOut(); } catch (e) {}
+    resetSesi(); render(); toast('Anda keluar otomatis karena tidak aktif 30 menit.');
+  }, 30000);
 }
 function resetSesi() {
   if (SB_CH) { try { SB.removeChannel(SB_CH); } catch (e) {} SB_CH = null; }
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   KOLEKSI_SB.forEach(sinkron); sinkron('pengaturan');
   S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = [];
-  S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true;
+  S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
 async function masukSesi(user) {
@@ -1022,6 +1036,7 @@ async function masukSesi(user) {
   S.names[user.id] = {name: S.me.name};
   try { await muatSemua(); } catch (e) { S.loaded = true; toast('Gagal memuat data. Periksa koneksi lalu muat ulang.', 'bad'); render(); return; }
   langganan(); muatProfil();
+  idleAkhir = Date.now(); mulaiIdle();
   S.sesi = prof.peran === 'pemilik' ? 'pemilik' : prof.peran === 'pengurus' ? (prof.pengurus_id || '') : 'w:' + user.id;
   S.tab = prof.peran === 'warga' ? 'portal' : 'ringkasan';
   S.loaded = true; render(); window.scrollTo(0, 0);
@@ -1032,7 +1047,7 @@ const pesanAuth = e => {
   if (/invalid login credentials/i.test(m)) return 'Email/username atau password salah.';
   if (/already registered|already been registered|exists|sudah dipakai/i.test(m)) return 'Email atau username ini sudah dipakai akun lain.';
   if (/Tidak diizinkan/i.test(m)) return 'Hanya Pemilik yang bisa melakukan ini.';
-  if (/password should be at least|weak/i.test(m)) return 'Password terlalu pendek (minimal 6 karakter).';
+  if (/password should be at least|weak|minimal 8/i.test(m)) return 'Password terlalu pendek (minimal 8 karakter).';
   if (/invalid.*email|email.*invalid/i.test(m)) return 'Format email tidak valid.';
   if (/email rate limit|over_email_send/i.test(m)) return 'Batas kirim email tercapai (layanan email gratis hanya beberapa email per jam). Coba lagi sekitar 1 jam lagi, atau minta Pemilik mereset password dari menu Admin.';
   if (/rate limit|too many/i.test(m)) return 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.';
@@ -1041,14 +1056,10 @@ const pesanAuth = e => {
   return m || 'Terjadi kesalahan.';
 };
 async function buatAkunAuth(email, password) {
-  const c = window.supabase.createClient(SUPA_URL, SUPA_KEY, {auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'sb-buat-akun'}});
-  const {data, error} = await c.auth.signUp({email, password});
+  const {data, error} = await SB.rpc('admin_buat_user', {email_baru: email, pw: password});
   if (error) throw error;
-  if (!data || !data.user) throw new Error('Akun tidak terbuat');
-  if (data.user.identities && data.user.identities.length === 0) throw new Error('User already registered');
-  try { await c.auth.signOut(); } catch (e) {}
-  try { await SB.rpc('admin_konfirmasi_user', {target: data.user.id}); } catch (e) {}
-  return data.user.id;
+  if (!data) throw new Error('Akun tidak terbuat');
+  return data;
 }
 async function ubahEmail(userId, email) { const {error} = await SB.rpc('admin_ubah_email', {target: userId, email_baru: email}); if (error) throw error; }
 async function resetPassword(userId, pw) { const {error} = await SB.rpc('admin_reset_password', {target: userId, pw}); if (error) throw error; }
@@ -1088,7 +1099,7 @@ async function putSetting(data) {
 }
 function fail(e) {
   const c = e && e.code;
-  if (c === 'ditolak') toast('Server menolak perubahan ini. Akun Anda tidak punya izin untuk data tersebut.', 'bad');
+  if (c === 'ditolak') toast('Server menolak perubahan ini: role Anda tidak punya izin mengubah data tersebut.', 'bad');
   else if (c === 'quota_exceeded') toast('Penyimpanan penuh. Hapus data lama, lalu coba lagi.', 'bad');
   else if (c === 'resource_exhausted') toast('Terlalu banyak perubahan sekaligus. Tunggu sebentar lalu coba lagi.', 'bad');
   else toast('Gagal menyimpan. Periksa koneksi internet lalu coba lagi.', 'bad');
@@ -1680,7 +1691,7 @@ async function prosesLupa() {
 async function prosesPulih() {
   const a = ($('#pBaru') || {}).value || '', b = ($('#pUlang') || {}).value || '';
   const msg = t => { const m = $('#pPesan'); if (m) m.textContent = t; };
-  if (a.length < 6) { msg('Password minimal 6 karakter.'); return; }
+  if (a.length < 8) { msg('Password minimal 8 karakter.'); return; }
   if (a !== b) { msg('Kedua password tidak sama.'); return; }
   const btn = $('#pulihForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan…'; }
   const {data, error} = await SB.auth.updateUser({password: a});
@@ -1707,7 +1718,7 @@ const wargaSaya = () => { const a = akunSesi(); if (a) return wById(a.wargaId); 
 const ROLE_WARGA = {id: 'warga', nama: 'Warga', izin: {...semua('tidak'), info: 'lihat', portal: 'lihat'}};
 const normUser = u => String(u || '').trim().toLowerCase();
 function sarankanUser(w) { let base = String(w.blok || w.nama || 'warga').toLowerCase().replace(/[^a-z0-9]/g, '') || 'warga', u = base, i = 2; while (S.akunWarga.some(a => a.username === u)) u = base + i++; return u; }
-function passAcak() { const c = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; const r = new Uint32Array(8); try { crypto.getRandomValues(r); } catch (e) { for (let i = 0; i < 8; i++) r[i] = Math.random() * 1e9; } for (let i = 0; i < 8; i++) s += c[r[i] % c.length]; return s; }
+function passAcak() { const c = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const r = new Uint32Array(10); crypto.getRandomValues(r); for (let i = 0; i < 10; i++) s += c[r[i] % c.length]; return s; }
 const maskNik = n => n ? '•••• •••• ' + String(n).slice(-4) : '—';
 const fmtNik = n => n ? String(n).replace(/(\d{4})(?=\d)/g, '$1 ') : '—';
 function vAdminAkun() {
@@ -1739,7 +1750,7 @@ function openAkun(id) {
       ${a.userId ? `<div class="fld"><label for="ak_pr">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="ak_pr" name="passwordBaru" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="akun-acak">Acak</button></div>
         <span class="hint">Isi untuk mengganti password warga yang lupa. Password baru ditampilkan sekali untuk dikirim ke warga.</span></div>` : ''}`
     : `<div class="fld"><label for="ak_p">Password <span class="req">*</span></label>
-      <div style="display:flex;gap:6px"><input type="text" id="ak_p" name="password" autocomplete="off" autocapitalize="none" value="${esc(pass0)}" placeholder="Minimal 6 karakter" style="flex:1">
+      <div style="display:flex;gap:6px"><input type="text" id="ak_p" name="password" autocomplete="off" autocapitalize="none" value="${esc(pass0)}" placeholder="Minimal 8 karakter" style="flex:1">
       <button type="button" class="btn sm" data-act="akun-acak">Acak</button></div>
       <span class="hint">Catat atau kirim password ini ke warga. Setelah disimpan, password tidak bisa dilihat lagi.</span></div>`}`,
     onSubmit: async d => {
@@ -1747,7 +1758,7 @@ function openAkun(id) {
       const w = wById(d.wargaId); if (!w) { pesanDlg('Pilih warga.', 'ak_w'); return false; }
       if (a) {
         const aktif = d.aktif !== '0', pb = String(d.passwordBaru || '');
-        if (pb && pb.length < 6) { pesanDlg('Password baru minimal 6 karakter.', 'ak_pr'); return false; }
+        if (pb && pb.length < 8) { pesanDlg('Password baru minimal 8 karakter.', 'ak_pr'); return false; }
         let uname = a.username;
         if (u !== a.username) {
           if (!/^[a-z0-9._]{3,30}$/.test(u)) { pesanDlg('Username 3–30 karakter: huruf kecil, angka, titik atau garis bawah.', 'ak_u'); return false; }
@@ -1766,7 +1777,7 @@ function openAkun(id) {
       }
       if (!/^[a-z0-9._]{3,30}$/.test(u)) { pesanDlg('Username 3–30 karakter: huruf kecil, angka, titik atau garis bawah.', 'ak_u'); return false; }
       if (S.akunWarga.some(x => x.username === u)) { pesanDlg(`Username "${u}" sudah dipakai.`, 'ak_u'); return false; }
-      if (pw.length < 6) { pesanDlg('Password minimal 6 karakter.', 'ak_p'); return false; }
+      if (pw.length < 8) { pesanDlg('Password minimal 8 karakter.', 'ak_p'); return false; }
       let userId;
       try { userId = await buatAkunAuth(emailWarga(u), pw); } catch (e) { pesanDlg(pesanAuth(e), 'ak_u'); return false; }
       try { await simpanProfil({user_id: userId, nama: w.nama, peran: 'warga', warga_id: w.id, pengurus_id: null}); }
@@ -1905,7 +1916,7 @@ function roleInfoHtml(rid, jab) {
   return warn + esc(izinRingkas(r));
 }
 function vAdmin() {
-  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`]]
+  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['log', 'Log aktivitas']]
     .map(([k, l]) => `<button type="button" data-act="admtab" data-k="${k}" aria-pressed="${S.admTab === k}">${l}</button>`).join('');
   const head = `<div class="sec-head"><div><h2>Admin</h2><p>Atur siapa pengurusnya, apa jabatannya, dan menu apa saja yang boleh mereka buka.</p></div>
     ${S.admTab === 'pengurus' ? '<button class="btn pri" data-act="pgr-new">+ Tambah pengurus</button>' : S.admTab === 'role' ? '<button class="btn pri" data-act="role-new">+ Tambah role</button>' : S.admTab === 'akun' ? '<button class="btn pri" data-act="akun-new">+ Buat akun warga</button>' : ''}</div>
@@ -1913,6 +1924,7 @@ function vAdmin() {
   const legacy = '';
   if (S.admTab === 'role') return head + vAdminRole();
   if (S.admTab === 'akun') return head + vAdminAkun();
+  if (S.admTab === 'log') return head + vAdminLog();
   if (S.admTab === 'permintaan') return head + vAdminMinta();
   const list = [...S.pengurus].sort((a, b) => (a.aktif === false) - (b.aktif === false) || JABATAN.indexOf(a.jabatan) - JABATAN.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
   const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div></div><span class="chip ok plain">Pemilik</span></div>` : '';
@@ -1932,6 +1944,27 @@ function vAdmin() {
     ${list.length ? '' : `<p class="muted" style="margin:${pemilik ? '10px' : '0'} 0 0">Belum ada pengurus. Tambahkan pengurus, pilih role-nya, lalu buatkan email & password supaya bisa masuk.</p>`}</div>
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
+}
+const LOG_KOL = {warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad']};
+async function muatLog() {
+  S.logAkt = 'memuat'; render();
+  const {data, error} = await SB.from('log_aktivitas').select('id,waktu,nama,aksi,koleksi,dok_id,data_lama').order('waktu', {ascending: false}).limit(200);
+  S.logAkt = error ? {err: error.message} : data || []; render();
+}
+function vAdminLog() {
+  if (S.logAkt == null) { setTimeout(muatLog, 0); return '<div class="skel">Memuat log…</div>'; }
+  if (S.logAkt === 'memuat') return '<div class="skel">Memuat log…</div>';
+  if (S.logAkt.err) return `<div class="notice">Log tidak bisa dimuat: ${esc(S.logAkt.err)}</div>`;
+  const ringkas = d => d ? esc(d.nama || d.judul || d.uraian || d.username || d.blok || '') : '';
+  const rows = S.logAkt.map(l => { const [lbl, cls] = LOG_AKSI[l.aksi] || [l.aksi, 'mute']; return `<div class="row"><div class="grow">
+    <div class="t">${esc(l.nama || 'Sistem')} <span class="muted" style="font-weight:400">· ${esc(LOG_KOL[l.koleksi] || l.koleksi)}</span></div>
+    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? ' · ' + ringkas(l.data_lama) : ''}</div></div>
+    <span class="chip ${cls} plain">${esc(lbl)}</span></div>`; }).join('');
+  return `<div class="panel"><h3>Log aktivitas <small>200 terakhir</small></h3>
+    <div class="toolbar" style="margin:-4px 0 8px"><button class="btn sm" data-act="log-muat">Muat ulang</button></div>
+    ${rows ? `<div class="rows">${rows}</div>` : '<p class="muted" style="margin:0">Belum ada aktivitas tercatat.</p>'}</div>
+    <p class="muted" style="margin:0;font-size:.84rem">Setiap tambah, ubah, dan hapus data tercatat otomatis di server beserta pelakunya. Data yang dihapus ikut disimpan di log sehingga bisa dipulihkan bila perlu.</p>`;
 }
 function vAdminRole() {
   const cell = v => v === 'kelola' ? '<span class="chip ok plain">Ubah</span>' : v === 'lihat' ? '<span class="chip info plain">Lihat</span>' : '<span class="muted">—</span>';
@@ -1980,7 +2013,7 @@ function openPengurus(id, prefill) {
     ${x.userId ? `<div class="fld"><label for="pg_email2">Email login</label><input type="email" id="pg_email2" name="emailBaru" autocomplete="off" autocapitalize="none" value="${esc(x.email || '')}"><span class="hint">Ubah bila email pengurus salah atau ganti. Login berikutnya memakai email baru.</span></div>
       <div class="fld"><label for="pg_reset">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="pg_reset" name="passwordBaru" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak2">Acak</button></div></div>`
     : `<div class="grid2"><div class="fld"><label for="pg_email">Email login</label><input type="email" id="pg_email" name="email" autocomplete="off" autocapitalize="none" placeholder="nama@email.com"></div>
-      <div class="fld"><label for="pg_pass">Password awal</label><div style="display:flex;gap:6px"><input type="text" id="pg_pass" name="password" autocomplete="off" autocapitalize="none" placeholder="Minimal 6 karakter" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak">Acak</button></div></div></div>
+      <div class="fld"><label for="pg_pass">Password awal</label><div style="display:flex;gap:6px"><input type="text" id="pg_pass" name="password" autocomplete="off" autocapitalize="none" placeholder="Minimal 8 karakter" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak">Acak</button></div></div></div>
       <p class="muted" style="margin:-4px 0 0;font-size:.82rem">Isi keduanya supaya pengurus ini bisa masuk. Boleh dikosongkan dan dibuat nanti.</p>`}`,
     onSubmit: async d => {
       const hp = String(d.noHp || '').replace(/\D/g, '').length;
@@ -1990,10 +2023,10 @@ function openPengurus(id, prefill) {
       if ((email || pw) && !(p && p.userId)) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { pesanDlg('Isi email login yang valid.', 'pg_email'); return false; }
         if (email.endsWith('@' + WARGA_DOMAIN)) { pesanDlg('Gunakan email pribadi pengurus.', 'pg_email'); return false; }
-        if (pw.length < 6) { pesanDlg('Password awal minimal 6 karakter.', 'pg_pass'); return false; }
+        if (pw.length < 8) { pesanDlg('Password awal minimal 8 karakter.', 'pg_pass'); return false; }
       }
       const pinData = {}, pb = String(d.passwordBaru || '');
-      if (pb && pb.length < 6) { pesanDlg('Password baru minimal 6 karakter.', 'pg_reset'); return false; }
+      if (pb && pb.length < 8) { pesanDlg('Password baru minimal 8 karakter.', 'pg_reset'); return false; }
       const row = {...(p || {}), nama: d.nama.trim(), jabatan: String(d.jabatan || '').trim(), noHp: String(d.noHp || '').trim(), peranId: d.peranId, wargaId: d.wargaId || '', aktif: d.aktif !== '0', mulai: d.mulai || '', userId: (p && p.userId) || '', email: (p && p.email) || '', diperbarui: todayISO()};
       delete row.pinHash; delete row.pinSalt;
       if (!p) row.dibuat = todayISO();
@@ -3420,7 +3453,8 @@ document.addEventListener('click', async e => {
     catch (err) { b.disabled = false; toast('Permintaan gagal dikirim. Pastikan halaman ini dibagikan ke Anda dengan akses Contributor.', 'bad'); }
   }
   else if (a === 'minta-batal') { try { await DB.collection('permintaan').doc(S.me.id).delete(); } catch (err) { fail(err); } }
-  else if (a === 'admtab') { S.admTab = b.dataset.k; render(); }
+  else if (a === 'admtab') { S.admTab = b.dataset.k; if (b.dataset.k === 'log') S.logAkt = null; render(); }
+  else if (a === 'log-muat') muatLog();
   else if (a === 'pgr-new') openPengurus();
   else if (a === 'pgr-edit') openPengurus(b.dataset.id);
   else if (a === 'role-new') openRole();
@@ -3573,6 +3607,7 @@ async function init() {
   if (dariReset || errReset) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
   if (errReset) { S.loaded = true; S.lupa = true; S.lupaTerkirim = ''; render(); toast(/expired|invalid/i.test(errReset) ? 'Tautan reset sudah kedaluwarsa atau sudah dipakai. Minta tautan baru.' : 'Tautan reset tidak valid: ' + errReset, 'bad'); return; }
   if (dariReset && sesi) { S.pulih = true; S.loaded = true; render(); return; }
+  if (dariReset && !sesi) { S.lupa = true; S.lupaTerkirim = ''; S.loaded = true; render(); toast('Tautan reset tidak valid lagi. Minta tautan baru.', 'bad'); return; }
   if (S.pulih) return;
   if (sesi && sesi.user) await masukSesi(sesi.user); else { S.loaded = true; render(); }
 }

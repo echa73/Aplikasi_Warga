@@ -1030,7 +1030,8 @@ async function masukSesi(user) {
 const pesanAuth = e => {
   const m = String((e && e.message) || e || '');
   if (/invalid login credentials/i.test(m)) return 'Email/username atau password salah.';
-  if (/already registered|already been registered|exists/i.test(m)) return 'Email atau username ini sudah terdaftar.';
+  if (/already registered|already been registered|exists|sudah dipakai/i.test(m)) return 'Email atau username ini sudah dipakai akun lain.';
+  if (/Tidak diizinkan/i.test(m)) return 'Hanya Pemilik yang bisa melakukan ini.';
   if (/password should be at least|weak/i.test(m)) return 'Password terlalu pendek (minimal 6 karakter).';
   if (/invalid.*email|email.*invalid/i.test(m)) return 'Format email tidak valid.';
   if (/email rate limit|over_email_send/i.test(m)) return 'Batas kirim email tercapai (layanan email gratis hanya beberapa email per jam). Coba lagi sekitar 1 jam lagi, atau minta Pemilik mereset password dari menu Admin.';
@@ -1049,6 +1050,7 @@ async function buatAkunAuth(email, password) {
   try { await SB.rpc('admin_konfirmasi_user', {target: data.user.id}); } catch (e) {}
   return data.user.id;
 }
+async function ubahEmail(userId, email) { const {error} = await SB.rpc('admin_ubah_email', {target: userId, email_baru: email}); if (error) throw error; }
 async function resetPassword(userId, pw) { const {error} = await SB.rpc('admin_reset_password', {target: userId, pw}); if (error) throw error; }
 async function simpanProfil(row) { const {error} = await SB.from('profil').upsert(row); if (error) throw error; await muatProfil(); }
 async function hapusProfil(userId) { if (!userId) return; const {error} = await SB.from('profil').delete().eq('user_id', userId); if (error) throw error; await muatProfil(); }
@@ -1732,7 +1734,7 @@ function openAkun(id) {
     title: a ? 'Ubah akun warga' : 'Buat akun warga', area: 'admin', submitLabel: a ? 'Simpan' : 'Buat akun',
     body: `<div class="fld"><label for="ak_w">Warga (kepala keluarga) <span class="req">*</span></label><select id="ak_w" name="wargaId" required ${a ? 'disabled' : ''}>${opsi.map(w => `<option value="${esc(w.id)}" ${w0 && w0.id === w.id ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select>
       ${a ? `<input type="hidden" name="wargaId" value="${esc(a.wargaId)}">` : ''}</div>
-    <div class="fld"><label for="ak_u">Username <span class="req">*</span></label><input type="text" id="ak_u" name="username" required autocomplete="off" autocapitalize="none" value="${esc(a ? a.username : sarankanUser(w0 || {}))}" ${a ? 'readonly' : ''}><span class="hint">${a ? 'Username tidak bisa diganti. Hapus akun lalu buat baru bila perlu.' : 'Huruf kecil, angka, titik atau garis bawah. 3–30 karakter.'}</span></div>
+    <div class="fld"><label for="ak_u">Username <span class="req">*</span></label><input type="text" id="ak_u" name="username" required autocomplete="off" autocapitalize="none" value="${esc(a ? a.username : sarankanUser(w0 || {}))}"><span class="hint">Huruf kecil, angka, titik atau garis bawah. 3–30 karakter.${a ? ' Bila diganti, warga login dengan username baru.' : ''}</span></div>
     ${a ? `<div class="fld"><label for="ak_s">Status</label><select id="ak_s" name="aktif"><option value="1" ${a.aktif !== false ? 'selected' : ''}>Aktif</option><option value="0" ${a.aktif === false ? 'selected' : ''}>Nonaktif (tidak bisa masuk)</option></select></div>
       ${a.userId ? `<div class="fld"><label for="ak_pr">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="ak_pr" name="passwordBaru" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="akun-acak">Acak</button></div>
         <span class="hint">Isi untuk mengganti password warga yang lupa. Password baru ditampilkan sekali untuk dikirim ke warga.</span></div>` : ''}`
@@ -1746,13 +1748,20 @@ function openAkun(id) {
       if (a) {
         const aktif = d.aktif !== '0', pb = String(d.passwordBaru || '');
         if (pb && pb.length < 6) { pesanDlg('Password baru minimal 6 karakter.', 'ak_pr'); return false; }
+        let uname = a.username;
+        if (u !== a.username) {
+          if (!/^[a-z0-9._]{3,30}$/.test(u)) { pesanDlg('Username 3–30 karakter: huruf kecil, angka, titik atau garis bawah.', 'ak_u'); return false; }
+          if (S.akunWarga.some(x => x.username === u && x.id !== a.id)) { pesanDlg(`Username "${u}" sudah dipakai.`, 'ak_u'); return false; }
+          if (a.userId) { try { await ubahEmail(a.userId, emailWarga(u)); } catch (e) { pesanDlg('Gagal mengganti username: ' + pesanAuth(e), 'ak_u'); return false; } }
+          uname = u;
+        }
         if (pb) { try { await resetPassword(a.userId, pb); } catch (e) { pesanDlg('Gagal mereset password: ' + pesanAuth(e)); return false; } }
         try {
           if (a.userId) { if (aktif) await simpanProfil({user_id: a.userId, nama: w.nama, peran: 'warga', warga_id: w.id, pengurus_id: null}); else await hapusProfil(a.userId); }
         } catch (e) { pesanDlg('Gagal mengubah akses login: ' + pesanAuth(e)); return false; }
-        const ok = await put('akunWarga', a.id, {...a, aktif, diperbarui: todayISO()});
-        if (ok && pb) setTimeout(() => tampilKredensial(w, a.username, pb), 50);
-        else if (ok) toast(aktif ? 'Akun warga aktif.' : 'Akun warga dinonaktifkan.');
+        const ok = await put('akunWarga', a.id, {...a, username: uname, aktif, diperbarui: todayISO()});
+        if (ok && pb) setTimeout(() => tampilKredensial(w, uname, pb), 50);
+        else if (ok) toast(uname !== a.username ? `Username diganti menjadi ${uname}.` : aktif ? 'Akun warga aktif.' : 'Akun warga dinonaktifkan.');
         return ok;
       }
       if (!/^[a-z0-9._]{3,30}$/.test(u)) { pesanDlg('Username 3–30 karakter: huruf kecil, angka, titik atau garis bawah.', 'ak_u'); return false; }
@@ -1968,7 +1977,7 @@ function openPengurus(id, prefill) {
       <div class="fld"><label for="pg_aktif">Status</label><select id="pg_aktif" name="aktif"><option value="1" ${x.aktif !== false ? 'selected' : ''}>Aktif</option><option value="0" ${x.aktif === false ? 'selected' : ''}>Nonaktif (tidak bisa masuk)</option></select></div>
       <div class="fld"><label for="pg_mulai">Menjabat sejak</label><input type="date" id="pg_mulai" name="mulai" value="${esc(x.mulai)}"></div>
     </div>
-    ${x.userId ? `<div class="fld"><label>Login</label><div class="row" style="padding:6px 0"><div class="grow"><div class="t mono">${esc(x.email || '(email tidak tercatat)')}</div><div class="s">Pengurus bisa reset sendiri lewat "Lupa password?" di layar login.</div></div></div></div>
+    ${x.userId ? `<div class="fld"><label for="pg_email2">Email login</label><input type="email" id="pg_email2" name="emailBaru" autocomplete="off" autocapitalize="none" value="${esc(x.email || '')}"><span class="hint">Ubah bila email pengurus salah atau ganti. Login berikutnya memakai email baru.</span></div>
       <div class="fld"><label for="pg_reset">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="pg_reset" name="passwordBaru" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak2">Acak</button></div></div>`
     : `<div class="grid2"><div class="fld"><label for="pg_email">Email login</label><input type="email" id="pg_email" name="email" autocomplete="off" autocapitalize="none" placeholder="nama@email.com"></div>
       <div class="fld"><label for="pg_pass">Password awal</label><div style="display:flex;gap:6px"><input type="text" id="pg_pass" name="password" autocomplete="off" autocapitalize="none" placeholder="Minimal 6 karakter" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak">Acak</button></div></div></div>
@@ -1990,6 +1999,12 @@ function openPengurus(id, prefill) {
       if (!p) row.dibuat = todayISO();
       const pid = p ? p.id : uid();
       if (await seedRoles() === false) return false;
+      const eb = String(d.emailBaru || '').trim().toLowerCase();
+      if (row.userId && eb && eb !== String(row.email || '').toLowerCase()) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eb)) { pesanDlg('Format email tidak valid.', 'pg_email2'); return false; }
+        if (eb.endsWith('@' + WARGA_DOMAIN)) { pesanDlg('Gunakan email pribadi pengurus.', 'pg_email2'); return false; }
+        try { await ubahEmail(row.userId, eb); row.email = eb; } catch (e) { pesanDlg('Gagal mengganti email: ' + pesanAuth(e), 'pg_email2'); return false; }
+      }
       if (email && pw && !row.userId) {
         try { row.userId = await buatAkunAuth(email, pw); row.email = email; } catch (e) { pesanDlg(pesanAuth(e), 'pg_email'); return false; }
       }

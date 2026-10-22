@@ -147,3 +147,20 @@ begin
 end $$;
 revoke all on function public.admin_konfirmasi_user(uuid) from public, anon;
 grant execute on function public.admin_konfirmasi_user(uuid) to authenticated;
+
+-- 8. Ganti email login pengurus / username warga dari menu Admin (hanya Pemilik)
+create or replace function public.admin_ubah_email(target uuid, email_baru text) returns void
+language plpgsql security definer set search_path = public as $$
+declare e text := lower(trim(email_baru));
+begin
+  if public.peran_saya() is distinct from 'pemilik' then raise exception 'Tidak diizinkan'; end if;
+  if e !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'Format email tidak valid'; end if;
+  if exists (select 1 from auth.users where lower(email) = e and id <> target) then raise exception 'Email sudah dipakai akun lain'; end if;
+  update auth.users set email = e, email_confirmed_at = coalesce(email_confirmed_at, now()),
+    email_change = '', email_change_token_new = '', updated_at = now() where id = target;
+  if not found then raise exception 'User tidak ditemukan'; end if;
+  update auth.identities set identity_data = identity_data || jsonb_build_object('email', e), updated_at = now()
+    where user_id = target and provider = 'email';
+end $$;
+revoke all on function public.admin_ubah_email(uuid, text) from public, anon;
+grant execute on function public.admin_ubah_email(uuid, text) to authenticated;

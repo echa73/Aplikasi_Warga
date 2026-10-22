@@ -3026,7 +3026,7 @@ function csvLaporan() {
 
 /* ---------- keamanan ---------- */
 const JENIS_TAMU = ['Tamu', 'Kurir / paket', 'Ojek online', 'Pekerja / tukang', 'Lainnya'];
-const JENIS_KEJADIAN = ['Orang mencurigakan', 'Pencurian', 'Kebakaran', 'Kecelakaan', 'Gangguan ketertiban', 'Kerusakan fasilitas', 'Lainnya'];
+const JENIS_KEJADIAN = ['Orang mencurigakan', 'Pencurian', 'Kebakaran', 'Darurat medis', 'Kecelakaan', 'Gangguan ketertiban', 'Kerusakan fasilitas', 'Lainnya'];
 const JENIS_DARURAT = ['Kebakaran', 'Pencurian / perampokan', 'Darurat medis', 'Orang mencurigakan', 'Lainnya'];
 const SHIFT = [['Pagi', '07.00–15.00'], ['Siang', '15.00–23.00'], ['Malam', '23.00–07.00']];
 const NOMOR_BAWAAN = [['Polisi', '110'], ['Ambulans', '118'], ['Pemadam kebakaran', '113'], ['SAR / Basarnas', '115'], ['PLN (gangguan listrik)', '123']];
@@ -3195,8 +3195,10 @@ function openTitipCek(id) {
 function kmKejadian() {
   const l = [...S.kejadian].sort((a, b) => String(b.waktu).localeCompare(String(a.waktu)));
   const tk = {Berat: 'p-Tinggi', Sedang: 'p-Sedang', Ringan: 'p-Rendah'};
+  const blm = bisa('keamanan') ? sosTanpaKejadian() : [];
   return `<div class="toolbar" style="justify-content:space-between"><button class="btn" data-act="km-csv" data-k="kejadian">Unduh CSV</button>${bisa('keamanan') ? '<button class="btn pri" data-act="kej-new">+ Catat kejadian</button>' : ''}</div>
-  ${l.length ? `<div class="kel-list">${l.map(k => `<article class="kel ${tk[k.tingkat] || ''}"><div class="meta"><span class="chip mute plain">${esc(k.jenis)}</span><span>Tingkat ${esc(k.tingkat || '—')}</span><span>· ${esc(tglJam(k.waktu))}</span></div>
+  ${blm.length ? `<div class="notice" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="grow">${blm.length} panggilan SOS yang sudah ditangani belum tercatat sebagai kejadian.</span><button class="btn sm pri" data-act="sos-impor">Catat ke Kejadian</button></div>` : ''}
+  ${l.length ? `<div class="kel-list">${l.map(k => `<article class="kel ${tk[k.tingkat] || ''}"><div class="meta">${k.sumber === 'SOS' ? '<span class="chip bad plain">SOS</span>' : ''}<span class="chip mute plain">${esc(k.jenis)}</span><span>Tingkat ${esc(k.tingkat || '—')}</span><span>· ${esc(tglJam(k.waktu))}</span></div>
     <h4>${esc(k.lokasi || 'Lokasi tidak diisi')}</h4>${k.uraian ? `<p>${esc(k.uraian)}</p>` : ''}${k.tindakan ? `<div class="resp"><b>Tindakan</b>${esc(k.tindakan)}</div>` : ''}
     <div class="meta">Petugas: ${esc(k.petugas || '—')}${bisa('keamanan') ? ` <button class="btn ghost sm" data-act="kej-edit" data-id="${esc(k.id)}">Ubah</button>` : ''}</div></article>`).join('')}</div>`
   : '<div class="empty">Belum ada kejadian tercatat. Semoga tetap aman.</div>'}`;
@@ -3253,12 +3255,29 @@ function openNomor(id) {
     },
     onDelete: n ? async () => { const ok = await del('nomorDarurat', n.id); if (ok) toast('Nomor dihapus.'); return ok; } : null, deleteLabel: 'Hapus'});
 }
+const SOS_KE_KEJADIAN = {'Kebakaran': ['Kebakaran', 'Berat'], 'Pencurian / perampokan': ['Pencurian', 'Berat'], 'Darurat medis': ['Darurat medis', 'Sedang'], 'Orang mencurigakan': ['Orang mencurigakan', 'Sedang'], 'Lainnya': ['Lainnya', 'Sedang']};
+const sosTanpaKejadian = () => S.darurat.filter(x => x.status === 'Ditangani' && !S.kejadian.some(k => k.daruratId === x.id));
+async function sosKeKejadian(x) {
+  const id = 'sos-' + x.id;
+  if (S.kejadian.some(k => k.id === id || k.daruratId === x.id)) return true;
+  const [jenis, tingkat] = SOS_KE_KEJADIAN[x.jenis] || ['Lainnya', 'Sedang'], rumah = rumahLbl(x.wargaId) || 'rumah tidak diketahui', t = x.ditangani || {};
+  return put('kejadian', id, {waktu: x.waktu, jenis, tingkat, lokasi: 'Rumah ' + rumah,
+    uraian: `Panggilan SOS (${x.jenis}) dari ${rumah}${x.pesan ? ': "' + x.pesan + '"' : '.'}`,
+    tindakan: [t.catatan, t.waktu ? `Ditangani ${tglJam(t.waktu)}` : ''].filter(Boolean).join(' · '),
+    petugas: t.oleh || namaSesi(), sumber: 'SOS', daruratId: x.id, dibuat: todayISO()});
+}
 function openSosTangani(id) {
   const x = S.darurat.find(d => d.id === id); if (!x) return;
   openDlg({title: 'Tangani panggilan darurat', area: 'keamanan', submitLabel: 'Tandai sudah ditangani',
     body: `<p style="margin:0"><b>${esc(x.jenis)}</b> dari <b>${esc(rumahLbl(x.wargaId))}</b> · ${esc(tglJam(x.waktu))}</p>${x.pesan ? `<p style="margin:0">"${esc(x.pesan)}"</p>` : ''}
     <div class="fld"><label for="sg_c">Catatan penanganan</label><textarea id="sg_c" name="catatan" rows="2" placeholder="mis. petugas tiba 3 menit, warga aman"></textarea></div>`,
-    onSubmit: async d => { const ok = await put('darurat', x.id, {...x, status: 'Ditangani', ditangani: {oleh: namaSesi(), waktu: nowDT(), catatan: String(d.catatan || '').trim()}}); if (ok) toast('Panggilan darurat ditandai sudah ditangani.'); return ok; }});
+    onSubmit: async d => {
+      const row = {...x, status: 'Ditangani', ditangani: {oleh: namaSesi(), waktu: nowDT(), catatan: String(d.catatan || '').trim()}};
+      const ok = await put('darurat', x.id, row); if (!ok) return false;
+      const kj = await sosKeKejadian({...row, id: x.id});
+      toast(kj ? 'Panggilan darurat ditangani dan tercatat di Kejadian.' : 'Panggilan darurat ditandai sudah ditangani.');
+      return true;
+    }});
 }
 function ekspKm(k) {
   const tag = lingk().replace(/\s+/g, '-');
@@ -3729,6 +3748,7 @@ document.addEventListener('click', async e => {
   else if (a === 'nomor-edit') openNomor(b.dataset.id);
   else if (a === 'sos-new') openSos();
   else if (a === 'sos-tangani') openSosTangani(b.dataset.id);
+  else if (a === 'sos-impor') { b.disabled = true; let n = 0; for (const x of sosTanpaKejadian()) if (await sosKeKejadian(x)) n++; toast(`${n} panggilan SOS dicatat ke Kejadian.`); }
   else if (a === 'sos-batal') { const x = S.darurat.find(d => d.id === b.dataset.id); if (x && await put('darurat', x.id, {...x, status: 'Dibatalkan', ditangani: {oleh: namaSesi(), waktu: nowDT(), catatan: 'Dibatalkan warga'}})) toast('Panggilan darurat dibatalkan.'); }
   else if (a === 'km-csv') ekspKm(b.dataset.k);
   else if (a === 'lapmode') { S.lapMode = b.dataset.k; if (S.lapMode === 'rentang' && !S.lapDari) { S.lapDari = nowPer() + '-01'; S.lapSampai = todayISO(); } render(); }

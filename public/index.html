@@ -6,7 +6,15 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.papan{width:100%;max-width:420px;display:grid;gap:12px}
+<style>.auth{position:relative}
+.papan-bell{position:absolute;top:18px;right:18px;z-index:5;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px 0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.10)}
+.papan-bell svg{width:20px;height:20px}.papan-bell:hover{border-color:var(--accent)}
+.papan-bell .bd{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:var(--tulip,#d33);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--surface)}
+.papan-bell.ada svg{animation:goyang 1.6s ease-in-out 2}
+@keyframes goyang{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}75%{transform:rotate(2deg)}}
+@media(max-width:860px){.papan-bell{top:14px;right:14px;height:40px;padding:0 11px}.papan-bell .lb{display:none}}
+dialog .papan{max-width:none}dialog .papan-k{border:0;padding:0;background:none}
+.papan{width:100%;max-width:420px;display:grid;gap:12px}
 .papan-k{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:10px}
 .papan-k h3{margin:0;font-size:.95rem;display:flex;align-items:center;gap:8px;justify-content:space-between}
 .papan-k h3 small{font-weight:500;color:var(--muted);font-size:.78rem}
@@ -1180,6 +1188,7 @@ const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  bell: '<path d="M6 9.5a6 6 0 1 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14 6 9.5z"/><path d="M10 19a2 2 0 0 0 4 0"/>',
   pengajuan: '<path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4h4"/><path d="M12 10v7M9.5 12.2c0-.9.9-1.5 2.5-1.5s2.5.6 2.5 1.5-1 1.3-2.5 1.6-2.5.7-2.5 1.6.9 1.5 2.5 1.5 2.5-.6 2.5-1.5"/>',
   kunci: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3"/>',
   ringkasan: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
@@ -1778,7 +1787,7 @@ function authArt() {
     </svg>
   </aside>`;
 }
-function vLogin() { return `<div class="auth">${authArt()}<div class="auth-main">${vLoginKartu()}${!S.authUser && !S.pulih ? papanInfo() : ''}</div></div>`; }
+function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? papanBell() : ''}${authArt()}<div class="auth-main">${vLoginKartu()}</div></div>`; }
 function vLoginKartu() {
   const brand = sub => `<div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Selamat datang</h2>
     <p class="muted" style="margin:4px 0 0">${sub}</p></div>`;
@@ -1842,6 +1851,20 @@ async function muatInfoPublik() {
   try { const {data, error} = await SB.rpc('info_publik'); if (!error && data) { S.infoPub = data; if (!sudahMasuk()) render(); } } catch (e) {}
 }
 setInterval(() => { if (SB && !S.authUser && document.visibilityState === 'visible') muatInfoPublik(); }, 5 * 60 * 1000);
+const papanKunci = d => [...(d.pengumuman || []).map(a => 'p:' + a.judul + '|' + a.dibuat + '|' + (a.tanggalAcara || '')), ...(d.keluhan || []).map(k => 'k:' + k.judul + '|' + k.dibuat + '|' + k.status)];
+function papanSudahLihat() { try { return new Set(JSON.parse(localStorage.getItem('papan-dilihat') || '[]')); } catch (e) { return new Set(); } }
+function papanBell() {
+  const d = S.infoPub; if (!d || d.aktif === false) return '';
+  const semua = papanKunci(d); if (!semua.length && !(d.ringkas && d.ringkas.selesaiBulanIni)) return '';
+  const lihat = papanSudahLihat(), baru = semua.filter(k => !lihat.has(k)).length;
+  return `<button type="button" class="papan-bell${baru ? ' ada' : ''}" data-act="papan-buka" aria-label="Info warga${baru ? ` (${baru} baru)` : ''}">${ico('bell')}<span class="lb">Info warga</span>${baru ? `<span class="bd">${baru > 9 ? '9+' : baru}</span>` : ''}</button>`;
+}
+function bukaPapan() {
+  const d = S.infoPub; if (!d) return;
+  openDlg({title: 'Info warga', body: papanInfo()});
+  try { localStorage.setItem('papan-dilihat', JSON.stringify(papanKunci(d).slice(0, 50))); } catch (e) {}
+  const b = document.querySelector('.papan-bell'); if (b) { b.classList.remove('ada'); const bd = b.querySelector('.bd'); if (bd) bd.remove(); }
+}
 function papanInfo() {
   const d = S.infoPub; if (!d || d.aktif === false) return '';
   const P = d.pengumuman || [], K = d.keluhan || [], R = d.ringkas || {};
@@ -3963,6 +3986,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lapq') { S.lapQ = Number(b.dataset.k); render(); }
   else if (a === 'lap-dl') unduhLaporan(b);
   else if (a === 'lap-csv') csvLaporan();
+  else if (a === 'papan-buka') bukaPapan();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'pj-new') openPengajuan();
   else if (a === 'pj-ubah') openPengajuan(b.dataset.id);

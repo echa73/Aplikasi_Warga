@@ -1350,9 +1350,177 @@ function chart6() {
 }
 
 /* --- Warga --- */
+/* ---------- Impor data warga dari Excel (.xlsx) tanpa pustaka ---------- */
+async function bacaXlsx(file) {
+  const buf = new Uint8Array(await file.arrayBuffer()), dv = new DataView(buf.buffer);
+  let eocd = -1; for (let i = buf.length - 22; i >= Math.max(0, buf.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('Bukan file Excel .xlsx yang valid.');
+  const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+  const dec = new TextDecoder(), files = {};
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const metode = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    files[dec.decode(buf.subarray(p + 46, p + 46 + nl))] = {metode, csize, off};
+    p += 46 + nl + xl + cl;
+  }
+  const ambil = async nama => {
+    const f = files[nama]; if (!f) return null;
+    const lnl = dv.getUint16(f.off + 26, true), lxl = dv.getUint16(f.off + 28, true), data = buf.subarray(f.off + 30 + lnl + lxl, f.off + 30 + lnl + lxl + f.csize);
+    if (f.metode === 0) return dec.decode(data);
+    if (typeof DecompressionStream === 'undefined') throw new Error('Browser ini belum mendukung impor Excel. Pakai Chrome, Edge, atau Safari terbaru.');
+    const st = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return dec.decode(await new Response(st).arrayBuffer());
+  };
+  const xml = t => new DOMParser().parseFromString(t, 'application/xml');
+  const ss = [], sst = await ambil('xl/sharedStrings.xml');
+  if (sst) for (const si of xml(sst).getElementsByTagName('si')) ss.push([...si.getElementsByTagName('t')].map(t => t.textContent).join(''));
+  const wbx = xml(await ambil('xl/workbook.xml')), rels = xml(await ambil('xl/_rels/workbook.xml.rels') || '<r/>');
+  const relMap = {}; for (const r of rels.getElementsByTagName('Relationship')) relMap[r.getAttribute('Id')] = r.getAttribute('Target');
+  const hasil = {};
+  for (const sh of wbx.getElementsByTagName('sheet')) {
+    const rid = sh.getAttribute('r:id') || sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    let target = relMap[rid] || ''; target = target.replace(/^\/?xl\//, '').replace(/^\//, '');
+    const t = await ambil('xl/' + target); if (!t) continue;
+    const rows = [];
+    for (const row of xml(t).getElementsByTagName('row')) {
+      const arr = [];
+      for (const c of row.getElementsByTagName('c')) {
+        const ref = c.getAttribute('r') || '', col = ref.replace(/\d+/g, '').split('').reduce((a, ch) => a * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+        const tp = c.getAttribute('t'), v = c.getElementsByTagName('v')[0];
+        let val = '';
+        if (tp === 's') val = ss[Number(v && v.textContent)] ?? '';
+        else if (tp === 'inlineStr') val = [...c.getElementsByTagName('t')].map(x => x.textContent).join('');
+        else if (v) val = tp === 'str' || tp === 'b' ? v.textContent : (isNaN(Number(v.textContent)) ? v.textContent : Number(v.textContent));
+        arr[col >= 0 ? col : arr.length] = val;
+      }
+      rows[Number(row.getAttribute('r')) - 1] = arr;
+    }
+    hasil[sh.getAttribute('name')] = rows;
+  }
+  return hasil;
+}
+const kunciKolom = h => String(h || '').toLowerCase().replace(/\*/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const KOL_WARGA = {'no rumah': 'blok', 'blok': 'blok', 'nama kepala keluarga': 'nama', 'nama': 'nama', 'no hp': 'noHp', 'hp': 'noHp', 'nik kk': 'nik', 'nik': 'nik', 'jenis kelamin': 'jk', 'tanggal lahir': 'lahir', 'status huni': 'statusHuni', 'wajib iuran mulai': 'mulaiIuran', 'status': 'status', 'catatan': 'catatan'};
+const KOL_AG = {'no rumah': 'blok', 'nama': 'nama', 'hubungan': 'hubungan', 'jenis kelamin': 'jk', 'tanggal lahir': 'lahir', 'nik': 'nik'};
+function tglExcel(v) {
+  if (v === '' || v == null) return '';
+  if (typeof v === 'number') { if (v < 1 || v > 80000) return null; const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
+  const t = String(v).trim(); let m;
+  if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+  if ((m = t.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/))) return `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`;
+  return null;
+}
+const teksNum = v => typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(0)) : String(v ?? '').trim();
+function petaBaris(rows, peta) {
+  const hi = rows.findIndex(r => r && r.some(x => peta[kunciKolom(x)])); if (hi < 0) return {err: 'Judul kolom tidak ditemukan.', data: []};
+  const idx = {}; rows[hi].forEach((h, i) => { const k = peta[kunciKolom(h)]; if (k && idx[k] === undefined) idx[k] = i; });
+  const data = [];
+  for (let r = hi + 1; r < rows.length; r++) {
+    const row = rows[r]; if (!row || !row.some(x => String(x ?? '').trim() !== '')) continue;
+    const o = {_baris: r + 1}; for (const [k, i] of Object.entries(idx)) o[k] = row[i] ?? ''; data.push(o);
+  }
+  return {data, idx};
+}
+function siapkanImpor(book) {
+  const nama = Object.keys(book), shW = nama.find(n => /data\s*warga/i.test(n)) || nama.find(n => !/panduan|pilihan|anggota/i.test(n));
+  const shA = nama.find(n => /anggota/i.test(n));
+  if (!shW) throw new Error('Sheet "Data Warga" tidak ditemukan. Pakai template dari aplikasi.');
+  const W = petaBaris(book[shW], KOL_WARGA); if (W.err) throw new Error('Sheet "' + shW + '": ' + W.err);
+  if (W.idx.blok === undefined || W.idx.nama === undefined || W.idx.noHp === undefined) throw new Error('Kolom wajib No. Rumah, Nama Kepala Keluarga, dan No. HP harus ada.');
+  const A = shA ? petaBaris(book[shA], KOL_AG) : {data: []};
+  const normJk = v => { const t = String(v || '').trim().toLowerCase(); return !t ? '' : t[0] === 'p' || t === 'w' || t.startsWith('wan') ? 'P' : t[0] === 'l' || t.startsWith('pri') ? 'L' : null; };
+  const normHuni = v => { const t = String(v || '').trim().toLowerCase(); if (!t) return 'Pemilik'; if (t.startsWith('kontrak') || t.startsWith('sewa')) return 'Kontrak / sewa'; if (t.startsWith('keluarga')) return 'Keluarga pemilik'; if (t.startsWith('pemilik')) return 'Pemilik'; return null; };
+  const normHub = v => { const t = String(v || '').trim().toLowerCase(); if (!t) return 'Lainnya'; return HUBUNGAN.find(h => h.toLowerCase() === t) || HUBUNGAN.find(h => t.startsWith(h.toLowerCase().slice(0, 4))) || 'Lainnya'; };
+  const agPer = {}, agErr = [];
+  for (const g of A.data) {
+    const blok = String(g.blok || '').trim().toUpperCase(), e = [];
+    const nik = teksNum(g.nik).replace(/\D/g, ''), lahir = tglExcel(g.lahir), jk = normJk(g.jk);
+    if (!blok) e.push('No. Rumah kosong'); if (!String(g.nama || '').trim()) e.push('Nama kosong');
+    if (nik && nik.length !== 16) e.push(`NIK ${nik.length} digit`); if (lahir === null) e.push('Tanggal lahir tidak dikenali'); if (jk === null) e.push('Jenis kelamin harus L/P');
+    if (e.length) { agErr.push({baris: g._baris, blok, nama: g.nama, err: e}); continue; }
+    (agPer[blok] = agPer[blok] || []).push({nama: String(g.nama).trim(), hubungan: normHub(g.hubungan), jk: jk || 'L', lahir: lahir || '', nik});
+  }
+  const lihatBlok = new Map(), lihatHp = new Map(), hasil = [];
+  for (const x of W.data) {
+    const e = [], blok = String(x.blok || '').trim().toUpperCase(), nama = String(x.nama || '').trim();
+    const hpAsli = teksNum(x.noHp), hpD = hpAsli.replace(/\D/g, ''), nik = teksNum(x.nik).replace(/\D/g, '');
+    const lahir = tglExcel(x.lahir), mulai = tglExcel(x.mulaiIuran), jk = normJk(x.jk), huni = normHuni(x.statusHuni);
+    const st = String(x.status || '').trim().toLowerCase(), status = !st || st === 'aktif' ? 'Aktif' : st === 'pindah' ? 'Pindah' : null;
+    if (!blok) e.push('No. Rumah kosong'); if (!nama) e.push('Nama kosong');
+    if (!hpD) e.push('No. HP kosong'); else if (hpD.length < 10) e.push(`No. HP ${hpD.length} digit`);
+    if (nik && nik.length !== 16) e.push(`NIK ${nik.length} digit`);
+    if (jk === null) e.push('Jenis kelamin harus L/P'); if (huni === null) e.push('Status huni tidak dikenali');
+    if (status === null) e.push('Status harus Aktif/Pindah'); if (lahir === null) e.push('Tanggal lahir tidak dikenali'); if (mulai === null) e.push('Tanggal wajib iuran tidak dikenali');
+    if (blok && lihatBlok.has(blok)) e.push(`No. Rumah sama dengan baris ${lihatBlok.get(blok)}`);
+    const peringatan = [];
+    if (hpD && lihatHp.has(normHp(hpD))) peringatan.push(`No. HP sama dengan baris ${lihatHp.get(normHp(hpD))}`);
+    if (blok) lihatBlok.set(blok, x._baris); if (hpD) lihatHp.set(normHp(hpD), x._baris);
+    const ada = S.warga.find(w => String(w.blok).toUpperCase() === blok && w.status !== 'Pindah');
+    const anggota = agPer[blok] || [];
+    hasil.push({baris: x._baris, blok, nama, err: e, peringatan, ada, row: {blok, nama, noHp: hpAsli, nik, jk: jk || 'L', lahir: lahir || '', statusHuni: huni || 'Pemilik', mulaiIuran: mulai || todayISO(), status: status || 'Aktif', catatan: String(x.catatan || '').trim(), anggota, jumlahJiwa: 1 + anggota.length}});
+  }
+  const blokFile = new Set(hasil.map(h => h.blok));
+  for (const [b, list] of Object.entries(agPer)) if (!blokFile.has(b) && !S.warga.some(w => String(w.blok).toUpperCase() === b)) agErr.push({baris: '-', blok: b, nama: list.map(x => x.nama).join(', '), err: ['No. Rumah tidak ada di sheet Data Warga']});
+  return {hasil, agErr, shW, shA};
+}
+function openImporWarga() {
+  if (!bisa('warga')) return;
+  openDlg({title: 'Impor data warga dari Excel', area: 'warga', submitLabel: 'Baca file',
+    body: `<ol style="margin:0;padding-left:18px;display:grid;gap:6px;font-size:.9rem">
+        <li><a class="btn sm" href="template/Template-Impor-Warga.xlsx" download>⬇ Unduh template Excel</a> (berisi panduan pengisian).</li>
+        <li>Isi sheet <b>Data Warga</b> (satu baris per rumah) dan bila perlu <b>Anggota Keluarga</b>.</li>
+        <li>Pilih file yang sudah diisi di bawah, lalu periksa pratinjaunya sebelum disimpan.</li></ol>
+      <div class="fld"><label for="imp_f">File Excel (.xlsx) <span class="req">*</span></label><input type="file" id="imp_f" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></div>
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="timpa"> Perbarui data rumah yang sudah ada di aplikasi (bila No. Rumah sama)</label>`,
+    onSubmit: async d => {
+      const f = ($('#imp_f') || {}).files && $('#imp_f').files[0];
+      if (!f) { pesanDlg('Pilih file Excel dulu.', 'imp_f'); return false; }
+      if (!/\.xlsx$/i.test(f.name)) { pesanDlg('File harus berformat .xlsx (Excel). Bila memakai Google Sheets: File → Download → Microsoft Excel (.xlsx).', 'imp_f'); return false; }
+      let siap;
+      try { siap = siapkanImpor(await bacaXlsx(f)); } catch (e) { pesanDlg(e.message || 'File tidak bisa dibaca.', 'imp_f'); return false; }
+      if (!siap.hasil.length) { pesanDlg('Belum ada data di sheet Data Warga.', 'imp_f'); return false; }
+      setTimeout(() => pratinjauImpor(siap, !!d.timpa, f.name), 30);
+      return true;
+    }});
+}
+function pratinjauImpor(siap, timpa, namaFile) {
+  const H = siap.hasil;
+  const status = h => h.err.length ? 'gagal' : h.ada && !timpa ? 'lewati' : h.ada ? 'perbarui' : 'baru';
+  const c = {baru: 0, perbarui: 0, lewati: 0, gagal: 0}; H.forEach(h => c[status(h)]++);
+  const jalan = H.filter(h => ['baru', 'perbarui'].includes(status(h)));
+  const lbl = {baru: ['Baru', 'ok'], perbarui: ['Perbarui', 'info'], lewati: ['Lewati · sudah ada', 'mute'], gagal: ['Perlu diperbaiki', 'bad']};
+  const rows = H.map(h => { const [t, k] = lbl[status(h)]; return `<tr><td class="muted">${h.baris}</td><td><span class="house">${esc(h.blok || '—')}</span></td><td>${esc(h.nama || '—')}${h.row.anggota.length ? `<div class="muted" style="font-size:.76rem">+${h.row.anggota.length} anggota</div>` : ''}</td>
+      <td style="white-space:normal;min-width:200px"><span class="chip ${k} plain">${t}</span>${h.err.length ? `<div style="color:var(--bad);font-size:.78rem">${esc(h.err.join(' · '))}</div>` : ''}${h.peringatan.length ? `<div style="color:var(--warn);font-size:.78rem">⚠ ${esc(h.peringatan.join(' · '))}</div>` : ''}</td></tr>`; }).join('');
+  openDlg({title: 'Pratinjau impor', area: 'warga', submitLabel: jalan.length ? `Impor ${jalan.length} data` : 'Tutup',
+    body: `<p class="muted" style="margin:0;font-size:.86rem">${esc(namaFile)} · sheet ${esc(siap.shW)}${siap.shA ? ' + ' + esc(siap.shA) : ''}</p>
+      <div class="papan-st" style="grid-template-columns:repeat(4,1fr)"><div><b style="color:var(--ok)">${c.baru}</b><span>Baru</span></div><div><b style="color:var(--info)">${c.perbarui}</b><span>Diperbarui</span></div><div><b>${c.lewati}</b><span>Dilewati</span></div><div><b style="color:var(--bad)">${c.gagal}</b><span>Perlu diperbaiki</span></div></div>
+      ${siap.agErr.length ? `<div class="notice" style="font-size:.82rem">Anggota keluarga dilewati: ${siap.agErr.map(a => `baris ${a.baris} (${esc(a.blok || '?')}: ${esc(a.err.join(', '))})`).join('; ')}</div>` : ''}
+      <div class="tbl-wrap" style="max-height:46vh;overflow:auto"><table><thead><tr><th>Baris</th><th>Rumah</th><th>Kepala keluarga</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${c.gagal ? '<p class="muted" style="margin:0;font-size:.82rem">Baris "Perlu diperbaiki" tidak ikut diimpor. Perbaiki di Excel lalu impor ulang file yang sama; data yang sudah masuk akan dilewati.</p>' : ''}`,
+    onSubmit: async () => {
+      if (!jalan.length) return true;
+      const docs = jalan.map(h => {
+        const lama = h.ada, row = {...(lama || {}), ...h.row, diperbarui: todayISO()};
+        if (lama && !h.row.anggota.length) { row.anggota = lama.anggota || []; row.jumlahJiwa = Math.max(Number(lama.jumlahJiwa) || 1, 1 + row.anggota.length); }
+        if (!lama) row.dibuat = todayISO();
+        delete row.id; row.sumber = 'impor';
+        return {koleksi: 'warga', id: lama ? lama.id : uid() + Math.random().toString(36).slice(2, 5), data: row};
+      });
+      let n = 0;
+      for (let i = 0; i < docs.length; i += 100) {
+        const {data, error} = await SB.from('dokumen').upsert(docs.slice(i, i + 100)).select('id,data');
+        if (error) { pesanDlg(`Gagal menyimpan${n ? ` (${n} data sudah tersimpan)` : ''}: ${/No HP/.test(error.message) ? error.message.replace('No HP', 'No. HP') : sbErr(error).code === 'ditolak' ? 'role Anda tidak punya izin mengubah data warga.' : error.message}`); return false; }
+        for (const r of data || []) taruh('warga', r.id, r.data);
+        n += (data || []).length;
+      }
+      sinkron('warga'); sbSched();
+      toast(`${n} data warga berhasil diimpor${c.gagal ? `, ${c.gagal} baris perlu diperbaiki` : ''}.`);
+      return true;
+    }});
+}
 function vWarga() {
   const head = `<div class="sec-head"><div><h2>Data warga</h2><p>Satu baris per rumah / kepala keluarga.</p></div>
-    <button class="btn pri" data-act="warga-new" ${dis('warga')}>+ Tambah warga</button></div>`;
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${bisa('warga') ? '<button class="btn" data-act="impor-warga">Impor Excel</button>' : ''}<button class="btn pri" data-act="warga-new" ${dis('warga')}>+ Tambah warga</button></div></div>`;
   if (!S.warga.length) return head + emptyWarga();
   const bloks = [...new Set(S.warga.map(w => String(w.blok || '').split(/[-\s/]/)[0].toUpperCase()).filter(Boolean))].sort();
   const q = S.q.trim().toLowerCase();
@@ -4001,6 +4169,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lap-dl') unduhLaporan(b);
   else if (a === 'lap-csv') csvLaporan();
   else if (a === 'papan-buka') bukaPapan();
+  else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'pj-new') openPengajuan();
   else if (a === 'pj-ubah') openPengajuan(b.dataset.id);

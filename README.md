@@ -44,3 +44,6 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
 - Android (Chrome): buka alamat aplikasi, tombol **Pasang** muncul di bawah layar, atau menu ⋮ → *Instal aplikasi*.
 - iPhone (Safari): tombol Bagikan → *Tambah ke Layar Utama*.
 - Setiap deploy baru otomatis terdeteksi; aplikasi menawarkan *Muat ulang* untuk memakai versi terbaru.
+
+## Impor data warga dari Excel
+Menu **Data warga → Impor Excel**. Unduh template (`public/template/Template-Impor-Warga.xlsx`), isi sheet "Data Warga" dan "Anggota Keluarga" mengikuti sheet "Panduan", lalu pilih file. Aplikasi menampilkan pratinjau dan validasi sebelum data disimpan. Data diolah di browser; file tidak diunggah ke server lain.

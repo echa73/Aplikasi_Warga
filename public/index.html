@@ -6,7 +6,18 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.rh-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:center;background:linear-gradient(135deg,var(--surface),var(--sunk))}
+<style>.pji{display:grid;gap:6px}
+.pji-row,.pji-hd{display:grid;grid-template-columns:minmax(0,1.7fr) 54px 68px minmax(104px,1.2fr) 92px 30px;gap:6px;align-items:center}
+.pji-hd{font-size:.74rem;color:var(--muted);font-weight:600;padding:0 2px}
+.pji-row input{min-width:0;padding-inline:8px}
+.pji-sub{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;font-size:.88rem}
+.pji-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 12px;border-radius:12px;background:var(--sunk);margin-top:4px}
+.pji-tot b{font-size:1.2rem;font-variant-numeric:tabular-nums}
+.pj-rinci{width:100%;border-collapse:collapse;font-size:.84rem;margin:2px 0 6px}
+.pj-rinci td{padding:3px 6px;border-top:1px solid var(--line)}.pj-rinci td.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pj-rinci tr.t td{font-weight:700}
+@media(max-width:620px){.pji-hd{display:none}.pji-row{grid-template-columns:1fr 1fr 34px;padding:8px;border:1px solid var(--line);border-radius:12px}.pji-row .pji-n{grid-column:1/3;grid-row:1}.pji-row>button{grid-column:3;grid-row:1}.pji-row .pji-q{grid-column:1;grid-row:2}.pji-row .pji-s{grid-column:2;grid-row:2}.pji-row .pji-h{grid-column:1/3;grid-row:3}.pji-row .pji-sub{grid-column:1/4;grid-row:4;text-align:left}}
+.rh-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:center;background:linear-gradient(135deg,var(--surface),var(--sunk))}
 .rh-hero .tg{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
 .rh-hero .hj{font-size:clamp(1.15rem,2.4vw,1.45rem);font-weight:800;line-height:1.25;margin:2px 0}
 .rh-hero .cd{margin-top:8px;font-size:.9rem}.rh-hero .cd b{color:var(--accent)}
@@ -3708,6 +3719,11 @@ function openSbKonfirmasi(pid) {
 /* ---------- Pengajuan dana (permintaan pengeluaran) ---------- */
 const bolehAjukan = () => !!S.sesi && !isWarga() && !!roleSaya();
 const PJ_CHIP = {Menunggu: 'warn', Dicairkan: 'ok', Ditolak: 'bad', Dibatalkan: 'mute'};
+function pjRinciHtml(x) {
+  const its = Array.isArray(x.rincian) ? x.rincian : []; if (!its.length) return '';
+  return `<table class="pj-rinci"><tbody>${its.map((it, i) => `<tr><td class="muted" style="width:22px">${i + 1}.</td><td>${esc(it.nama)}</td><td class="r muted">${esc(String(it.qty).replace('.', ','))}${it.satuan ? ' ' + esc(it.satuan) : ''} × ${esc(rp(it.harga))}</td><td class="r">${esc(rp(it.subtotal ?? pjSub(it)))}</td></tr>`).join('')}
+    ${its.length > 1 ? `<tr class="t"><td></td><td>Total</td><td></td><td class="r">${esc(rp(x.jumlah))}</td></tr>` : ''}</tbody></table>`;
+}
 function vPengajuan() {
   const proses = bisa('pengeluaran'), saya = S.me && S.me.id;
   const all = [...S.pengajuan].sort((a, b) => (b.status === 'Menunggu') - (a.status === 'Menunggu') || String(b.diajukan || '').localeCompare(String(a.diajukan || '')) || String(b.id).localeCompare(String(a.id)));
@@ -3721,6 +3737,7 @@ function vPengajuan() {
     return `<article class="kel ${tunggu ? 'p-Sedang' : x.status === 'Ditolak' ? 'p-Tinggi' : 'p-Rendah'}">
       <div class="meta"><span class="chip ${PJ_CHIP[x.status] || 'mute'}">${esc(x.status || 'Menunggu')}</span><span class="chip mute plain">${esc(x.kategori || 'Lainnya')}</span>${tunggu && proses && Number(x.jumlah) > saldoKini() ? '<span class="chip bad">Melebihi saldo kas</span>' : ''}<span>Diajukan ${esc(tgl(x.diajukan))} oleh <b>${esc(x.pemohonNama || '—')}</b>${milik ? ' (Anda)' : ''}</span>${x.dibutuhkan ? `<span>· dibutuhkan ${esc(tgl(x.dibutuhkan))}</span>` : ''}</div>
       <h4 style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>${esc(x.uraian)}</span><span style="white-space:nowrap">${esc(rp(x.jumlah))}</span></h4>
+      ${pjRinciHtml(x)}
       ${x.keterangan ? `<p>${esc(x.keterangan)}</p>` : ''}
       ${x.status === 'Dicairkan' ? `<div class="resp"><b>Dicatat di kas</b>${esc(rp(p.jumlah ?? x.jumlah))} · ${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}${p.oleh ? ' · oleh ' + esc(p.oleh) : ''}${p.catatan ? '<br>' + esc(p.catatan) : ''}</div>` : ''}
       ${x.status === 'Ditolak' ? `<div class="resp"><b>Ditolak${p.oleh ? ' oleh ' + esc(p.oleh) : ''}</b>${esc(p.catatan || '')}</div>` : ''}
@@ -3745,42 +3762,74 @@ function cekSaldoHint(el, jumlah, info, lain = 0) {
   else if (jumlah && antre && jumlah > info.saldo - antre) { el.innerHTML = `⚠ Saldo kas ${esc(rp(info.saldo))} cukup, tetapi ada pengajuan lain yang menunggu ${esc(rp(antre))}.`; el.style.color = 'var(--warn)'; }
   else { el.textContent = `Saldo kas saat ini ${rp(info.saldo)}${jumlah ? ' · mencukupi' : ''}.`; el.style.color = jumlah ? 'var(--ok)' : ''; }
 }
+// rincian item pengajuan
+const pjItems = x => x && Array.isArray(x.rincian) && x.rincian.length ? x.rincian : x && x.uraian ? [{nama: x.uraian, qty: 1, satuan: '', harga: Number(x.jumlah) || 0}] : [];
+const pjSub = it => Math.round((Number(it.qty) || 0) * (Number(it.harga) || 0));
+function pjiRow(it) {
+  it = it || {qty: 1};
+  return `<div class="pji-row"><input type="text" class="pji-n" maxlength="100" value="${esc(it.nama || '')}" placeholder="Nama barang / jasa" aria-label="Nama barang atau jasa">
+    <input type="number" class="pji-q" min="0" step="any" inputmode="decimal" value="${esc(it.qty ?? 1)}" placeholder="Jml" aria-label="Jumlah">
+    <input type="text" class="pji-s" maxlength="15" value="${esc(it.satuan || '')}" placeholder="satuan" aria-label="Satuan">
+    <input type="number" class="pji-h" min="0" step="100" inputmode="numeric" value="${esc(it.harga || '')}" placeholder="Harga satuan" aria-label="Harga satuan (Rp)">
+    <span class="pji-sub">${it.harga ? esc(rp(pjSub(it))) : '—'}</span>
+    <button type="button" class="btn ghost sm" data-act="pji-del" aria-label="Hapus item" style="color:var(--bad);padding-inline:8px">✕</button></div>`;
+}
+function pjiAmbil() {
+  return [...document.querySelectorAll('#pjItems .pji-row')].map(r => ({nama: r.querySelector('.pji-n').value.trim(), qty: Number(r.querySelector('.pji-q').value) || 0, satuan: r.querySelector('.pji-s').value.trim(), harga: Math.round(Number(r.querySelector('.pji-h').value) || 0), _el: r}))
+    .filter(it => it.nama || it.harga);
+}
+let pjCtx = null;
+function pjiHitung() {
+  document.querySelectorAll('#pjItems .pji-row').forEach(r => { const sub = pjSub({qty: r.querySelector('.pji-q').value, harga: r.querySelector('.pji-h').value}); r.querySelector('.pji-sub').textContent = sub ? rp(sub) : '—'; });
+  const its = pjiAmbil(), tot = its.reduce((t, it) => t + pjSub(it), 0), el = $('#pjTot');
+  if (el) el.textContent = rp(tot);
+  const n = $('#pjN'); if (n) n.textContent = its.length ? `${its.length} item` : '';
+  const del = document.querySelectorAll('#pjItems [data-act=pji-del]'); del.forEach(b => { b.disabled = del.length < 2; });
+  if (pjCtx) cekSaldoHint($('#pjSaldo'), tot, pjCtx.saldo, pjCtx.lain);
+  return tot;
+}
 function openPengajuan(id) {
   const x = id ? S.pengajuan.find(p => p.id === id) : null;
   if (x && (x.status !== 'Menunggu' || x.pemohonId !== (S.me && S.me.id))) return;
   const v = x || {kategori: KAT_KELUAR[0]};
   openDlg({
     title: x ? 'Ubah pengajuan' : 'Ajukan pengeluaran', submitLabel: x ? 'Simpan' : 'Kirim ke Bendahara',
-    body: `<div class="fld"><label for="pj_u">Untuk keperluan <span class="req">*</span></label><input type="text" id="pj_u" name="uraian" required maxlength="140" value="${esc(v.uraian)}" placeholder="mis. Beli lampu jalan blok C (4 buah)"></div>
+    body: `<div class="fld"><label for="pj_u">Untuk keperluan <span class="req">*</span></label><input type="text" id="pj_u" name="uraian" required maxlength="140" value="${esc(v.uraian)}" placeholder="mis. Perbaikan lampu jalan blok C"></div>
+    <div class="fld"><label>Rincian pembelian <span class="req">*</span> <span class="muted" id="pjN" style="font-weight:500"></span></label>
+      <div class="pji"><div class="pji-hd"><span>Barang / jasa</span><span>Jml</span><span>Satuan</span><span>Harga satuan (Rp)</span><span style="text-align:right">Subtotal</span><span></span></div>
+        <div class="pji" id="pjItems">${(pjItems(x).length ? pjItems(x) : [{qty: 1}]).map(pjiRow).join('')}</div>
+        <button type="button" class="btn sm" data-act="pji-add" style="justify-self:start">+ Tambah item</button>
+        <div class="pji-tot"><span>Total pengajuan</span><b id="pjTot">Rp 0</b></div>
+        <div class="hint" id="pjSaldo" style="font-size:.84rem">Memeriksa saldo kas…</div></div></div>
     <div class="grid2">
-      <div class="fld"><label for="pj_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="pj_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah)}"><span class="hint" id="pjRp">${v.jumlah ? esc(rp(v.jumlah)) : ''}</span></div>
-      <div class="hint" id="pjSaldo" style="grid-column:1/-1;margin-top:-6px;font-size:.84rem">Memeriksa saldo kas…</div>
       <div class="fld"><label for="pj_k">Kategori</label><select id="pj_k" name="kategori">${KAT_KELUAR.map(k => `<option ${v.kategori === k ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="pj_d">Dibutuhkan tanggal</label><input type="date" id="pj_d" name="dibutuhkan" value="${esc(v.dibutuhkan || '')}"></div>
     </div>
-    <div class="fld"><label for="pj_d">Dibutuhkan tanggal</label><input type="date" id="pj_d" name="dibutuhkan" value="${esc(v.dibutuhkan || '')}"></div>
-    <div class="fld"><label for="pj_ket">Keterangan / rincian</label><textarea id="pj_ket" name="keterangan" rows="3" maxlength="600" placeholder="mis. Lampu LED 20W @ Rp 45.000, dibeli di toko listrik dekat gerbang">${esc(v.keterangan || '')}</textarea></div>`,
+    <div class="fld"><label for="pj_ket">Keterangan</label><textarea id="pj_ket" name="keterangan" rows="2" maxlength="600" placeholder="mis. Dibeli di toko listrik dekat gerbang, nota menyusul">${esc(v.keterangan || '')}</textarea></div>`,
     onSubmit: async d => {
-      const jumlah = Math.round(Number(d.jumlah) || 0);
-      if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'pj_j'); return false; }
-      if (saldoInfo && jumlah > saldoInfo.saldo && konfirmKurang !== jumlah) { konfirmKurang = jumlah; pesanDlg(`Dana kas tidak mencukupi: saldo ${rp(saldoInfo.saldo)}, kurang ${rp(jumlah - saldoInfo.saldo)}. Klik "${x ? 'Simpan' : 'Kirim ke Bendahara'}" sekali lagi bila tetap ingin mengajukan.`, 'pj_j'); return false; }
-      const row = {...(x || {}), uraian: d.uraian.trim(), jumlah, saldoSaatAjuan: saldoInfo ? saldoInfo.saldo : null, kategori: d.kategori, dibutuhkan: d.dibutuhkan || '', keterangan: String(d.keterangan || '').trim(),
+      const its = pjiAmbil();
+      if (!its.length) { pesanDlg('Isi minimal satu item pembelian.'); const f = document.querySelector('#pjItems .pji-n'); if (f) f.focus(); return false; }
+      const salah = its.find(it => !it.nama || it.qty <= 0 || it.harga <= 0);
+      if (salah) { pesanDlg(!salah.nama ? 'Nama barang/jasa belum diisi.' : salah.qty <= 0 ? `Jumlah "${salah.nama}" harus lebih dari 0.` : `Harga satuan "${salah.nama}" belum diisi.`); const f = salah._el.querySelector(!salah.nama ? '.pji-n' : salah.qty <= 0 ? '.pji-q' : '.pji-h'); if (f) { f.setAttribute('aria-invalid', 'true'); f.focus(); } return false; }
+      const rincian = its.map(({_el, ...it}) => ({...it, subtotal: pjSub(it)})), jumlah = rincian.reduce((t, it) => t + it.subtotal, 0);
+      const saldoInfo = pjCtx && pjCtx.saldo;
+      if (saldoInfo && jumlah > saldoInfo.saldo && pjCtx.konfirm !== jumlah) { pjCtx.konfirm = jumlah; pesanDlg(`Dana kas tidak mencukupi: total ${rp(jumlah)}, saldo ${rp(saldoInfo.saldo)}, kurang ${rp(jumlah - saldoInfo.saldo)}. Klik "${x ? 'Simpan' : 'Kirim ke Bendahara'}" sekali lagi bila tetap ingin mengajukan.`); return false; }
+      const row = {...(x || {}), uraian: d.uraian.trim(), jumlah, rincian, saldoSaatAjuan: saldoInfo ? saldoInfo.saldo : null, kategori: d.kategori, dibutuhkan: d.dibutuhkan || '', keterangan: String(d.keterangan || '').trim(),
         status: 'Menunggu', pemohonId: (x && x.pemohonId) || (S.me && S.me.id) || '', pemohonNama: (x && x.pemohonNama) || namaSesi(), diajukan: (x && x.diajukan) || todayISO()};
       const ok = await put('pengajuan', x ? x.id : uid(), row);
       if (ok) toast(x ? 'Pengajuan diperbarui.' : `Pengajuan ${rp(jumlah)} terkirim ke Bendahara.`);
       return ok;
     }
   });
-  let saldoInfo = null, konfirmKurang = 0;
-  const j = $('#pj_j'), lain = x ? Number(x.jumlah) || 0 : 0;
-  const upd = () => { const el = $('#pjRp'); if (el) el.textContent = j.value ? rp(Number(j.value)) : ''; cekSaldoHint($('#pjSaldo'), Number(j.value) || 0, saldoInfo, lain); };
-  if (j) j.addEventListener('input', upd);
-  ambilSaldoKas().then(info => { saldoInfo = info; if (!info) { const el = $('#pjSaldo'); if (el) el.textContent = ''; } else upd(); });
+  const ctx = pjCtx = {saldo: null, lain: x ? Number(x.jumlah) || 0 : 0, konfirm: 0};
+  pjiHitung();
+  ambilSaldoKas().then(info => { if (pjCtx !== ctx) return; ctx.saldo = info; if (!info) { const el = $('#pjSaldo'); if (el) el.textContent = ''; } else pjiHitung(); });
 }
 function openPjCatat(id) {
   const x = S.pengajuan.find(p => p.id === id); if (!x || x.status !== 'Menunggu') return;
   openDlg({
     title: 'Catat pengeluaran dari pengajuan', area: 'pengeluaran', submitLabel: 'Catat di kas',
-    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(x.uraian)}</b> · ${esc(rp(x.jumlah))}<div class="muted" style="font-size:.84rem">Diajukan ${esc(x.pemohonNama || '')} · ${esc(tgl(x.diajukan))}${x.keterangan ? ' · ' + esc(x.keterangan) : ''}</div></div>
+    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(x.uraian)}</b> · ${esc(rp(x.jumlah))}<div class="muted" style="font-size:.84rem">Diajukan ${esc(x.pemohonNama || '')} · ${esc(tgl(x.diajukan))}${x.keterangan ? ' · ' + esc(x.keterangan) : ''}</div>${pjRinciHtml(x)}</div>
     <div class="grid2">
       <div class="fld"><label for="pc_t">Tanggal keluar <span class="req">*</span></label><input type="date" id="pc_t" name="tanggal" required value="${todayISO()}"></div>
       <div class="fld"><label for="pc_j">Jumlah dikeluarkan (Rp) <span class="req">*</span></label><input type="number" id="pc_j" name="jumlah" min="1" step="500" required value="${esc(x.jumlah)}"><span class="hint">Ubah bila yang dicairkan berbeda.</span></div>
@@ -3802,7 +3851,7 @@ function openPjCatat(id) {
       if (jumlah > saldoKini() && konfirmPc !== jumlah) { konfirmPc = jumlah; pesanDlg(`Dana kas tidak mencukupi: saldo ${rp(saldoKini())}, kurang ${rp(jumlah - saldoKini())}. Saldo kas akan menjadi minus. Klik "Catat di kas" sekali lagi bila tetap ingin mencatat.`, 'pc_j'); return false; }
       const kasId = 'pj-' + x.id;
       const okKas = await put('kas', kasId, {jenis: 'keluar', tanggal: d.tanggal, kategori: d.kategori, uraian: x.uraian, jumlah, metode: d.metode,
-        penerima: String(d.penerima || '').trim(), noNota: String(d.noNota || '').trim(), catatan: `Pengajuan dari ${x.pemohonNama || '-'}${d.catatan ? ' · ' + String(d.catatan).trim() : ''}`, pengajuanId: x.id, dibuat: todayISO()});
+        penerima: String(d.penerima || '').trim(), noNota: String(d.noNota || '').trim(), catatan: `Pengajuan dari ${x.pemohonNama || '-'}${Array.isArray(x.rincian) && x.rincian.length > 1 ? ' · ' + x.rincian.map(it => `${it.nama} ${String(it.qty).replace('.', ',')}${it.satuan ? ' ' + it.satuan : ''}`).join(', ') : ''}${d.catatan ? ' · ' + String(d.catatan).trim() : ''}`, rincian: Array.isArray(x.rincian) ? x.rincian : undefined, pengajuanId: x.id, dibuat: todayISO()});
       if (!okKas) return false;
       const ok = await put('pengajuan', x.id, {...x, status: 'Dicairkan', kasId, proses: {oleh: namaSesi(), waktu: nowDT(), tanggal: d.tanggal, jumlah, metode: d.metode, catatan: String(d.catatan || '').trim()}});
       if (ok) { toast(`Pengeluaran ${rp(jumlah)} dicatat di kas.`); S.pgPer = d.tanggal.slice(0, 7); }
@@ -4907,6 +4956,7 @@ function pesanDlg(msg, fieldId) {
   if (fieldId) { const f = document.getElementById(fieldId); if (f) { f.setAttribute('aria-invalid', 'true'); f.focus(); f.scrollIntoView({block: 'center', behavior: 'smooth'}); } }
 }
 $('#dlgForm').addEventListener('input', e => {
+  if (e.target.closest && e.target.closest('#pjItems')) { e.target.removeAttribute('aria-invalid'); pjiHitung(); return; }
   if (e.target.id === 'f_nik') { cekNik(e.target); return; }
   if (e.target.id === 'pg_pin' || e.target.id === 'pp_pin' || e.target.id === 'pp_pin2') { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); return; }
   if (e.target.id === 'pg_role') { e.target.dataset.manual = '1'; $('#pgRoleInfo').innerHTML = roleInfoHtml(e.target.value, $('#pg_jab').value); return; }
@@ -5134,6 +5184,8 @@ document.addEventListener('click', async e => {
   else if (a === 'sbm-simpan') sbMzSimpan();
   else if (a === 'sbw-konf') openSbKonfirmasi(b.dataset.id);
   else if (a === 'sbw-muat') { S.sbPub = null; render(); }
+  else if (a === 'pji-add') { $('#pjItems').insertAdjacentHTML('beforeend', pjiRow()); pjiHitung(); const r = document.querySelectorAll('#pjItems .pji-n'); r[r.length - 1].focus(); }
+  else if (a === 'pji-del') { const r = b.closest('.pji-row'); if (r && document.querySelectorAll('#pjItems .pji-row').length > 1) { r.remove(); pjiHitung(); } }
   else if (a === 'pj-new') openPengajuan();
   else if (a === 'pj-ubah') openPengajuan(b.dataset.id);
   else if (a === 'pj-catat') openPjCatat(b.dataset.id);

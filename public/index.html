@@ -2033,7 +2033,8 @@ async function muatInfoPublik() {
   try { const {data, error} = await SB.rpc('info_publik'); if (!error && data) { S.infoPub = data; if (!sudahMasuk()) render(); } } catch (e) {}
 }
 setInterval(() => { if (SB && !S.authUser && document.visibilityState === 'visible') muatInfoPublik(); }, 5 * 60 * 1000);
-const papanKunci = d => [...(d.pengumuman || []).map(a => 'p:' + a.judul + '|' + a.dibuat + '|' + (a.tanggalAcara || '')), ...(d.keluhan || []).map(k => 'k:' + k.judul + '|' + k.dibuat + '|' + k.status)];
+const papanAktif = d => (d.pengumuman || []).filter(a => !a.tanggalAcara || a.tanggalAcara >= todayISO());
+const papanKunci = d => [...papanAktif(d).map(a => 'p:' + a.judul + '|' + a.dibuat + '|' + (a.tanggalAcara || '')), ...(d.keluhan || []).map(k => 'k:' + k.judul + '|' + k.dibuat + '|' + k.status)];
 function papanSudahLihat() { try { return new Set(JSON.parse(localStorage.getItem('papan-dilihat') || '[]')); } catch (e) { return new Set(); } }
 function papanBell() {
   const d = S.infoPub; if (!d || d.aktif === false) return '';
@@ -2049,7 +2050,7 @@ function bukaPapan() {
 }
 function papanInfo() {
   const d = S.infoPub; if (!d || d.aktif === false) return '';
-  const P = d.pengumuman || [], K = d.keluhan || [], R = d.ringkas || {};
+  const P = papanAktif(d), K = d.keluhan || [], R = d.ringkas || {};
   if (!P.length && !K.length && !(R.selesaiBulanIni)) return '';
   const hari = todayISO();
   const acara = a => a.tanggalAcara ? `${a.tanggalAcara === hari ? '<span class="papan-tag">Hari ini</span>' : a.tanggalAcara > hari ? '<span class="papan-tag">Akan datang</span>' : ''} 📅 ${esc(tglPanjang(a.tanggalAcara))}${a.jam ? ' · ' + esc(a.jam) : ''}${a.tempat ? ' · ' + esc(a.tempat) : ''}` : '';

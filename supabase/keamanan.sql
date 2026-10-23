@@ -244,3 +244,6 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Papan info publik di halaman login: public.info_publik() (security definer, boleh dipanggil anon).
 -- Hanya mengembalikan pengumuman terbaru (judul, isi ringkas, jadwal) dan keluhan yang belum selesai (judul, kategori, status, tanggal),
 -- tanpa nama pelapor, rumah, lokasi, atau isi keluhan. Bisa dimatikan di Pengaturan (pengaturan.umum.papanPublik = false).
+
+-- 2026-10-23: info_publik() tidak lagi menampilkan pengumuman yang tanggal acaranya sudah lewat
+-- (filter tambahan: not (tanggalAcara <> '' and tanggalAcara < hari ini WIB)), termasuk yang disematkan.

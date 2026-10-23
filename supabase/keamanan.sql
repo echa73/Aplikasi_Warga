@@ -278,3 +278,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Warga: policy tambah/ubah/hapus lapak miliknya ("warga hapus lapak").
 -- Trigger privat.jaga_lapak: penjualId & data penjual (nama, blok, HP) selalu diisi server; non-moderator tidak bisa
 --   menyembunyikan/menampilkan kembali lapak yang disembunyikan moderator.
+
+-- 2026-10-23: Izin berjualan Lapak Warga (migrasi lapak_izin_warga)
+-- warga.data.izinLapak hanya bisa diubah Pemilik atau pengurus ber-role 'ketua' (privat.boleh_izin_lapak, trigger trg_jaga_warga_lapak).
+-- Warga boleh mengajukan lewat warga.data.mintaLapak (status dipaksa 'Menunggu').
+-- privat.jaga_lapak: warga tanpa izinLapak tidak bisa memasang lapak baru. Pengurus tidak perlu izin.

@@ -266,3 +266,7 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Role koord_kerohanian: izin rohani = kelola.
 
 -- 2026-10-23: info_publik() menyembunyikan pengumuman kategori 'Berita duka' yang dibuat lebih dari 7 hari lalu.
+
+-- 2026-10-23: public.saldo_kas() (authenticated, pemilik/pengurus saja) -> {saldo, menunggu}.
+-- Rumus sama dengan buku kas: saldo cut-off + iuran + kas masuk - kas keluar + sumbangan diterima - penyaluran (program masuk kas),
+-- semua sejak tanggal cut-off. Dipakai untuk peringatan "dana tidak mencukupi" di Pengajuan dana.

@@ -3719,7 +3719,7 @@ function vPengajuan() {
   const kartu = x => {
     const milik = x.pemohonId === saya, tunggu = x.status === 'Menunggu', p = x.proses || {};
     return `<article class="kel ${tunggu ? 'p-Sedang' : x.status === 'Ditolak' ? 'p-Tinggi' : 'p-Rendah'}">
-      <div class="meta"><span class="chip ${PJ_CHIP[x.status] || 'mute'}">${esc(x.status || 'Menunggu')}</span><span class="chip mute plain">${esc(x.kategori || 'Lainnya')}</span><span>Diajukan ${esc(tgl(x.diajukan))} oleh <b>${esc(x.pemohonNama || '—')}</b>${milik ? ' (Anda)' : ''}</span>${x.dibutuhkan ? `<span>· dibutuhkan ${esc(tgl(x.dibutuhkan))}</span>` : ''}</div>
+      <div class="meta"><span class="chip ${PJ_CHIP[x.status] || 'mute'}">${esc(x.status || 'Menunggu')}</span><span class="chip mute plain">${esc(x.kategori || 'Lainnya')}</span>${tunggu && proses && Number(x.jumlah) > saldoKini() ? '<span class="chip bad">Melebihi saldo kas</span>' : ''}<span>Diajukan ${esc(tgl(x.diajukan))} oleh <b>${esc(x.pemohonNama || '—')}</b>${milik ? ' (Anda)' : ''}</span>${x.dibutuhkan ? `<span>· dibutuhkan ${esc(tgl(x.dibutuhkan))}</span>` : ''}</div>
       <h4 style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>${esc(x.uraian)}</span><span style="white-space:nowrap">${esc(rp(x.jumlah))}</span></h4>
       ${x.keterangan ? `<p>${esc(x.keterangan)}</p>` : ''}
       ${x.status === 'Dicairkan' ? `<div class="resp"><b>Dicatat di kas</b>${esc(rp(p.jumlah ?? x.jumlah))} · ${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}${p.oleh ? ' · oleh ' + esc(p.oleh) : ''}${p.catatan ? '<br>' + esc(p.catatan) : ''}</div>` : ''}
@@ -3733,6 +3733,18 @@ function vPengajuan() {
   <div class="toolbar"><div class="seg" role="group" aria-label="Saring pengajuan">${seg}</div></div>
   ${list.length ? `<div class="kel-list">${list.map(kartu).join('')}</div>` : `<div class="empty">${S.pjFilter === 'menunggu' ? 'Tidak ada pengajuan yang menunggu.' : 'Belum ada pengajuan.'}</div>`}`;
 }
+async function ambilSaldoKas() {
+  if (SB) { try { const {data, error} = await SB.rpc('saldo_kas'); if (!error && data) return {saldo: Number(data.saldo) || 0, menunggu: Number(data.menunggu) || 0}; } catch (e) {} }
+  return lihat('kas') ? {saldo: saldoKini(), menunggu: S.pengajuan.filter(x => x.status === 'Menunggu').reduce((t, x) => t + (Number(x.jumlah) || 0), 0)} : null;
+}
+function cekSaldoHint(el, jumlah, info, lain = 0) {
+  if (!el) return;
+  if (!info) { el.textContent = ''; return; }
+  const kurang = jumlah - info.saldo, antre = Math.max(0, info.menunggu - lain);
+  if (jumlah && kurang > 0) { el.innerHTML = `⚠ <b>Dana kas tidak mencukupi.</b> Saldo kas ${esc(rp(info.saldo))}, kurang ${esc(rp(kurang))}.`; el.style.color = 'var(--bad)'; }
+  else if (jumlah && antre && jumlah > info.saldo - antre) { el.innerHTML = `⚠ Saldo kas ${esc(rp(info.saldo))} cukup, tetapi ada pengajuan lain yang menunggu ${esc(rp(antre))}.`; el.style.color = 'var(--warn)'; }
+  else { el.textContent = `Saldo kas saat ini ${rp(info.saldo)}${jumlah ? ' · mencukupi' : ''}.`; el.style.color = jumlah ? 'var(--ok)' : ''; }
+}
 function openPengajuan(id) {
   const x = id ? S.pengajuan.find(p => p.id === id) : null;
   if (x && (x.status !== 'Menunggu' || x.pemohonId !== (S.me && S.me.id))) return;
@@ -3742,6 +3754,7 @@ function openPengajuan(id) {
     body: `<div class="fld"><label for="pj_u">Untuk keperluan <span class="req">*</span></label><input type="text" id="pj_u" name="uraian" required maxlength="140" value="${esc(v.uraian)}" placeholder="mis. Beli lampu jalan blok C (4 buah)"></div>
     <div class="grid2">
       <div class="fld"><label for="pj_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="pj_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah)}"><span class="hint" id="pjRp">${v.jumlah ? esc(rp(v.jumlah)) : ''}</span></div>
+      <div class="hint" id="pjSaldo" style="grid-column:1/-1;margin-top:-6px;font-size:.84rem">Memeriksa saldo kas…</div>
       <div class="fld"><label for="pj_k">Kategori</label><select id="pj_k" name="kategori">${KAT_KELUAR.map(k => `<option ${v.kategori === k ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
     </div>
     <div class="fld"><label for="pj_d">Dibutuhkan tanggal</label><input type="date" id="pj_d" name="dibutuhkan" value="${esc(v.dibutuhkan || '')}"></div>
@@ -3749,14 +3762,19 @@ function openPengajuan(id) {
     onSubmit: async d => {
       const jumlah = Math.round(Number(d.jumlah) || 0);
       if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'pj_j'); return false; }
-      const row = {...(x || {}), uraian: d.uraian.trim(), jumlah, kategori: d.kategori, dibutuhkan: d.dibutuhkan || '', keterangan: String(d.keterangan || '').trim(),
+      if (saldoInfo && jumlah > saldoInfo.saldo && konfirmKurang !== jumlah) { konfirmKurang = jumlah; pesanDlg(`Dana kas tidak mencukupi: saldo ${rp(saldoInfo.saldo)}, kurang ${rp(jumlah - saldoInfo.saldo)}. Klik "${x ? 'Simpan' : 'Kirim ke Bendahara'}" sekali lagi bila tetap ingin mengajukan.`, 'pj_j'); return false; }
+      const row = {...(x || {}), uraian: d.uraian.trim(), jumlah, saldoSaatAjuan: saldoInfo ? saldoInfo.saldo : null, kategori: d.kategori, dibutuhkan: d.dibutuhkan || '', keterangan: String(d.keterangan || '').trim(),
         status: 'Menunggu', pemohonId: (x && x.pemohonId) || (S.me && S.me.id) || '', pemohonNama: (x && x.pemohonNama) || namaSesi(), diajukan: (x && x.diajukan) || todayISO()};
       const ok = await put('pengajuan', x ? x.id : uid(), row);
       if (ok) toast(x ? 'Pengajuan diperbarui.' : `Pengajuan ${rp(jumlah)} terkirim ke Bendahara.`);
       return ok;
     }
   });
-  const j = $('#pj_j'); if (j) j.addEventListener('input', () => { const el = $('#pjRp'); if (el) el.textContent = j.value ? rp(Number(j.value)) : ''; });
+  let saldoInfo = null, konfirmKurang = 0;
+  const j = $('#pj_j'), lain = x ? Number(x.jumlah) || 0 : 0;
+  const upd = () => { const el = $('#pjRp'); if (el) el.textContent = j.value ? rp(Number(j.value)) : ''; cekSaldoHint($('#pjSaldo'), Number(j.value) || 0, saldoInfo, lain); };
+  if (j) j.addEventListener('input', upd);
+  ambilSaldoKas().then(info => { saldoInfo = info; if (!info) { const el = $('#pjSaldo'); if (el) el.textContent = ''; } else upd(); });
 }
 function openPjCatat(id) {
   const x = S.pengajuan.find(p => p.id === id); if (!x || x.status !== 'Menunggu') return;
@@ -3766,6 +3784,7 @@ function openPjCatat(id) {
     <div class="grid2">
       <div class="fld"><label for="pc_t">Tanggal keluar <span class="req">*</span></label><input type="date" id="pc_t" name="tanggal" required value="${todayISO()}"></div>
       <div class="fld"><label for="pc_j">Jumlah dikeluarkan (Rp) <span class="req">*</span></label><input type="number" id="pc_j" name="jumlah" min="1" step="500" required value="${esc(x.jumlah)}"><span class="hint">Ubah bila yang dicairkan berbeda.</span></div>
+      <div class="hint" id="pcSaldo" style="grid-column:1/-1;margin-top:-6px;font-size:.84rem"></div>
     </div>
     <div class="grid2">
       <div class="fld"><label for="pc_k">Kategori</label><select id="pc_k" name="kategori">${KAT_KELUAR.map(k => `<option ${x.kategori === k ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
@@ -3780,6 +3799,7 @@ function openPjCatat(id) {
     onSubmit: async d => {
       const jumlah = Math.round(Number(d.jumlah) || 0);
       if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'pc_j'); return false; }
+      if (jumlah > saldoKini() && konfirmPc !== jumlah) { konfirmPc = jumlah; pesanDlg(`Dana kas tidak mencukupi: saldo ${rp(saldoKini())}, kurang ${rp(jumlah - saldoKini())}. Saldo kas akan menjadi minus. Klik "Catat di kas" sekali lagi bila tetap ingin mencatat.`, 'pc_j'); return false; }
       const kasId = 'pj-' + x.id;
       const okKas = await put('kas', kasId, {jenis: 'keluar', tanggal: d.tanggal, kategori: d.kategori, uraian: x.uraian, jumlah, metode: d.metode,
         penerima: String(d.penerima || '').trim(), noNota: String(d.noNota || '').trim(), catatan: `Pengajuan dari ${x.pemohonNama || '-'}${d.catatan ? ' · ' + String(d.catatan).trim() : ''}`, pengajuanId: x.id, dibuat: todayISO()});
@@ -3789,6 +3809,9 @@ function openPjCatat(id) {
       return ok;
     }
   });
+  let konfirmPc = 0;
+  const pj = $('#pc_j'), info = {saldo: saldoKini(), menunggu: 0}, upd = () => cekSaldoHint($('#pcSaldo'), Number(pj.value) || 0, info);
+  if (pj) { pj.addEventListener('input', upd); upd(); }
 }
 function openPjTolak(id) {
   const x = S.pengajuan.find(p => p.id === id); if (!x || x.status !== 'Menunggu') return;

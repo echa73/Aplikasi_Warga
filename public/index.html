@@ -6,7 +6,17 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.pwa-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:440px;margin:0 auto;display:flex;gap:12px;align-items:center;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 12px 32px rgba(0,0,0,.14);animation:pwaIn .25s ease-out}
+<style>.papan{width:100%;max-width:420px;display:grid;gap:12px}
+.papan-k{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:10px}
+.papan-k h3{margin:0;font-size:.95rem;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.papan-k h3 small{font-weight:500;color:var(--muted);font-size:.78rem}
+.papan-i{display:grid;gap:3px;padding:10px 0;border-top:1px solid var(--line)}.papan-i:first-of-type{border-top:0;padding-top:2px}
+.papan-i b{font-size:.92rem;line-height:1.35}.papan-i .m{font-size:.78rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.papan-i p{margin:2px 0 0;font-size:.84rem;color:var(--ink);opacity:.85;line-height:1.45;white-space:pre-line}
+.papan-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.papan-st div{background:var(--sunk);border-radius:12px;padding:8px 10px;text-align:center}
+.papan-st b{display:block;font-size:1.15rem}.papan-st span{font-size:.72rem;color:var(--muted)}
+.papan-tag{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--sun-soft);color:#7a5600}
+.pwa-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:440px;margin:0 auto;display:flex;gap:12px;align-items:center;padding:12px 12px 12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 12px 32px rgba(0,0,0,.14);animation:pwaIn .25s ease-out}
 .pwa-bar img{width:40px;height:40px;border-radius:10px;object-fit:contain;background:#fff;flex:none}.pwa-bar .tx{flex:1;min-width:0;font-size:.86rem;line-height:1.35}.pwa-bar .tx b{display:block;font-size:.92rem}.pwa-bar .x{background:none;border:0;color:var(--muted);font-size:1.2rem;padding:4px 6px;cursor:pointer}
 @keyframes pwaIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 @media(max-width:760px){body.in .pwa-bar{bottom:calc(78px + env(safe-area-inset-bottom))}}
@@ -874,7 +884,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -1696,6 +1706,7 @@ function vPengaturan() {
       <div class="fld"><label for="s_ketuarw">Nama Ketua RW</label><input type="text" id="s_ketuarw" name="ketuaRw" value="${esc(S.set.ketuaRw)}" ${ro}><span class="hint">Kolom "Mengetahui"</span></div>
     </div>
     <div class="fld"><label for="s_bayar">Info pembayaran untuk warga</label><textarea id="s_bayar" name="infoBayar" rows="3" placeholder="mis. Transfer ke BCA 1234567890 a.n. Bendahara RT 05, atau tunai ke Ibu Sri (B-02)" ${ro}>${esc(S.set.infoBayar || '')}</textarea><span class="hint">Tampil di halaman Rumah saya milik warga</span></div>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="papanPublik" ${S.set.papanPublik === false ? '' : 'checked'} ${ro}> <span>Tampilkan papan info di halaman login (pengumuman terbaru & status keluhan, tanpa nama pelapor atau nomor rumah). Bisa dilihat tanpa login.</span></label>
     <h3 style="margin-top:6px">Saldo awal kas</h3>
     <p class="muted" style="margin:0">${(c => c.tanggal || c.jumlah ? `${esc(rp(c.jumlah))}${c.tanggal ? ' per ' + esc(tglSurat(c.tanggal)) : ''}. ` : 'Belum diatur. ')(saldoCutoff())}Saldo awal (cut-off) diatur Bendahara di menu <a href="#laporan" data-act="tab" data-k="laporan" style="color:var(--accent);font-weight:600">Laporan keuangan</a>.</p>
     <div><button class="btn pri" type="submit" ${ro}>Simpan pengaturan</button></div>
@@ -1767,7 +1778,7 @@ function authArt() {
     </svg>
   </aside>`;
 }
-function vLogin() { return `<div class="auth">${authArt()}<div class="auth-main">${vLoginKartu()}</div></div>`; }
+function vLogin() { return `<div class="auth">${authArt()}<div class="auth-main">${vLoginKartu()}${!S.authUser && !S.pulih ? papanInfo() : ''}</div></div>`; }
 function vLoginKartu() {
   const brand = sub => `<div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Selamat datang</h2>
     <p class="muted" style="margin:4px 0 0">${sub}</p></div>`;
@@ -1825,6 +1836,28 @@ function vLoginKartu() {
       <button type="submit" class="btn pri">Masuk</button>
       <button type="button" class="linkbtn" data-act="lupa-hp">Lupa password?</button></form>
     ${!PWA.standalone && (PWA.prompt || PWA.ios) ? '<button type="button" class="btn ghost" data-act="pwa-pasang" style="width:100%;margin-top:4px">📲 Pasang aplikasi di HP</button>' : ''}</div>`;
+}
+async function muatInfoPublik() {
+  if (!SB) return;
+  try { const {data, error} = await SB.rpc('info_publik'); if (!error && data) { S.infoPub = data; if (!sudahMasuk()) render(); } } catch (e) {}
+}
+setInterval(() => { if (SB && !S.authUser && document.visibilityState === 'visible') muatInfoPublik(); }, 5 * 60 * 1000);
+function papanInfo() {
+  const d = S.infoPub; if (!d || d.aktif === false) return '';
+  const P = d.pengumuman || [], K = d.keluhan || [], R = d.ringkas || {};
+  if (!P.length && !K.length && !(R.selesaiBulanIni)) return '';
+  const hari = todayISO();
+  const acara = a => a.tanggalAcara ? `${a.tanggalAcara === hari ? '<span class="papan-tag">Hari ini</span>' : a.tanggalAcara > hari ? '<span class="papan-tag">Akan datang</span>' : ''} 📅 ${esc(tglPanjang(a.tanggalAcara))}${a.jam ? ' · ' + esc(a.jam) : ''}${a.tempat ? ' · ' + esc(a.tempat) : ''}` : '';
+  const pg = P.map(a => `<div class="papan-i"><div class="m">${a.sematkan ? '<span>📌</span>' : ''}<span class="chip mute plain">${esc(a.kategori || 'Info')}</span><span>${esc(tgl(a.dibuat))}</span></div>
+      <b>${esc(a.judul)}</b>${a.isi ? `<p>${esc(a.isi)}</p>` : ''}${a.tanggalAcara ? `<div class="m">${acara(a)}</div>` : ''}</div>`).join('');
+  const kl = K.map(k => `<div class="papan-i"><div class="m">${chipK(k.status || 'Baru')}<span>${esc(k.kategori || '')}</span><span>· dilaporkan ${esc(tgl(k.dibuat))}</span></div><b>${esc(k.judul)}</b>
+      ${k.status === 'Diproses' ? `<div class="m">Sedang ditindaklanjuti pengurus${k.diperbarui && k.diperbarui !== k.dibuat ? ' sejak ' + esc(tgl(k.diperbarui)) : ''}</div>` : '<div class="m">Menunggu ditinjau pengurus</div>'}</div>`).join('');
+  return `<section class="papan" aria-label="Info warga">
+    ${pg ? `<div class="papan-k"><h3><span>📢 Pengumuman</span><small>${P.length} info</small></h3>${pg}</div>` : ''}
+    <div class="papan-k"><h3><span>🛠️ Keluhan warga</span><small>diperbarui otomatis</small></h3>
+      <div class="papan-st"><div><b>${R.baru || 0}</b><span>Baru</span></div><div><b>${R.proses || 0}</b><span>Ditindaklanjuti</span></div><div><b>${R.selesaiBulanIni || 0}</b><span>Selesai bulan ini</span></div></div>
+      ${kl || '<p class="muted" style="margin:0;font-size:.84rem">Tidak ada keluhan yang sedang menunggu. 👍</p>'}</div>
+    <p class="muted" style="margin:0;font-size:.76rem;text-align:center">Masuk untuk melapor keluhan dan melihat detail.</p></section>`;
 }
 async function prosesLupa() {
   const email = String(($('#lupaEmail') || {}).value || '').trim().toLowerCase();
@@ -3953,7 +3986,7 @@ document.addEventListener('click', async e => {
     if (dlgDelete) { b.disabled = true; const ok = await dlgDelete(); if (ok !== false) dlg.close(); }
   }
   else if (a === 'pilih-user') { S.pilih = S.pilih === b.dataset.id ? null : b.dataset.id; S.pinGagal = 0; render(); const f = $('#pinMasuk') || $('#loginForm button'); if (f) f.focus(); }
-  else if (a === 'keluar') { b.disabled = true; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); }
+  else if (a === 'keluar') { b.disabled = true; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
   else if (a === 'pin-pemilik') openPinPemilik();
   else if (a === 'pemilik-hp') openPemilikHp();
   else if (a === 'loginmode') { S.loginMode = b.dataset.k; S.pilih = null; S.pinGagal = 0; render(); const f = $(S.loginMode === 'warga' ? '#wUser' : '.user-opt'); if (f) f.focus(); }
@@ -4070,7 +4103,7 @@ document.addEventListener('submit', async e => {
   const t = k => String(d[k] || '').trim();
   const ok = await putSetting({nama: t('nama') || 'Villani 5', iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
-    infoBayar: String(d.infoBayar || '').trim()});
+    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik});
   if (ok) toast('Pengaturan disimpan.');
 });
 
@@ -4222,7 +4255,7 @@ async function init() {
   if (dariReset && sesi) { S.pulih = true; S.loaded = true; render(); return; }
   if (dariReset && !sesi) { S.lupa = true; S.lupaTerkirim = ''; S.lupaInfo = 'Tautan reset tidak valid lagi. Minta lagi di bawah, lalu buka email paling baru atau ketik kodenya.'; S.loaded = true; render(); return; }
   if (S.pulih) return;
-  if (sesi && sesi.user) await masukSesi(sesi.user); else { S.loaded = true; render(); }
+  if (sesi && sesi.user) await masukSesi(sesi.user); else { S.loaded = true; render(); muatInfoPublik(); }
 }
 init();
 </script>

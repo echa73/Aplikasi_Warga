@@ -240,3 +240,7 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Pengajuan dana (koleksi 'pengajuan'): semua pengurus aktif bisa melihat & mengajukan; pemohon hanya bisa ubah/batalkan
 -- pengajuannya sendiri selama 'Menunggu'; pencairan/penolakan hanya oleh role dengan izin ubah pengeluaran (Bendahara).
 -- Trigger privat.jaga_dokumen mengisi pemohonId/pemohonNama dari akun yang login. Definisi lengkap: migrasi pengajuan_pengeluaran.
+
+-- Papan info publik di halaman login: public.info_publik() (security definer, boleh dipanggil anon).
+-- Hanya mengembalikan pengumuman terbaru (judul, isi ringkas, jadwal) dan keluhan yang belum selesai (judul, kategori, status, tanggal),
+-- tanpa nama pelapor, rumah, lokasi, atau isi keluhan. Bisa dimatikan di Pengaturan (pengaturan.umum.papanPublik = false).

@@ -4,9 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F7A4D">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob: https://maps.google.com https://www.google.com; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.lp-cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:12px}
+<style>.peta{display:grid;gap:10px}
+.peta-frame{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--sunk);aspect-ratio:16/9;max-height:320px;width:100%}
+.peta-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.peta-frame .muat{position:absolute;inset:0;display:grid;place-items:center;text-align:center;gap:6px;font:inherit;border:0;cursor:pointer;color:var(--ink);background:linear-gradient(135deg,var(--sunk),var(--surface));padding:12px}
+.peta-frame .muat b{font-size:1rem}.peta-frame .muat svg{width:34px;height:34px;color:var(--accent)}
+.peta-alamat{display:flex;gap:10px;align-items:flex-start;font-size:.9rem}.peta-alamat svg{width:20px;height:20px;flex:none;color:var(--accent);margin-top:2px}
+.peta-act{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:560px){.peta-frame{aspect-ratio:4/3}}
+.lp-cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:12px}
 .lp-cats button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 12px;font:inherit;font-size:.84rem;cursor:pointer;white-space:nowrap}
 .lp-cats button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
 .lp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
@@ -1284,6 +1292,7 @@ const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/>',
   lapak: '<path d="M4 9.5 5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12v8.5h13V12"/><path d="M10 20.5v-5h4v5"/>',
   hati: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
   rohani: '<path d="M3.5 21h17"/><path d="M5.5 21v-8.5h13V21"/><path d="M7 12.5a5 5 0 0 1 10 0"/><path d="M12 7.5V3.5M10.6 4.8h2.8"/><path d="M10.5 21v-3.5a1.5 1.5 0 0 1 3 0V21"/>',
@@ -1372,7 +1381,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: () => vRingkasan() + panelLokasi(), aman: () => vAman() + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2012,6 +2021,13 @@ function vPengaturan() {
     </div>
     <div class="fld"><label for="s_bayar">Info pembayaran untuk warga</label><textarea id="s_bayar" name="infoBayar" rows="3" placeholder="mis. Transfer ke BCA 1234567890 a.n. Bendahara RT 05, atau tunai ke Ibu Sri (B-02)" ${ro}>${esc(S.set.infoBayar || '')}</textarea><span class="hint">Tampil di halaman Rumah saya milik warga</span></div>
     <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="papanPublik" ${S.set.papanPublik === false ? '' : 'checked'} ${ro}> <span>Tampilkan papan info di halaman login (pengumuman terbaru & status keluhan, tanpa nama pelapor atau nomor rumah). Bisa dilihat tanpa login.</span></label>
+    <h3 style="margin-top:6px">Lokasi lingkungan</h3>
+    <div class="fld"><label for="s_alamat">Alamat lengkap</label><textarea id="s_alamat" name="alamat" rows="2" ${ro}>${esc(lokasiRT().alamat)}</textarea><span class="hint">Tampil di peta Beranda, Rumah saya, dan untuk dikirim ke tamu/kurir</span></div>
+    <div class="grid2">
+      <div class="fld"><label for="s_lat">Lintang (latitude)</label><input type="number" id="s_lat" name="lat" step="0.0000001" min="-11" max="6" value="${esc(lokasiRT().lat)}" ${ro}></div>
+      <div class="fld"><label for="s_lng">Bujur (longitude)</label><input type="number" id="s_lng" name="lng" step="0.0000001" min="95" max="141" value="${esc(lokasiRT().lng)}" ${ro}></div>
+    </div>
+    <span class="hint" style="margin-top:-6px">Koordinat bisa disalin dari Google Maps (tekan lama titik lokasi). <a href="${esc(petaUrl(lokasiRT()))}" target="_blank" rel="noopener" style="color:var(--accent)">Cek di Google Maps</a></span>
     <h3 style="margin-top:6px">Saldo awal kas</h3>
     <p class="muted" style="margin:0">${(c => c.tanggal || c.jumlah ? `${esc(rp(c.jumlah))}${c.tanggal ? ' per ' + esc(tglSurat(c.tanggal)) : ''}. ` : 'Belum diatur. ')(saldoCutoff())}Saldo awal (cut-off) diatur Bendahara di menu <a href="#laporan" data-act="tab" data-k="laporan" style="color:var(--accent);font-weight:600">Laporan keuangan</a>.</p>
     <div><button class="btn pri" type="submit" ${ro}>Simpan pengaturan</button></div>
@@ -2412,6 +2428,7 @@ function vPortal() {
     </tbody></table></div>
   <p class="muted" style="margin:10px 0 0;font-size:.82rem">${isWarga() ? 'Tambah, ubah atau hapus anggota keluarga lewat tombol Ubah data keluarga.' : bisa('warga') ? `Data ini diambil dari menu Data warga. <a href="#warga" data-act="warga-edit" data-id="${esc(w.id)}" style="color:var(--accent)">Ubah data rumah ini</a>` : 'Data ini diambil dari menu Data warga.'}</p></div>
   <div class="panel"><h3>Riwayat iuran <small>12 bulan terakhir</small></h3><div class="rows">${rowBln || '<p class="muted" style="margin:0">Belum ada tagihan.</p>'}</div></div>
+  ${panelLokasi({blok: w.blok, judul: 'Alamat & peta rumah'})}
   ${vLapakBaru()}`;
 }
 function vLapor() {
@@ -2915,6 +2932,23 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Lokasi lingkungan (peta) ---------- */
+const LOKASI_DEF = {lat: -6.3403724, lng: 106.9677112, placeId: 'ChIJFUB5FACTaS4RjOJ6MsWYaWI', alamat: 'Jl. Vila Nusa Indah 5 Cluster Kasuari, Ciangsana, Kec. Gunung Putri, Kabupaten Bogor, Jawa Barat 16968'};
+const lokasiRT = () => ({...LOKASI_DEF, ...((S.set && S.set.lokasi) || {})});
+const petaUrl = L => `https://www.google.com/maps/search/?api=1&query=${L.lat},${L.lng}${L.placeId ? '&query_place_id=' + encodeURIComponent(L.placeId) : ''}`;
+const petaArah = L => `https://www.google.com/maps/dir/?api=1&destination=${L.lat},${L.lng}`;
+const petaEmbed = L => `https://maps.google.com/maps?q=${L.lat},${L.lng}&z=17&hl=id&output=embed`;
+function petaAktif() { try { return localStorage.getItem('peta-muat') === '1'; } catch (e) { return false; } }
+function panelLokasi({blok = '', judul = 'Lokasi lingkungan', teksBagi = '', ringkas = false, labelBagi = ''} = {}) {
+  const L = lokasiRT(), alamat = (blok ? 'Blok ' + blok + ', ' : '') + L.alamat;
+  const bagi = teksBagi || `*${blok ? 'Alamat rumah saya' : 'Lokasi ' + lingk()}*\n${alamat}\n\nPeta: ${petaUrl(L)}`;
+  return `<div class="panel peta"><h3>${esc(judul)} <small>${esc(lingk())}</small></h3>
+    <div class="peta-alamat">${ico('pin')}<span>${blok ? `<b>Blok ${esc(blok)}</b>, ` : ''}${esc(L.alamat)}</span></div>
+    ${ringkas ? '' : `<div class="peta-frame">${petaAktif() ? `<iframe src="${esc(petaEmbed(L))}" title="Peta ${esc(lingk())}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>` : `<button type="button" class="muat" data-act="peta-muat">${ico('pin')}<b>Tampilkan peta</b><span class="muted" style="font-size:.82rem">Ketuk untuk memuat peta Google Maps</span></button>`}</div>`}
+    <div class="peta-act"><a class="btn sm pri" href="${esc(petaArah(L))}" target="_blank" rel="noopener">Petunjuk arah</a><a class="btn sm" href="${esc(petaUrl(L))}" target="_blank" rel="noopener">Buka di Google Maps</a>
+      <a class="btn sm wa" href="${esc(waShare(bagi))}" target="_blank" rel="noopener">${esc(labelBagi || (blok ? 'Kirim alamat ke tamu / kurir' : 'Bagikan lokasi'))}</a><button type="button" class="btn sm ghost" data-act="salin" data-teks="${esc(alamat + '\n' + petaUrl(L))}">Salin alamat</button></div></div>`;
+}
+
 /* ---------- Lapak warga (marketplace) ---------- */
 const LP_KAT = [['Makanan & minuman', '🍱'], ['Kue & camilan', '🧁'], ['Kebutuhan rumah', '🧺'], ['Fashion', '👕'], ['Elektronik & gadget', '📱'], ['Barang bekas (preloved)', '♻️'], ['Jasa', '🛠️'], ['Les & kursus', '📚'], ['Sewa / properti', '🏠'], ['Tanaman & hewan', '🪴'], ['Lainnya', '🛍️']];
 const lpEmoji = k => (LP_KAT.find(x => x[0] === k) || LP_KAT[LP_KAT.length - 1])[1];
@@ -3143,7 +3177,7 @@ const JENIS_RH = ['Pengajian rutin', 'Kajian / majelis taklim', 'Peringatan hari
 const ULANG_RH = [['tidak', 'Sekali saja'], ['mingguan', 'Setiap minggu'], ['2mingguan', 'Setiap 2 minggu'], ['bulanan', 'Setiap bulan (tanggal sama)'], ['bulanan_hari', 'Setiap bulan (hari & minggu ke- sama)']];
 const KE = ['pertama', 'kedua', 'ketiga', 'keempat', 'kelima'];
 const SHOLAT = [['imsak', 'Imsak'], ['subuh', 'Subuh'], ['terbit', 'Terbit'], ['dzuhur', 'Dzuhur'], ['ashar', 'Ashar'], ['maghrib', 'Maghrib'], ['isya', 'Isya']];
-const rhSet = () => ({kota: 'Bojong Kulur, Gunung Putri', lat: -6.31, lng: 106.97, tampilSholat: true, ...((S.rohani.find(x => x.id === 'set')) || {})});
+const rhSet = () => ({kota: 'Ciangsana, Gunung Putri', lat: lokasiRT().lat, lng: lokasiRT().lng, tampilSholat: true, ...((S.rohani.find(x => x.id === 'set')) || {})});
 const rhAgenda = () => S.rohani.filter(x => x.tipe === 'agenda');
 const rhDuka = () => S.rohani.filter(x => x.tipe === 'duka').sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')));
 const qbSet = th => ({tahun: th, hargaSapi: 0, hargaKambing: 0, hargaDomba: 0, tanggal: '', catatan: '', ...((S.rohani.find(x => x.id === 'qurban-' + th)) || {})});
@@ -5421,6 +5455,7 @@ document.addEventListener('click', async e => {
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'peta-muat') { try { localStorage.setItem('peta-muat', '1'); } catch (err) {} render(); }
   else if (a === 'lp-buka') openLapakDetail(b.dataset.id);
   else if (a === 'lp-new') { if (!isWarga()) toast('Pengurus RT dan admin tidak diperbolehkan berjualan di Lapak Warga.', 'bad'); else if (lpBolehJual()) openLapak(); else openLapakIzin(); }
   else if (a === 'lp-izin-buka') { S.tab = 'lapak'; S.lpTab = 'izin'; render(); window.scrollTo(0, 0); }
@@ -5628,7 +5663,9 @@ document.addEventListener('submit', async e => {
   const t = k => String(d[k] || '').trim();
   const ok = await putSetting({nama: t('nama') || 'Villani 5', iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
-    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik});
+    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik,
+    lokasi: (() => { const lat = Number(d.lat), lng = Number(d.lng), L0 = lokasiRT(); const okK = isFinite(lat) && isFinite(lng) && lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141;
+      const L = {alamat: t('alamat') || L0.alamat, lat: okK ? lat : L0.lat, lng: okK ? lng : L0.lng}; if (L.lat === LOKASI_DEF.lat && L.lng === LOKASI_DEF.lng) L.placeId = LOKASI_DEF.placeId; return L; })()});
   if (ok) toast('Pengaturan disimpan.');
 });
 

@@ -6,7 +6,35 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+<style>.rh-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:center;background:linear-gradient(135deg,var(--surface),var(--sunk))}
+.rh-hero .tg{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.rh-hero .hj{font-size:clamp(1.15rem,2.4vw,1.45rem);font-weight:800;line-height:1.25;margin:2px 0}
+.rh-hero .cd{margin-top:8px;font-size:.9rem}.rh-hero .cd b{color:var(--accent)}
+.rh-sholat{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.rh-sholat div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;min-width:0}
+.rh-sholat span{display:block;font-size:.7rem;color:var(--muted);font-weight:600}
+.rh-sholat b{font-size:1rem;font-variant-numeric:tabular-nums}
+.rh-sholat .on{background:var(--accent);border-color:var(--accent);color:#fff}.rh-sholat .on span{color:rgba(255,255,255,.85)}
+.rh-sholat .lw{opacity:.55}
+.rh-list{display:grid;gap:10px}
+.rh-ag{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;align-items:start}
+.rh-ag.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft,rgba(31,122,77,.15))}
+.rh-dt{border-radius:12px;background:var(--sunk);text-align:center;padding:6px 4px;line-height:1.1}
+.rh-dt b{display:block;font-size:1.45rem}.rh-dt span{font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.04em}
+.rh-ag h4{margin:0 0 4px;font-size:.98rem;line-height:1.3}
+.rh-ag .m{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.rh-ag .act{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rh-duka{background:var(--surface);border:1px solid var(--line);border-left:4px solid #5b5b5b;border-radius:var(--r);padding:14px 16px;display:grid;gap:6px}
+.rh-duka .sal{font-style:italic;color:var(--muted);font-size:.86rem}
+.rh-duka h4{margin:0;font-size:1.05rem}
+.rh-duka dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;margin:0;font-size:.86rem}.rh-duka dt{color:var(--muted)}.rh-duka dd{margin:0}
+.qb-grp{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.qb-grp>div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.qb-grp h4{margin:0 0 6px;font-size:.92rem;display:flex;justify-content:space-between;gap:8px}
+.qb-grp ol{margin:0;padding-left:18px;font-size:.84rem;display:grid;gap:2px}
+@media(max-width:860px){.rh-hero{grid-template-columns:1fr}}
+@media(max-width:560px){.rh-sholat{grid-template-columns:repeat(4,minmax(0,1fr))}.rh-ag{grid-template-columns:52px minmax(0,1fr);gap:10px}}
+.sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
 .sb-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;cursor:pointer;align-content:start;transition:border-color .15s,box-shadow .15s}
 .sb-card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
 .sb-card h4{margin:0;font-size:1rem;line-height:1.3}
@@ -914,7 +942,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], rohani: [], qurban: [], rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -925,7 +953,7 @@ const S = {
   sesi: null, pilih: null, keamanan: {}, pinGagal: 0, pinKunci: 0
 };
 let U = null;
-const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['keamanan', 'Keamanan (satpam)'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
+const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['keamanan', 'Keamanan (satpam)'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
 const LVL = {tidak: 0, lihat: 1, kelola: 2};
 const LVL_LBL = {tidak: 'Tidak bisa buka', lihat: 'Lihat saja', kelola: 'Lihat & ubah'};
 const semua = v => Object.fromEntries(MENU_IZIN.map(([k]) => [k, v]));
@@ -938,12 +966,12 @@ const DEFAULT_ROLES = [
   {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', warga: 'lihat', info: 'lihat'}},
   {id: 'koord_keamanan', nama: 'Koordinator Keamanan', ket: 'Mengelola keamanan & satpam, pengumuman; melihat data warga dan keluhan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keamanan: 'kelola', keluhan: 'lihat', info: 'kelola'}},
   {id: 'koord_kebersihan', nama: 'Koordinator Kebersihan', ket: 'Menangani keluhan kebersihan & lingkungan, pengumuman kerja bakti; melihat data warga', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keluhan: 'kelola', info: 'kelola'}},
-  {id: 'koord_kerohanian', nama: 'Koordinator Kerohanian', ket: 'Kegiatan keagamaan (pengajian, Ramadhan, qurban, santunan), pengumuman kegiatan; melihat data warga dan program sumbangan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', info: 'kelola', sumbangan: 'lihat'}}
+  {id: 'koord_kerohanian', nama: 'Koordinator Kerohanian', ket: 'Kegiatan keagamaan (pengajian, Ramadhan, qurban, santunan), pengumuman kegiatan; melihat data warga dan program sumbangan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', info: 'kelola', rohani: 'kelola', sumbangan: 'lihat'}}
 ];
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {qurban: 'rohani', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -971,7 +999,7 @@ function izin(area) {
   const v = izinRole(r, area);
   return LVL[v] !== undefined ? v : 'tidak';
 }
-function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan') ? iz.kas : undefined; }
+function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan') ? iz.kas : m === 'rohani' ? iz.info : undefined; }
 const lihat = area => LVL[izin(area)] >= 1;
 function bisa(area) { if (S.readOnly) return false; return izin(area) === 'kelola'; }
 const hanyaLihat = () => !['admin', ...MENU_IZIN.map(m => m[0])].some(bisa);
@@ -993,7 +1021,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -1204,14 +1232,15 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'rohani' ? (isWarga() || lihat('rohani')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  rohani: '<path d="M3.5 21h17"/><path d="M5.5 21v-8.5h13V21"/><path d="M7 12.5a5 5 0 0 1 10 0"/><path d="M12 7.5V3.5M10.6 4.8h2.8"/><path d="M10.5 21v-3.5a1.5 1.5 0 0 1 3 0V21"/>',
   sumbangan: '<path d="M12 20.5s-7.5-4.6-7.5-10.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 2.5c0 5.8-7.5 10.4-7.5 10.4z"/><path d="M12 10.6v5.2M9.4 13.2h5.2"/>',
   bell: '<path d="M6 9.5a6 6 0 1 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14 6 9.5z"/><path d="M10 19a2 2 0 0 0 4 0"/>',
   pengajuan: '<path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4h4"/><path d="M12 10v7M9.5 12.2c0-.9.9-1.5 2.5-1.5s2.5.6 2.5 1.5-1 1.3-2.5 1.6-2.5.7-2.5 1.6.9 1.5 2.5 1.5 2.5-.6 2.5-1.5"/>',
@@ -1296,7 +1325,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2404,7 +2433,7 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_KOL = {rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn']};
 async function muatLog() {
   S.logAkt = 'memuat'; render();
@@ -2825,6 +2854,362 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Kerohanian ---------- */
+const AGAMA = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Lintas agama'];
+const JENIS_RH = ['Pengajian rutin', 'Kajian / majelis taklim', 'Peringatan hari besar', 'Ibadah / persekutuan doa', 'Santunan & bakti sosial', 'Ramadhan / buka bersama', 'Doa bersama', 'Lainnya'];
+const ULANG_RH = [['tidak', 'Sekali saja'], ['mingguan', 'Setiap minggu'], ['2mingguan', 'Setiap 2 minggu'], ['bulanan', 'Setiap bulan (tanggal sama)'], ['bulanan_hari', 'Setiap bulan (hari & minggu ke- sama)']];
+const KE = ['pertama', 'kedua', 'ketiga', 'keempat', 'kelima'];
+const SHOLAT = [['imsak', 'Imsak'], ['subuh', 'Subuh'], ['terbit', 'Terbit'], ['dzuhur', 'Dzuhur'], ['ashar', 'Ashar'], ['maghrib', 'Maghrib'], ['isya', 'Isya']];
+const rhSet = () => ({kota: 'Bojong Kulur, Gunung Putri', lat: -6.31, lng: 106.97, tampilSholat: true, ...((S.rohani.find(x => x.id === 'set')) || {})});
+const rhAgenda = () => S.rohani.filter(x => x.tipe === 'agenda');
+const rhDuka = () => S.rohani.filter(x => x.tipe === 'duka').sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')));
+const qbSet = th => ({tahun: th, hargaSapi: 0, hargaKambing: 0, hargaDomba: 0, tanggal: '', catatan: '', ...((S.rohani.find(x => x.id === 'qurban-' + th)) || {})});
+const isoD = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const dOf = iso => new Date(iso + 'T00:00');
+const hariTgl = iso => HARI[dOf(iso).getDay()] + ', ' + tgl(iso);
+function tglHijri(iso) {
+  try { return new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {day: 'numeric', month: 'long', year: 'numeric'}).format(dOf(iso)).replace(/\s*(SH|H)$/, '') + ' H'; } catch (e) { return ''; }
+}
+// Jadwal sholat (metode Kemenag RI: Subuh 20°, Isya 18°, Ashar Syafi'i, ihtiyat 2 menit)
+function jadwalSholat(iso, lat, lng, tz = 7) {
+  const rad = x => x * Math.PI / 180, deg = x => x * 180 / Math.PI;
+  let [Y, M, D] = iso.split('-').map(Number);
+  if (M <= 2) { Y -= 1; M += 12; }
+  const A = Math.floor(Y / 100), B = 2 - A + Math.floor(A / 4);
+  const jd = Math.floor(365.25 * (Y + 4716)) + Math.floor(30.6001 * (M + 1)) + D + B - 1524.5 - lng / 360;
+  const sun = t => {
+    const d = jd + t - 2451545, g = rad((357.529 + 0.98560028 * d) % 360), q = (280.459 + 0.98564736 * d) % 360;
+    const L = rad((q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) % 360), e = rad(23.439 - 0.00000036 * d);
+    const ra = ((deg(Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L))) / 15) % 24 + 24) % 24;
+    let eqt = q / 15 - ra; eqt = ((eqt + 12) % 24 + 24) % 24 - 12;
+    return {decl: Math.asin(Math.sin(e) * Math.sin(L)), eqt};
+  };
+  const mid = t => 12 - sun(t).eqt, la = rad(lat);
+  const T = (ang, t) => { const dc = sun(t).decl; return deg(Math.acos(Math.max(-1, Math.min(1, (-Math.sin(rad(ang)) - Math.sin(dc) * Math.sin(la)) / (Math.cos(dc) * Math.cos(la)))))) / 15; };
+  const asrAng = t => -deg(Math.atan(1 / (1 + Math.tan(Math.abs(la - sun(t).decl)))));
+  const adj = tz - lng / 15, mnt = (x, ih) => Math.ceil((x + adj) * 60 + ih - 1e-9);
+  const m = {subuh: mnt(mid(5 / 24) - T(20, 5 / 24), 2), terbit: Math.floor((mid(6 / 24) - T(0.833, 6 / 24) + adj) * 60) - 2, dzuhur: mnt(mid(.5), 3),
+    ashar: mnt(mid(13 / 24) + T(asrAng(13 / 24), 13 / 24), 2), maghrib: mnt(mid(18 / 24) + T(0.833, 18 / 24), 2), isya: mnt(mid(18 / 24) + T(18, 18 / 24), 2)};
+  m.imsak = m.subuh - 10;
+  return m; // menit sejak 00:00
+}
+const jamM = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+function sholatBerikut() {
+  const st = rhSet(), now = new Date(), menit = now.getHours() * 60 + now.getMinutes(), j = jadwalSholat(todayISO(), Number(st.lat), Number(st.lng));
+  const urut = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+  let k = urut.find(x => j[x] > menit), besok = false, t;
+  if (!k) { k = 'subuh'; besok = true; const d = new Date(); d.setDate(d.getDate() + 1); t = jadwalSholat(isoD(d), Number(st.lat), Number(st.lng)).subuh + 1440; } else t = j[k];
+  const sisa = t - menit;
+  return {j, k, nama: SHOLAT.find(x => x[0] === k)[1], sisa, besok, teks: `${SHOLAT.find(x => x[0] === k)[1]} ${besok ? 'besok ' : ''}${jamM(t % 1440)} · ${sisa >= 60 ? Math.floor(sisa / 60) + ' jam ' : ''}${sisa % 60} menit lagi`};
+}
+setInterval(() => { const el = document.getElementById('rhCd'); if (el && S.tab === 'rohani') { const b = sholatBerikut(); el.innerHTML = `Berikutnya: <b>${esc(b.teks)}</b>`; } }, 30000);
+// kejadian agenda (termasuk yang berulang) dalam rentang tanggal
+function rhKejadian(a, dari, sampai) {
+  if (!a.tanggal) return [];
+  if (!a.ulang || a.ulang === 'tidak') return a.tanggal >= dari && a.tanggal <= sampai ? [a.tanggal] : [];
+  const out = [], akhir = a.sampai && a.sampai < sampai ? a.sampai : sampai, d0 = dOf(a.tanggal);
+  if (a.ulang === 'bulanan_hari') {
+    const wd = d0.getDay(), ke = Math.ceil(d0.getDate() / 7);
+    for (let i = 0; i < 240; i++) {
+      const b = new Date(d0.getFullYear(), d0.getMonth() + i, 1); if (isoD(b) > akhir) break;
+      const off = (wd - b.getDay() + 7) % 7, tg = 1 + off + (ke - 1) * 7, x = new Date(b.getFullYear(), b.getMonth(), tg);
+      if (x.getMonth() !== b.getMonth()) continue;
+      const s = isoD(x); if (s >= a.tanggal && s >= dari && s <= akhir) out.push(s);
+    }
+    return out;
+  }
+  if (a.ulang === 'bulanan') {
+    for (let i = 0; i < 240; i++) { const x = new Date(d0.getFullYear(), d0.getMonth() + i, d0.getDate()); if (x.getDate() !== d0.getDate()) continue; const s = isoD(x); if (s > akhir) break; if (s >= dari) out.push(s); }
+    return out;
+  }
+  const step = a.ulang === '2mingguan' ? 14 : 7; let x = new Date(d0);
+  if (isoD(x) < dari) { const n = Math.floor((dOf(dari) - x) / 864e5 / step); x.setDate(x.getDate() + n * step); }
+  for (let i = 0; i < 400 && isoD(x) <= akhir; i++) { const s = isoD(x); if (s >= dari) out.push(s); x.setDate(x.getDate() + step); }
+  return out;
+}
+function rhUlangTeks(a) {
+  const d = a.tanggal ? dOf(a.tanggal) : null; if (!d || !a.ulang || a.ulang === 'tidak') return '';
+  const s = a.ulang === 'mingguan' ? 'Setiap ' + HARI[d.getDay()] : a.ulang === '2mingguan' ? 'Setiap 2 minggu, hari ' + HARI[d.getDay()] : a.ulang === 'bulanan' ? 'Setiap tanggal ' + d.getDate() : `Setiap ${HARI[d.getDay()]} ${KE[Math.ceil(d.getDate() / 7) - 1]} tiap bulan`;
+  return s + (a.sampai ? ' s.d. ' + tgl(a.sampai) : '');
+}
+function rhMendatang(hari = 60) {
+  const dari = todayISO(), d = new Date(); d.setDate(d.getDate() + hari); const sampai = isoD(d);
+  return rhAgenda().flatMap(a => rhKejadian(a, dari, sampai).map(t => ({a, t}))).sort((x, y) => x.t.localeCompare(y.t) || String(x.a.jam || '').localeCompare(String(y.a.jam || '')));
+}
+const rhJam = a => a.jam ? a.jam.replace(':', '.') + (a.jamSelesai ? '–' + a.jamSelesai.replace(':', '.') : '') + ' WIB' : '';
+function teksRhAgenda(a, t) {
+  return `*${a.judul}*\n${a.jenis || ''}${a.agama && a.agama !== 'Lintas agama' ? ' · ' + a.agama : ''}\n\n📅 ${hariTgl(t || a.tanggal)}${rhUlangTeks(a) ? ' (' + rhUlangTeks(a) + ')' : ''}${a.jam ? '\n🕒 ' + rhJam(a) : ''}${a.tempat ? '\n📍 ' + a.tempat : ''}${a.pemimpin ? '\n🎙️ ' + a.pemimpin : ''}${a.petugas ? '\n\n' + a.petugas : ''}${a.keterangan ? '\n\n' + a.keterangan : ''}\n\nMohon kehadiran Bapak/Ibu. Terima kasih.\n${pengirim()}`;
+}
+const SALAM_DUKA = {Islam: "Innalillahi wa inna ilaihi raji'un", Kristen: 'Telah dipanggil pulang ke rumah Bapa di Surga', Katolik: 'Telah dipanggil Tuhan', Hindu: 'Om Swargantu, Moksantu, Sunyantu, Murcantu', Buddha: 'Semoga terlahir di alam bahagia', Konghucu: 'Turut berduka cita yang sedalam-dalamnya'};
+const salamDuka = a => SALAM_DUKA[a] || 'Turut berduka cita yang sedalam-dalamnya';
+function teksRhDuka(x) {
+  const doa = x.agama === 'Islam' ? 'Semoga almarhum/almarhumah husnul khotimah, diampuni segala dosanya, dan keluarga yang ditinggalkan diberi ketabahan.' : 'Semoga keluarga yang ditinggalkan diberi ketabahan dan penghiburan.';
+  return `*BERITA DUKA*\n${salamDuka(x.agama)}\n\nTelah berpulang:\n*${x.nama}*${x.usia ? ` (${x.usia} th)` : ''}${x.hubungan ? '\n' + x.hubungan : ''}${x.blok ? '\nWarga ' + x.blok + ', ' + lingk() : ''}\n\nPada ${hariTgl(x.tanggal)}${x.jam ? ' pukul ' + x.jam.replace(':', '.') + ' WIB' : ''}${x.rumahDuka ? '\nDisemayamkan di ' + x.rumahDuka : ''}${x.makam ? '\nDimakamkan ' + (x.waktuMakam ? x.waktuMakam + ' ' : '') + 'di ' + x.makam : ''}${x.keterangan ? '\n\n' + x.keterangan : ''}\n\n${doa}\n\n${pengirim()}`;
+}
+function vRohani() {
+  const kel = bisa('rohani'), w = isWarga();
+  const qbBoleh = w || kel || lihat('kas');
+  const tabs = [['beranda', 'Beranda'], ['agenda', 'Agenda'], ['duka', 'Kabar duka'], ...(qbBoleh ? [['qurban', 'Qurban']] : [])];
+  if (!tabs.some(t => t[0] === S.rhTab)) S.rhTab = 'beranda';
+  const seg = tabs.map(([k, l]) => `<button type="button" data-act="rht" data-k="${k}" aria-pressed="${S.rhTab === k}">${l}</button>`).join('');
+  const head = `<div class="sec-head"><div><h2>Kerohanian</h2><p>Jadwal ibadah, agenda kegiatan keagamaan, kabar duka, dan qurban warga ${esc(lingk())}.</p></div>
+    ${kel ? `<div class="toolbar" style="margin:0">${S.rhTab === 'duka' ? '<button class="btn pri" data-act="rh-duka">+ Kabar duka</button>' : S.rhTab === 'qurban' ? '<button class="btn pri" data-act="qb-new">+ Peserta qurban</button>' : '<button class="btn pri" data-act="rh-ag">+ Agenda kegiatan</button>'}${S.rhTab === 'beranda' ? '<button class="btn ghost" data-act="rh-set">Atur lokasi</button>' : ''}</div>` : ''}</div>
+    <div class="toolbar"><div class="seg" role="group" aria-label="Bagian kerohanian">${seg}</div></div>`;
+  const isi = S.rhTab === 'agenda' ? vRhAgenda(kel) : S.rhTab === 'duka' ? vRhDuka(kel) : S.rhTab === 'qurban' ? vQurban(kel, w) : vRhBeranda(kel);
+  return head + isi;
+}
+function rhAgKartu(x, kel) {
+  const a = x.a, t = x.t, d = dOf(t), hariIni = t === todayISO();
+  return `<article class="rh-ag${hariIni ? ' today' : ''}"><div class="rh-dt"><span>${HARI[d.getDay()].slice(0, 3)}</span><b>${d.getDate()}</b><span>${BLN[d.getMonth()]}</span></div>
+    <div><div class="m" style="margin-bottom:4px">${hariIni ? '<span class="chip ok">Hari ini</span>' : ''}<span class="chip mute plain">${esc(a.jenis || 'Kegiatan')}</span>${a.agama ? `<span class="chip info plain">${esc(a.agama)}</span>` : ''}${rhUlangTeks(a) ? `<span>↻ ${esc(rhUlangTeks(a))}</span>` : ''}</div>
+      <h4>${esc(a.judul)}</h4>
+      <div class="m">${a.jam ? `<span>🕒 ${esc(rhJam(a))}</span>` : ''}${a.tempat ? `<span>📍 ${esc(a.tempat)}</span>` : ''}${a.pemimpin ? `<span>🎙️ ${esc(a.pemimpin)}</span>` : ''}${a.pj ? `<span>PJ: ${esc(a.pj)}</span>` : ''}</div>
+      ${a.petugas ? `<div class="m" style="margin-top:4px;white-space:pre-line;display:block">${esc(a.petugas)}</div>` : ''}
+      ${a.keterangan ? `<p style="margin:6px 0 0;font-size:.86rem;white-space:pre-line">${esc(a.keterangan)}</p>` : ''}
+      <div class="act"><a class="btn wa sm" href="${esc(waShare(teksRhAgenda(a, t)))}" target="_blank" rel="noopener">Bagikan</a>${kel ? `<button class="btn sm" data-act="rh-ag" data-id="${esc(a.id)}">Ubah</button>${bisa('info') ? `<button class="btn ghost sm" data-act="rh-umum" data-id="${esc(a.id)}" data-t="${esc(t)}">Umumkan</button>` : ''}` : ''}</div></div></article>`;
+}
+function vRhBeranda(kel) {
+  const st = rhSet(), hari = todayISO();
+  let sh = '';
+  if (st.tampilSholat !== false) {
+    const b = sholatBerikut(), menit = new Date().getHours() * 60 + new Date().getMinutes();
+    sh = `<div class="rh-sholat" role="list" aria-label="Jadwal sholat hari ini">${SHOLAT.map(([k, l]) => `<div role="listitem" class="${!b.besok && k === b.k ? 'on' : b.j[k] < menit && k !== b.k ? 'lw' : ''}"><span>${l}</span><b>${jamM(b.j[k])}</b></div>`).join('')}</div>
+      <div class="rh-hero-cd cd" id="rhCd">Berikutnya: <b>${esc(b.teks)}</b></div>`;
+  }
+  const hij = tglHijri(hari);
+  const hero = `<div class="panel rh-hero"><div><span class="tg">${esc(HARI[new Date().getDay()])}, ${esc(tglSurat(hari))}</span><div class="hj">${esc(hij || tgl(hari))}</div>
+      <span class="muted" style="font-size:.82rem">${st.tampilSholat !== false ? `Jadwal sholat ${esc(st.kota)} · metode Kemenag RI` : 'Jadwal sholat disembunyikan'}</span></div><div>${sh || '<p class="muted" style="margin:0">Aktifkan jadwal sholat di "Atur lokasi".</p>'}</div></div>`;
+  const ag = rhMendatang(30).slice(0, 5), duka = rhDuka().filter(x => x.tanggal && (dOf(hari) - dOf(x.tanggal)) / 864e5 <= 7);
+  const qs = qbSet(S.qbTh), qn = S.qurban.filter(x => Number(x.tahun) === S.qbTh).length;
+  const qbBanner = qs.tanggal && qs.tanggal >= hari && (dOf(qs.tanggal) - dOf(hari)) / 864e5 <= 75
+    ? `<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🐄 Idul Adha ${esc(tglSurat(qs.tanggal))} · ${Math.round((dOf(qs.tanggal) - dOf(hari)) / 864e5)} hari lagi${isWarga() || !(bisa('rohani') || lihat('kas')) ? '' : ` · ${qn} peserta qurban terdaftar`}</span>${isWarga() || bisa('rohani') || lihat('kas') ? '<button class="btn sm" data-act="rht" data-k="qurban">Lihat qurban</button>' : ''}</div>` : '';
+  return hero + qbBanner + (duka.length ? `<div class="rh-list" style="margin-bottom:14px">${duka.map(x => rhDukaKartu(x, kel)).join('')}</div>` : '')
+    + `<div class="panel"><h3>Agenda 30 hari ke depan <small>${ag.length ? ag.length + ' kegiatan' : ''}</small></h3>${ag.length ? `<div class="rh-list">${ag.map(x => rhAgKartu(x, kel)).join('')}</div>` : `<p class="muted" style="margin:0">Belum ada agenda kegiatan.${kel ? ' Tambahkan pengajian rutin, kajian, atau peringatan hari besar.' : ''}</p>`}</div>`;
+}
+function vRhAgenda(kel) {
+  const segF = [['datang', 'Akan datang'], ['semua', 'Semua agenda']].map(([k, l]) => `<button type="button" data-act="rhaf" data-k="${k}" aria-pressed="${S.rhAgF === k}">${l}</button>`).join('');
+  const ag = S.rhAgama;
+  const filt = a => !ag || a.agama === ag || a.agama === 'Lintas agama';
+  const toolbar = `<div class="toolbar"><div class="seg" role="group" aria-label="Tampilan agenda">${segF}</div><select id="fRhAgama" aria-label="Saring agama" style="width:auto"><option value="">Semua agama</option>${AGAMA.filter(x => x !== 'Lintas agama').map(x => `<option ${ag === x ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`;
+  if (S.rhAgF === 'semua') {
+    const L = rhAgenda().filter(filt).sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')));
+    return toolbar + (L.length ? `<div class="tbl-wrap"><table><thead><tr><th>Kegiatan</th><th>Jadwal</th><th>Tempat</th><th>Pemimpin / pengisi</th><th></th></tr></thead><tbody>${L.map(a => `<tr><td><div style="font-weight:600">${esc(a.judul)}</div><div class="muted" style="font-size:.78rem">${esc(a.jenis || '')}${a.agama ? ' · ' + esc(a.agama) : ''}</div></td>
+      <td>${esc(rhUlangTeks(a) || hariTgl(a.tanggal))}${a.jam ? '<div class="muted" style="font-size:.78rem">' + esc(rhJam(a)) + '</div>' : ''}</td><td>${esc(a.tempat || '—')}</td><td>${esc(a.pemimpin || '—')}</td><td class="r"><button class="btn sm" data-act="rh-ag" data-id="${esc(a.id)}">${kel ? 'Ubah' : 'Lihat'}</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Belum ada agenda.</div>');
+  }
+  const L = rhMendatang(90).filter(x => filt(x.a));
+  let bln = '', out = '';
+  for (const x of L) { const b = x.t.slice(0, 7); if (b !== bln) { out += `<h3 style="margin:14px 0 2px;font-size:.92rem">${esc(perLbl(b, true))}</h3>`; bln = b; } out += rhAgKartu(x, kel); }
+  return toolbar + (L.length ? `<div class="rh-list">${out}</div><p class="muted" style="font-size:.8rem">Menampilkan 90 hari ke depan. Kegiatan berulang otomatis muncul di tiap jadwalnya.</p>` : `<div class="empty">Tidak ada kegiatan dalam 90 hari ke depan.${kel ? '<button class="btn pri" data-act="rh-ag">+ Agenda kegiatan</button>' : ''}</div>`);
+}
+function rhDukaKartu(x, kel) {
+  return `<article class="rh-duka"><span class="sal">${esc(salamDuka(x.agama))}</span><h4>${esc(x.nama)}${x.usia ? ` <span class="muted" style="font-weight:500">(${esc(x.usia)} th)</span>` : ''}</h4>
+    ${x.hubungan || x.blok ? `<div class="muted" style="font-size:.86rem">${esc([x.hubungan, x.blok && 'Rumah ' + x.blok].filter(Boolean).join(' · '))}</div>` : ''}
+    <dl><dt>Wafat</dt><dd>${esc(hariTgl(x.tanggal))}${x.jam ? ', ' + esc(x.jam.replace(':', '.')) + ' WIB' : ''}</dd>${x.rumahDuka ? `<dt>Disemayamkan</dt><dd>${esc(x.rumahDuka)}</dd>` : ''}${x.makam ? `<dt>Pemakaman</dt><dd>${esc((x.waktuMakam ? x.waktuMakam + ' · ' : '') + x.makam)}</dd>` : ''}</dl>
+    ${x.keterangan ? `<p style="margin:0;font-size:.86rem;white-space:pre-line">${esc(x.keterangan)}</p>` : ''}
+    <div class="meta" style="gap:6px;display:flex;flex-wrap:wrap"><a class="btn wa sm" href="${esc(waShare(teksRhDuka(x)))}" target="_blank" rel="noopener">Bagikan berita duka</a>${kel ? `<button class="btn sm" data-act="rh-duka" data-id="${esc(x.id)}">Ubah</button>` : ''}${bisa('sumbangan') ? `<button class="btn ghost sm" data-act="rh-santun" data-id="${esc(x.id)}">Buat program santunan</button>` : ''}${kel && bisa('info') ? `<button class="btn ghost sm" data-act="rh-umum-duka" data-id="${esc(x.id)}">Umumkan</button>` : ''}</div></article>`;
+}
+function vRhDuka(kel) {
+  const L = rhDuka();
+  return L.length ? `<div class="rh-list">${L.map(x => rhDukaKartu(x, kel)).join('')}</div>` : `<div class="empty">Belum ada kabar duka.${kel ? '<button class="btn pri" data-act="rh-duka">+ Kabar duka</button>' : ''}</div>`;
+}
+const HEWAN = ['Sapi', 'Kambing', 'Domba'];
+function qbHarga(p, set) { if (Number(p.harga)) return Number(p.harga); const n = Number(p.jumlah) || 1; return p.hewan === 'Sapi' ? Math.round((Number(set.hargaSapi) || 0) / 7) * n : p.hewan === 'Domba' ? (Number(set.hargaDomba) || 0) * n : (Number(set.hargaKambing) || 0) * n; }
+const qbStatus = (p, set) => { const t = qbHarga(p, set), b = Number(p.dibayar) || 0; return t && b >= t ? 'Lunas' : b > 0 ? 'Cicil' : 'Belum bayar'; };
+const QB_CH = {Lunas: 'ok', Cicil: 'warn', 'Belum bayar': 'bad'};
+function qbKelompok(L) {
+  const g = []; let cur = null;
+  for (const p of L.filter(x => x.hewan === 'Sapi').sort((a, b) => String(a.dibuat || '').localeCompare(String(b.dibuat || '')) || String(a.id).localeCompare(String(b.id)))) {
+    let n = Math.max(1, Math.min(7, Number(p.jumlah) || 1));
+    while (n > 0) { if (!cur || cur.isi >= 7) { cur = {no: g.length + 1, isi: 0, ang: []}; g.push(cur); } const ambil = Math.min(n, 7 - cur.isi); cur.ang.push({p, n: ambil}); cur.isi += ambil; n -= ambil; }
+  }
+  return g;
+}
+function vQurban(kel, w) {
+  const th = S.qbTh, set = qbSet(th), L = S.qurban.filter(x => Number(x.tahun) === th);
+  const nav = `<div class="monthnav"><button class="btn sm" data-act="qbth" data-n="-1" aria-label="Tahun sebelumnya">‹</button><strong>Qurban ${th}</strong><button class="btn sm" data-act="qbth" data-n="1" aria-label="Tahun berikutnya">›</button></div>`;
+  const info = `<div class="panel" style="display:flex;gap:12px 24px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+    <div style="display:grid;gap:2px"><b>${set.tanggal ? 'Idul Adha ' + esc(tglSurat(set.tanggal)) : 'Tanggal Idul Adha belum diatur'}</b>
+      <span class="muted" style="font-size:.86rem">Sapi ${esc(rp(set.hargaSapi))} per ekor (${esc(rp(Math.round((Number(set.hargaSapi) || 0) / 7)))} per 1/7 bagian) · Kambing ${esc(rp(set.hargaKambing))} · Domba ${esc(rp(set.hargaDomba))}</span>
+      ${set.catatan ? `<span style="font-size:.86rem;white-space:pre-line">${esc(set.catatan)}</span>` : ''}</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${nav}${kel ? `<button class="btn sm" data-act="qb-set">Atur harga & tanggal</button>` : ''}</div></div>`;
+  if (w) {
+    const saya = L.filter(p => p.wargaId === (wargaSaya() || {}).id);
+    return info + (saya.length ? `<div class="rh-list">${saya.map(p => `<div class="panel" style="display:grid;gap:4px"><div class="meta" style="display:flex;gap:6px"><span class="chip ${QB_CH[qbStatus(p, set)]}">${qbStatus(p, set)}</span><span class="chip mute plain">${esc(p.hewan)}${p.hewan === 'Sapi' ? ' · ' + (p.jumlah || 1) + '/7 bagian' : ' · ' + (p.jumlah || 1) + ' ekor'}</span></div>
+        <b>Atas nama: ${esc(p.atasNama || p.nama)}</b><span class="muted" style="font-size:.86rem">Biaya ${esc(rp(qbHarga(p, set)))} · sudah dibayar ${esc(rp(p.dibayar || 0))}</span></div>`).join('')}</div>`
+      : `<div class="empty">Anda belum terdaftar sebagai peserta qurban ${th}. Hubungi seksi kerohanian untuk mendaftar.${S.set.infoBayar ? `<div style="font-size:.86rem;margin-top:6px;white-space:pre-wrap">${esc(S.set.infoBayar)}</div>` : ''}</div>`);
+  }
+  const total = L.reduce((t, p) => t + qbHarga(p, set), 0), dibayar = L.reduce((t, p) => t + (Number(p.dibayar) || 0), 0);
+  const bagSapi = L.filter(p => p.hewan === 'Sapi').reduce((t, p) => t + (Number(p.jumlah) || 1), 0), ekorSapi = Math.ceil(bagSapi / 7), kurang = ekorSapi * 7 - bagSapi;
+  const kmb = L.filter(p => p.hewan === 'Kambing').reduce((t, p) => t + (Number(p.jumlah) || 1), 0), dmb = L.filter(p => p.hewan === 'Domba').reduce((t, p) => t + (Number(p.jumlah) || 1), 0);
+  const G = qbKelompok(L);
+  const rows = [...L].sort((a, b) => sortHouse(a, b) || String(a.nama).localeCompare(String(b.nama)));
+  const aksi = p => { const wg = p.wargaId && wById(p.wargaId), st = qbStatus(p, set), wa = wg && wg.noHp && waNomor(wg.noHp).length >= 10 && st !== 'Lunas';
+    return `${wa ? `<a class="btn ghost sm" href="${esc(waLink(wg.noHp, `Yth. Bapak/Ibu ${p.nama} (${p.blok}),\n\nTerima kasih telah mendaftar qurban ${th} (${p.hewan}${p.hewan === 'Sapi' ? ' ' + (p.jumlah || 1) + '/7 bagian' : ''}) atas nama ${p.atasNama || p.nama}.\nBiaya ${rp(qbHarga(p, set))}, sudah dibayar ${rp(p.dibayar || 0)}, sisa ${rp(qbHarga(p, set) - (Number(p.dibayar) || 0))}.\n${S.set.infoBayar ? '\n' + S.set.infoBayar + '\n' : ''}\nTerima kasih.\n${pengirim()}`))}" target="_blank" rel="noopener">Ingatkan</a>` : ''}<button class="btn sm" data-act="qb-edit" data-id="${esc(p.id)}">${kel ? 'Ubah' : 'Lihat'}</button>`; };
+  return info + `<div class="tiles">
+      <div class="tile"><span class="ti g">${ico('warga')}</span><span class="lbl">Shohibul qurban</span><span class="val">${L.length}</span><span class="sub">peserta terdaftar</span></div>
+      <div class="tile"><span class="ti b">${ico('rohani')}</span><span class="lbl">Sapi</span><span class="val">${ekorSapi} ekor</span><span class="sub">${bagSapi} bagian${kurang ? ` · kurang ${kurang} untuk genap` : ''}</span></div>
+      <div class="tile"><span class="ti s">${ico('rohani')}</span><span class="lbl">Kambing / domba</span><span class="val">${kmb + dmb} ekor</span><span class="sub">kambing ${kmb} · domba ${dmb}</span></div>
+      <div class="tile"><span class="ti r">${ico('kas')}</span><span class="lbl">Pembayaran</span><span class="val">${esc(rp(dibayar))}</span><span class="sub">dari ${esc(rp(total))} · sisa ${esc(rp(total - dibayar))}</span></div></div>
+    ${G.length ? `<div class="panel"><h3>Kelompok sapi <small>1 ekor = 7 bagian, diurutkan sesuai waktu daftar</small></h3><div class="qb-grp">${G.map(g => `<div><h4><span>Sapi ${g.no}</span><span class="chip ${g.isi >= 7 ? 'ok' : 'warn'} plain">${g.isi}/7${g.isi < 7 ? ' · kurang ' + (7 - g.isi) : ''}</span></h4><ol>${g.ang.map(a => `<li>${esc(a.p.atasNama || a.p.nama)}${a.n > 1 ? ` (${a.n} bagian)` : ''}</li>`).join('')}</ol></div>`).join('')}</div></div>` : ''}
+    ${rows.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th>Rumah</th><th>Peserta</th><th>Hewan</th><th>Atas nama</th><th class="r">Biaya</th><th class="r">Dibayar</th><th>Status</th><th></th></tr></thead><tbody>${rows.map(p => `<tr>
+      <td>${p.blok ? `<span class="house">${esc(p.blok)}</span>` : '<span class="muted">luar</span>'}</td><td style="font-weight:600">${esc(p.nama)}</td><td>${esc(p.hewan)} ${p.hewan === 'Sapi' ? (p.jumlah || 1) + '/7' : '× ' + (p.jumlah || 1)}</td><td>${esc(p.atasNama || '—')}</td>
+      <td class="r num">${esc(rp(qbHarga(p, set)))}</td><td class="r num">${esc(rp(p.dibayar || 0))}</td><td><span class="chip ${QB_CH[qbStatus(p, set)]}">${qbStatus(p, set)}</span></td><td class="r" style="white-space:nowrap">${aksi(p)}</td></tr>`).join('')}
+      <tr><td colspan="4" style="font-weight:700">Total ${rows.length} peserta</td><td class="r num" style="font-weight:800">${esc(rp(total))}</td><td class="r num" style="font-weight:800">${esc(rp(dibayar))}</td><td colspan="2"></td></tr></tbody></table></div>
+      <div class="list-mobile">${rows.map(p => `<div class="row"><div class="grow"><div class="t">${esc(p.nama)}${p.blok ? ' · ' + esc(p.blok) : ''}</div><div class="s">${esc(p.hewan)} ${p.hewan === 'Sapi' ? (p.jumlah || 1) + '/7' : '× ' + (p.jumlah || 1)} · ${esc(rp(p.dibayar || 0))} / ${esc(rp(qbHarga(p, set)))}</div></div><span class="chip ${QB_CH[qbStatus(p, set)]}">${qbStatus(p, set)}</span><button class="btn ghost sm" data-act="qb-edit" data-id="${esc(p.id)}" aria-label="Buka">›</button></div>`).join('')}</div>`
+      : `<div class="empty">Belum ada peserta qurban ${th}.${kel ? '<button class="btn pri" data-act="qb-new">+ Peserta qurban</button>' : ''}</div>`}
+    ${rows.length ? `<div class="toolbar"><a class="btn wa" href="${esc(waShare(teksQurban(th, set, L, G)))}" target="_blank" rel="noopener">Bagikan daftar shohibul qurban</a><button class="btn" data-act="qb-xlsx">Unduh daftar (Excel)</button></div>` : ''}
+    <p class="muted" style="font-size:.8rem">Dana qurban dicatat terpisah dari buku kas RT.</p>`;
+}
+function teksQurban(th, set, L, G) {
+  const lain = L.filter(p => p.hewan !== 'Sapi');
+  return `*Daftar Shohibul Qurban ${th}*\n${lingk()}${set.tanggal ? '\nIdul Adha ' + tglSurat(set.tanggal) : ''}\n\n${G.map(g => `*Sapi ${g.no}* (${g.isi}/7)\n${g.ang.map((a, i) => `${i + 1}. ${a.p.atasNama || a.p.nama}${a.n > 1 ? ' (' + a.n + ' bagian)' : ''}`).join('\n')}`).join('\n\n')}`
+    + `${lain.length ? `${G.length ? '\n\n' : ''}*Kambing / domba*\n${lain.map((p, i) => `${i + 1}. ${p.atasNama || p.nama} – ${p.hewan}${Number(p.jumlah) > 1 ? ' ×' + p.jumlah : ''}`).join('\n')}` : ''}\n\nSemoga diterima Allah SWT. Aamiin.\n${pengirim()}`;
+}
+function xlsxQurban(th) {
+  const set = qbSet(th), L = S.qurban.filter(x => Number(x.tahun) === th).sort(sortHouse), G = qbKelompok(L), W = MiniXlsx.sheet([6, 12, 26, 14, 28, 15, 15, 12]), K = W.ST;
+  W.put(0, `PENGURUS RT ${S.set.rt || '…'} / RW ${S.set.rw || '…'} · ${lingk()}`, K.kop, 8).next().skip();
+  W.put(0, 'DAFTAR PESERTA QURBAN ' + th, K.title, 8).next();
+  W.put(0, set.tanggal ? 'Idul Adha ' + tglSurat(set.tanggal) : '', K.sub, 8).next().skip();
+  W.put(0, 'No', K.headC).put(1, 'Rumah', K.head).put(2, 'Peserta', K.head).put(3, 'Hewan', K.head).put(4, 'Atas nama', K.head).put(5, 'Biaya', K.headR).put(6, 'Dibayar', K.headR).put(7, 'Status', K.head).next();
+  L.forEach((p, i) => W.put(0, i + 1, K.center).put(1, p.blok || 'luar', K.text).put(2, p.nama || '', K.text).put(3, p.hewan + (p.hewan === 'Sapi' ? ' ' + (p.jumlah || 1) + '/7' : ' x' + (p.jumlah || 1)), K.text).put(4, p.atasNama || '', K.text).put(5, qbHarga(p, set), K.num).put(6, Number(p.dibayar) || 0, K.num).put(7, qbStatus(p, set), K.text).next());
+  W.put(0, '', K.totText).put(1, '', K.totText).put(2, 'Jumlah', K.totText).put(3, '', K.totText).put(4, '', K.totText).put(5, L.reduce((t, p) => t + qbHarga(p, set), 0), K.totNum).put(6, L.reduce((t, p) => t + (Number(p.dibayar) || 0), 0), K.totNum).put(7, '', K.totText).next();
+  if (G.length) { W.skip().put(0, 'KELOMPOK SAPI', K.bold, 8).next(); G.forEach(g => { W.put(0, 'Sapi ' + g.no + ` (${g.isi}/7)`, K.bold, 8).next(); g.ang.forEach((a, i) => W.put(1, i + 1, K.center).put(2, (a.p.atasNama || a.p.nama) + (a.n > 1 ? ` (${a.n} bagian)` : ''), K.text, 3).next()); }); }
+  return W.build('Qurban ' + th);
+}
+function openRhAgenda(id) {
+  const x = id ? S.rohani.find(a => a.id === id) : null, ro = dis('rohani');
+  const v = x || {jenis: JENIS_RH[0], agama: 'Islam', tanggal: todayISO(), ulang: 'tidak'};
+  openDlg({title: x ? (bisa('rohani') ? 'Ubah agenda' : 'Agenda kegiatan') : 'Agenda kegiatan baru', area: 'rohani', submitLabel: x ? 'Simpan' : 'Simpan agenda',
+    body: `<div class="fld"><label for="ra_j">Nama kegiatan <span class="req">*</span></label><input type="text" id="ra_j" name="judul" required maxlength="120" value="${esc(v.judul || '')}" placeholder="mis. Pengajian rutin ibu-ibu" ${ro}></div>
+    <div class="grid2"><div class="fld"><label for="ra_k">Jenis</label><select id="ra_k" name="jenis" ${ro}>${JENIS_RH.map(k => `<option ${k === v.jenis ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
+      <div class="fld"><label for="ra_a">Agama</label><select id="ra_a" name="agama" ${ro}>${AGAMA.map(k => `<option ${k === v.agama ? 'selected' : ''}>${k}</option>`).join('')}</select></div></div>
+    <div class="grid2"><div class="fld"><label for="ra_t">Tanggal ${x && x.ulang !== 'tidak' ? 'mulai' : ''} <span class="req">*</span></label><input type="date" id="ra_t" name="tanggal" required value="${esc(v.tanggal)}" ${ro}></div>
+      <div class="fld"><label for="ra_u">Berulang</label><select id="ra_u" name="ulang" ${ro}>${ULANG_RH.map(([k, l]) => `<option value="${k}" ${k === (v.ulang || 'tidak') ? 'selected' : ''}>${l}</option>`).join('')}</select><span class="hint" id="raUH"></span></div></div>
+    <div class="fld" id="raSWrap"${!v.ulang || v.ulang === 'tidak' ? ' hidden' : ''}><label for="ra_s">Berulang sampai</label><input type="date" id="ra_s" name="sampai" value="${esc(v.sampai || '')}" ${ro}><span class="hint">Kosongkan bila terus berjalan</span></div>
+    <div class="grid2"><div class="fld"><label for="ra_jm">Jam mulai</label><input type="time" id="ra_jm" name="jam" value="${esc(v.jam || '')}" ${ro}></div>
+      <div class="fld"><label for="ra_js">Jam selesai</label><input type="time" id="ra_js" name="jamSelesai" value="${esc(v.jamSelesai || '')}" ${ro}></div></div>
+    <div class="fld"><label for="ra_tp">Tempat</label><input type="text" id="ra_tp" name="tempat" maxlength="100" value="${esc(v.tempat || '')}" placeholder="mis. Musholla Al-Ikhlas / rumah Bpk. Hasan (B-03)" ${ro}></div>
+    <div class="grid2"><div class="fld"><label for="ra_p">Pemimpin / penceramah</label><input type="text" id="ra_p" name="pemimpin" maxlength="80" value="${esc(v.pemimpin || '')}" placeholder="mis. Ust. Ahmad / Pdt. Yohanes" ${ro}></div>
+      <div class="fld"><label for="ra_pj">Penanggung jawab</label><input type="text" id="ra_pj" name="pj" maxlength="80" value="${esc(v.pj || '')}" ${ro}></div></div>
+    <div class="fld"><label for="ra_pt">Petugas</label><textarea id="ra_pt" name="petugas" rows="3" maxlength="500" placeholder="satu baris per tugas, mis.&#10;Imam: Bpk. Hasan&#10;Kultum: Bpk. Rudi&#10;Konsumsi: RT blok B" ${ro}>${esc(v.petugas || '')}</textarea></div>
+    <div class="fld"><label for="ra_c">Keterangan</label><textarea id="ra_c" name="keterangan" rows="2" maxlength="500" ${ro}>${esc(v.keterangan || '')}</textarea></div>
+    ${!x && bisa('info') ? '<label class="ck" style="font-weight:500"><input type="checkbox" name="umumkan"> <span>Sekaligus umumkan di Pengumuman (tampil di papan info & beranda warga)</span></label>' : ''}`,
+    onSubmit: async d => {
+      const judul = String(d.judul || '').trim(); if (!judul) { pesanDlg('Isi nama kegiatan.', 'ra_j'); return false; }
+      if (d.sampai && d.sampai < d.tanggal) { pesanDlg('Tanggal "berulang sampai" tidak boleh sebelum tanggal mulai.', 'ra_s'); return false; }
+      const row = {...(x || {}), tipe: 'agenda', judul, jenis: d.jenis, agama: d.agama, tanggal: d.tanggal, ulang: d.ulang, sampai: d.ulang === 'tidak' ? '' : d.sampai || '', jam: d.jam || '', jamSelesai: d.jamSelesai || '',
+        tempat: String(d.tempat || '').trim(), pemimpin: String(d.pemimpin || '').trim(), pj: String(d.pj || '').trim(), petugas: String(d.petugas || '').trim(), keterangan: String(d.keterangan || '').trim(), diperbarui: todayISO()};
+      if (!x) { row.dibuat = todayISO(); row.dibuatOleh = namaSesi(); }
+      const nid = x ? x.id : 'ag_' + uid(), ok = await put('rohani', nid, row);
+      if (ok && d.umumkan) await rhUmumkan(row, (rhKejadian(row, todayISO(), '9999-12-31')[0]) || row.tanggal);
+      if (ok) toast(x ? 'Agenda diperbarui.' : 'Agenda kegiatan disimpan.');
+      return ok;
+    },
+    onDelete: x ? async () => { const ok = await del('rohani', x.id); if (ok) toast('Agenda dihapus.'); return ok; } : null, deleteLabel: 'Hapus agenda'});
+  const u = $('#ra_u'), t = $('#ra_t');
+  const upd = () => { const sw = $('#raSWrap'); if (sw) sw.hidden = u.value === 'tidak'; const h = $('#raUH'); if (h) h.textContent = u.value === 'tidak' ? '' : rhUlangTeks({tanggal: t.value, ulang: u.value}); };
+  if (u) { u.addEventListener('change', upd); t.addEventListener('change', upd); upd(); }
+}
+async function rhUmumkan(a, t) {
+  const ok = await put('pengumuman', 'rh_' + uid(), {judul: a.judul, kategori: 'Keagamaan', isi: [a.pemimpin && 'Pengisi: ' + a.pemimpin, rhUlangTeks(a), a.petugas, a.keterangan].filter(Boolean).join('\n'), tanggalAcara: t, jam: a.jam || '', tempat: a.tempat || '', sematkan: false, dibuat: todayISO(), diperbarui: todayISO()});
+  if (ok) toast('Diumumkan di menu Pengumuman.');
+  return ok;
+}
+function openRhDuka(id) {
+  const x = id ? S.rohani.find(a => a.id === id) : null, ro = dis('rohani');
+  const v = x || {agama: 'Islam', tanggal: todayISO()};
+  openDlg({title: x ? (bisa('rohani') ? 'Ubah kabar duka' : 'Kabar duka') : 'Kabar duka', area: 'rohani', submitLabel: x ? 'Simpan' : 'Simpan kabar duka',
+    body: `<div class="grid2"><div class="fld"><label for="rd_n">Nama almarhum/almarhumah <span class="req">*</span></label><input type="text" id="rd_n" name="nama" required maxlength="100" value="${esc(v.nama || '')}" ${ro}></div>
+      <div class="fld"><label for="rd_u">Usia (tahun)</label><input type="number" id="rd_u" name="usia" min="0" max="130" value="${esc(v.usia || '')}" ${ro}></div></div>
+    <div class="grid2"><div class="fld"><label for="rd_w">Keluarga dari rumah</label><select id="rd_w" name="wargaId" ${ro}><option value="">— bukan warga / kerabat luar —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${w.id === v.wargaId ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="rd_a">Agama</label><select id="rd_a" name="agama" ${ro}>${AGAMA.filter(a => a !== 'Lintas agama').map(a => `<option ${a === v.agama ? 'selected' : ''}>${a}</option>`).join('')}<option value="" ${!v.agama ? 'selected' : ''}>Tidak disebutkan</option></select></div></div>
+    <div class="fld"><label for="rd_h">Hubungan / keterangan keluarga</label><input type="text" id="rd_h" name="hubungan" maxlength="120" value="${esc(v.hubungan || '')}" placeholder="mis. Ayahanda dari Bpk. Budi Santoso" ${ro}></div>
+    <div class="grid2"><div class="fld"><label for="rd_t">Tanggal wafat <span class="req">*</span></label><input type="date" id="rd_t" name="tanggal" required value="${esc(v.tanggal)}" ${ro}></div>
+      <div class="fld"><label for="rd_j">Jam</label><input type="time" id="rd_j" name="jam" value="${esc(v.jam || '')}" ${ro}></div></div>
+    <div class="fld"><label for="rd_r">Disemayamkan di</label><input type="text" id="rd_r" name="rumahDuka" maxlength="120" value="${esc(v.rumahDuka || '')}" placeholder="mis. Rumah duka, Blok B-03" ${ro}></div>
+    <div class="grid2"><div class="fld"><label for="rd_wm">Waktu pemakaman</label><input type="text" id="rd_wm" name="waktuMakam" maxlength="60" value="${esc(v.waktuMakam || '')}" placeholder="mis. Ba'da Dzuhur / Sabtu 10.00" ${ro}></div>
+      <div class="fld"><label for="rd_m">Lokasi pemakaman</label><input type="text" id="rd_m" name="makam" maxlength="120" value="${esc(v.makam || '')}" placeholder="mis. TPU Bojong Kulur" ${ro}></div></div>
+    <div class="fld"><label for="rd_c">Keterangan / info takziah</label><textarea id="rd_c" name="keterangan" rows="2" maxlength="500" ${ro}>${esc(v.keterangan || '')}</textarea></div>
+    ${!x && bisa('info') ? '<label class="ck" style="font-weight:500"><input type="checkbox" name="umumkan" checked> <span>Umumkan di Pengumuman & sematkan</span></label>' : ''}`,
+    onSubmit: async d => {
+      const nama = String(d.nama || '').trim(); if (!nama) { pesanDlg('Isi nama almarhum/almarhumah.', 'rd_n'); return false; }
+      const w = d.wargaId && wById(d.wargaId);
+      const row = {...(x || {}), tipe: 'duka', nama, usia: d.usia || '', wargaId: w ? w.id : '', blok: w ? w.blok : '', agama: d.agama || '', hubungan: String(d.hubungan || '').trim(), tanggal: d.tanggal, jam: d.jam || '',
+        rumahDuka: String(d.rumahDuka || '').trim(), waktuMakam: String(d.waktuMakam || '').trim(), makam: String(d.makam || '').trim(), keterangan: String(d.keterangan || '').trim(), diperbarui: todayISO()};
+      if (!x) { row.dibuat = todayISO(); row.dibuatOleh = namaSesi(); }
+      const ok = await put('rohani', x ? x.id : 'dk_' + uid(), row);
+      if (ok && d.umumkan) await rhUmumkanDuka(row);
+      if (ok) toast(x ? 'Kabar duka diperbarui.' : 'Kabar duka disimpan. Bagikan ke grup WhatsApp dari kartunya.');
+      return ok;
+    },
+    onDelete: x ? async () => { const ok = await del('rohani', x.id); if (ok) toast('Kabar duka dihapus.'); return ok; } : null, deleteLabel: 'Hapus'});
+}
+async function rhUmumkanDuka(x) {
+  const ok = await put('pengumuman', 'dk_' + uid(), {judul: 'Berita duka: ' + x.nama, kategori: 'Berita duka', isi: teksRhDuka(x).replace(/\*/g, '').replace(/\n\n[^\n]*$/, ''), tanggalAcara: '', jam: '', tempat: x.rumahDuka || '', sematkan: true, dibuat: todayISO(), diperbarui: todayISO()});
+  if (ok) toast('Berita duka diumumkan dan disematkan.');
+  return ok;
+}
+function openRhSet() {
+  const st = rhSet();
+  openDlg({title: 'Lokasi jadwal sholat', area: 'rohani',
+    body: `<label class="ck" style="font-weight:500"><input type="checkbox" name="tampilSholat" ${st.tampilSholat !== false ? 'checked' : ''}> <span>Tampilkan jadwal sholat di Kerohanian</span></label>
+    <div class="fld"><label for="rs_k">Nama lokasi</label><input type="text" id="rs_k" name="kota" maxlength="60" value="${esc(st.kota)}"></div>
+    <div class="grid2"><div class="fld"><label for="rs_la">Lintang (latitude)</label><input type="number" id="rs_la" name="lat" step="0.0001" min="-11" max="6" value="${esc(st.lat)}"></div>
+      <div class="fld"><label for="rs_lo">Bujur (longitude)</label><input type="number" id="rs_lo" name="lng" step="0.0001" min="95" max="141" value="${esc(st.lng)}"></div></div>
+    <p class="muted" style="margin:0;font-size:.84rem">Koordinat bisa disalin dari Google Maps (tekan lama lokasi). Waktu dihitung dengan metode Kemenag RI untuk zona WIB.</p>`,
+    onSubmit: async d => {
+      const lat = Number(d.lat), lng = Number(d.lng);
+      if (!isFinite(lat) || lat < -11 || lat > 6 || !isFinite(lng) || lng < 95 || lng > 141) { pesanDlg('Koordinat di luar wilayah Indonesia.', 'rs_la'); return false; }
+      const ok = await put('rohani', 'set', {tipe: 'set', kota: String(d.kota || '').trim() || 'Lokasi RT', lat, lng, tampilSholat: !!d.tampilSholat});
+      if (ok) toast('Lokasi jadwal sholat disimpan.'); return ok;
+    }});
+}
+function openQbSet() {
+  const th = S.qbTh, st = qbSet(th);
+  openDlg({title: 'Qurban ' + th + ': harga & tanggal', area: 'rohani',
+    body: `<div class="fld"><label for="qs_t">Tanggal Idul Adha</label><input type="date" id="qs_t" name="tanggal" value="${esc(st.tanggal)}"></div>
+    <div class="grid2"><div class="fld"><label for="qs_s">Harga sapi per ekor (Rp)</label><input type="number" id="qs_s" name="hargaSapi" min="0" step="50000" value="${esc(st.hargaSapi || '')}"><span class="hint" id="qsH"></span></div>
+      <div class="fld"><label for="qs_k">Harga kambing per ekor (Rp)</label><input type="number" id="qs_k" name="hargaKambing" min="0" step="50000" value="${esc(st.hargaKambing || '')}"></div></div>
+    <div class="fld"><label for="qs_d">Harga domba per ekor (Rp)</label><input type="number" id="qs_d" name="hargaDomba" min="0" step="50000" value="${esc(st.hargaDomba || '')}"></div>
+    <div class="fld"><label for="qs_c">Catatan untuk peserta</label><textarea id="qs_c" name="catatan" rows="2" maxlength="400" placeholder="mis. Pendaftaran paling lambat H-14, pemotongan di lapangan blok C">${esc(st.catatan || '')}</textarea></div>`,
+    onSubmit: async d => {
+      const ok = await put('rohani', 'qurban-' + th, {tipe: 'qurbanSet', tahun: th, tanggal: d.tanggal || '', hargaSapi: Math.round(Number(d.hargaSapi) || 0), hargaKambing: Math.round(Number(d.hargaKambing) || 0), hargaDomba: Math.round(Number(d.hargaDomba) || 0), catatan: String(d.catatan || '').trim()});
+      if (ok) toast('Pengaturan qurban disimpan.'); return ok;
+    }});
+  const s = $('#qs_s'), h = () => { $('#qsH').textContent = s.value ? '1/7 bagian = ' + rp(Math.round(Number(s.value) / 7)) : ''; };
+  s.addEventListener('input', h); h();
+}
+function openQbPeserta(id) {
+  const th = S.qbTh, set = qbSet(th), x = id ? S.qurban.find(p => p.id === id) : null, ro = dis('rohani');
+  const v = x || {hewan: 'Sapi', jumlah: 1, tahun: th};
+  openDlg({title: x ? (bisa('rohani') ? 'Ubah peserta qurban' : 'Peserta qurban') : 'Peserta qurban ' + th, area: 'rohani', submitLabel: x ? 'Simpan' : 'Daftarkan',
+    body: `<div class="fld"><label for="qp_w">Warga</label><select id="qp_w" name="wargaId" ${ro}><option value="">— Peserta dari luar —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${w.id === v.wargaId ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select></div>
+    <div class="fld" id="qpNW"${v.wargaId ? ' hidden' : ''}><label for="qp_n">Nama peserta <span class="req">*</span></label><input type="text" id="qp_n" name="nama" maxlength="80" value="${esc(v.wargaId ? '' : v.nama || '')}" ${ro}></div>
+    <div class="grid2"><div class="fld"><label for="qp_h">Hewan</label><select id="qp_h" name="hewan" ${ro}>${HEWAN.map(k => `<option ${k === v.hewan ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
+      <div class="fld"><label for="qp_j" id="qpJL">${v.hewan === 'Sapi' ? 'Jumlah bagian (1–7)' : 'Jumlah ekor'}</label><input type="number" id="qp_j" name="jumlah" min="1" max="${v.hewan === 'Sapi' ? 7 : 20}" value="${esc(v.jumlah || 1)}" ${ro}></div></div>
+    <div class="fld"><label for="qp_a">Qurban atas nama</label><input type="text" id="qp_a" name="atasNama" maxlength="200" value="${esc(v.atasNama || '')}" placeholder="mis. Budi bin Santoso (boleh beberapa nama untuk kambing/domba keluarga)" ${ro}></div>
+    <div class="grid2"><div class="fld"><label for="qp_hg">Biaya (Rp)</label><input type="number" id="qp_hg" name="harga" min="0" step="1000" value="${esc(v.harga || '')}" placeholder="otomatis" ${ro}><span class="hint" id="qpHH"></span></div>
+      <div class="fld"><label for="qp_b">Sudah dibayar (Rp)</label><input type="number" id="qp_b" name="dibayar" min="0" step="1000" value="${esc(v.dibayar || '')}" ${ro}></div></div>
+    <div class="grid2"><div class="fld"><label for="qp_m">Metode bayar</label><select id="qp_m" name="metode" ${ro}>${METODE.map(m => `<option ${m === v.metode ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="fld"><label for="qp_tb">Tanggal bayar terakhir</label><input type="date" id="qp_tb" name="tglBayar" value="${esc(v.tglBayar || '')}" ${ro}></div></div>
+    <div class="fld"><label for="qp_c">Catatan</label><input type="text" id="qp_c" name="catatan" maxlength="200" value="${esc(v.catatan || '')}" placeholder="mis. minta kaki & kepala, daging dibagikan semua" ${ro}></div>`,
+    onSubmit: async d => {
+      const w = d.wargaId && wById(d.wargaId), nama = w ? w.nama : String(d.nama || '').trim();
+      if (!nama) { pesanDlg('Isi nama peserta.', 'qp_n'); return false; }
+      const jumlah = Math.max(1, Math.min(d.hewan === 'Sapi' ? 7 : 20, Math.round(Number(d.jumlah) || 1)));
+      const row = {...(x || {}), tahun: th, wargaId: w ? w.id : '', nama, blok: w ? w.blok : '', hewan: d.hewan, jumlah, atasNama: String(d.atasNama || '').trim() || nama, harga: Math.round(Number(d.harga) || 0),
+        dibayar: Math.round(Number(d.dibayar) || 0), metode: d.metode, tglBayar: d.tglBayar || (Number(d.dibayar) && !(x && x.tglBayar) ? todayISO() : (x && x.tglBayar) || ''), catatan: String(d.catatan || '').trim(), diperbarui: todayISO()};
+      if (!x) { row.dibuat = new Date().toISOString(); row.dibuatOleh = namaSesi(); }
+      const ok = await put('qurban', x ? x.id : th + '_' + uid(), row);
+      if (ok) toast(x ? 'Data peserta diperbarui.' : `${nama} terdaftar sebagai peserta qurban.`); return ok;
+    },
+    onDelete: x ? async () => { const ok = await del('qurban', x.id); if (ok) toast('Peserta dihapus.'); return ok; } : null, deleteLabel: 'Hapus peserta'});
+  const sw = $('#qp_w'), hw = $('#qp_h'), jj = $('#qp_j');
+  const upd = () => { $('#qpNW').hidden = !!sw.value; $('#qpJL').textContent = hw.value === 'Sapi' ? 'Jumlah bagian (1–7)' : 'Jumlah ekor'; jj.max = hw.value === 'Sapi' ? 7 : 20;
+    $('#qpHH').textContent = 'Otomatis: ' + rp(qbHarga({hewan: hw.value, jumlah: jj.value}, set)); };
+  [sw, hw].forEach(e => e && e.addEventListener('change', upd)); if (jj) jj.addEventListener('input', upd); if (sw) upd();
+}
+
 /* ---------- Sumbangan & donasi ---------- */
 const SB_THN = (() => { const d = new Date(); return d.getFullYear() + (d.getMonth() >= 4 ? 1 : 0); })();
 const SB_JENIS = [
@@ -4225,7 +4610,7 @@ function openSos() {
 }
 
 /* ---------- pengumuman ---------- */
-const KAT_INFO = ['Informasi', 'Kegiatan', 'Kerja bakti', 'Rapat warga', 'Penting'];
+const KAT_INFO = ['Informasi', 'Kegiatan', 'Kerja bakti', 'Rapat warga', 'Keagamaan', 'Berita duka', 'Penting'];
 const jamLbl = j => j ? ' pukul ' + j.replace(':', '.') : '';
 function teksInfo(a) {
   return `*${a.judul}*\n\n${a.isi || ''}${a.tanggalAcara ? `\n\nWaktu: ${tglPanjang(a.tanggalAcara)}${jamLbl(a.jam)}` : ''}${a.tempat ? `\nTempat: ${a.tempat}` : ''}\n\n${pengirim()}`;
@@ -4664,6 +5049,19 @@ document.addEventListener('click', async e => {
   else if (a === 'papan-buka') bukaPapan();
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
+  else if (a === 'rht') { if (S.tab !== 'rohani') { if (!tabBoleh('rohani')) return; S.tab = 'rohani'; } S.rhTab = b.dataset.k; render(); }
+  else if (a === 'rhaf') { S.rhAgF = b.dataset.k; render(); }
+  else if (a === 'rh-ag') openRhAgenda(b.dataset.id);
+  else if (a === 'rh-duka') openRhDuka(b.dataset.id);
+  else if (a === 'rh-set') openRhSet();
+  else if (a === 'rh-umum') { const x = S.rohani.find(r => r.id === b.dataset.id); if (x) { b.disabled = true; await rhUmumkan(x, b.dataset.t); } }
+  else if (a === 'rh-umum-duka') { const x = S.rohani.find(r => r.id === b.dataset.id); if (x) { b.disabled = true; await rhUmumkanDuka(x); } }
+  else if (a === 'rh-santun') { const x = S.rohani.find(r => r.id === b.dataset.id); if (x) { openSbProgram(null, 'Duka cita / santunan'); const n = $('#sbp_n'); if (n) { n.value = 'Santunan duka cita ' + (x.agama === 'Islam' ? 'alm. ' : '') + x.nama; n.dataset.ubah = '1'; } const dd = $('#sbp_d'); if (dd) dd.value = `Santunan untuk keluarga ${x.nama}${x.hubungan ? ' (' + x.hubungan + ')' : ''}.`; } }
+  else if (a === 'qbth') { S.qbTh += Number(b.dataset.n); render(); }
+  else if (a === 'qb-set') openQbSet();
+  else if (a === 'qb-new') openQbPeserta();
+  else if (a === 'qb-edit') openQbPeserta(b.dataset.id);
+  else if (a === 'qb-xlsx') { try { unduh(fname(`Peserta Qurban ${S.qbTh} - ${lingk()}.xlsx`), xlsxQurban(S.qbTh)); } catch (err) { toast('File Excel gagal dibuat.', 'bad'); } }
   else if (a === 'sb-new') openSbProgram(null, b.dataset.j);
   else if (a === 'sb-buka') { if (!tabBoleh('sumbangan')) return; if (dlg.open) dlg.close(); const pindah = S.tab !== 'sumbangan' || S.sbSel !== b.dataset.id; S.tab = 'sumbangan'; S.sbSel = b.dataset.id; if (pindah) { S.sbTab = 'penyumbang'; S.sbQ = ''; } render(); window.scrollTo(0, 0); }
   else if (a === 'sb-kembali') { S.sbSel = null; render(); window.scrollTo(0, 0); }
@@ -4821,6 +5219,7 @@ document.addEventListener('change', async e => {
   }
   if (e.target.id === 'fBlok') { S.blok = e.target.value; render(); }
   if (e.target.id === 'fPgKat') { S.pgKat = e.target.value; render(); }
+  if (e.target.id === 'fRhAgama') { S.rhAgama = e.target.value; render(); }
   if (e.target.id === 'lapDari') { S.lapDari = e.target.value; render(); }
   if (e.target.id === 'lapSampai') { S.lapSampai = e.target.value; render(); }
 });

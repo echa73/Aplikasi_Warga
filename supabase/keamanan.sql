@@ -257,3 +257,10 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   sumber 'warga', nama/blok dari data warga, membuang 'verif', dan menolak bila program tidak aktif/tidak menerima konfirmasi.
 -- public.sumbangan_saya(): RPC (authenticated) — program yang ditampilkan ke warga + total, penyaluran,
 --   daftar penyumbang sesuai pengaturan (anonim -> "Hamba Allah"), dan donasi milik warga tersebut.
+
+-- 2026-10-23: Modul Kerohanian (migrasi kerohanian_akses + qurban_baca_ketat)
+-- Koleksi: rohani (agenda, kabar duka, pengaturan lokasi 'set', pengaturan qurban 'qurban-<tahun>'), qurban (peserta).
+-- privat.izin: area 'rohani' fallback ke izin 'info' bila role belum punya kunci 'rohani'.
+-- rohani: terbaca semua pengurus & warga; ditulis izin rohani = kelola.
+-- qurban: terbaca izin rohani = kelola atau kas >= lihat, warga hanya miliknya; ditulis izin rohani = kelola.
+-- Role koord_kerohanian: izin rohani = kelola.

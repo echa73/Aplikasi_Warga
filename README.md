@@ -50,3 +50,6 @@ Menu **Data warga → Impor Excel**. Unduh template (`public/template/Template-I
 
 ## Sumbangan
 Menu **Keuangan → Sumbangan** (role dengan izin Sumbangan = kelola, default Bendahara): program sukarela / per rumah (THR keamanan & kebersihan, HUT RI, duka cita, dll.), catat sumbangan, catat keliling per rumah, penyaluran dana, verifikasi konfirmasi dari warga, laporan Excel & WhatsApp. Penerimaan (per program per tanggal) dan penyaluran otomatis masuk Buku kas, Pengeluaran, dan Laporan keuangan kecuali program ditandai "dana terpisah". Warga melihat progres dan bisa mengirim konfirmasi sumbangan.
+
+## Kerohanian
+Menu **Warga → Kerohanian**: jadwal sholat harian (metode Kemenag, lokasi bisa diatur) + tanggal Hijriah, agenda kegiatan keagamaan semua agama (bisa berulang mingguan/bulanan/"Jumat pertama"), kabar duka (bagikan ke WA, umumkan, buat program santunan), dan qurban (harga per tahun, peserta, kelompok sapi 1/7 otomatis, status bayar, Excel). Dikelola role dengan izin Kerohanian = kelola (default Koordinator Kerohanian; role lama mengikuti izin Pengumuman).

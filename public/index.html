@@ -895,7 +895,9 @@ const DEFAULT_ROLES = [
   {id: 'bendahara', nama: 'Bendahara', ket: 'Iuran dan buku kas', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'lihat', iuran: 'kelola', kas: 'kelola', keluhan: 'tidak', info: 'lihat', surat: 'tidak', pengaturan: 'tidak'}},
   {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
   {id: 'lihat', nama: 'Lihat saja', ket: 'Hanya melihat, tanpa pengaturan', izin: {...semua('lihat'), pengaturan: 'tidak', portal: 'tidak'}},
-  {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', warga: 'lihat', info: 'lihat'}}
+  {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', warga: 'lihat', info: 'lihat'}},
+  {id: 'koord_keamanan', nama: 'Koordinator Keamanan', ket: 'Mengelola keamanan & satpam, pengumuman; melihat data warga dan keluhan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keamanan: 'kelola', keluhan: 'lihat', info: 'kelola'}},
+  {id: 'koord_kebersihan', nama: 'Koordinator Kebersihan', ket: 'Menangani keluhan kebersihan & lingkungan, pengumuman kerja bakti; melihat data warga', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keluhan: 'kelola', info: 'kelola'}}
 ];
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
@@ -2087,7 +2089,7 @@ function openLapor() {
 }
 
 /* --- Admin: pengurus & role --- */
-const JABATAN = ['Ketua RT', 'Wakil Ketua RT', 'Sekretaris', 'Bendahara', 'Seksi Keamanan', 'Satpam', 'Seksi Kebersihan', 'Seksi Sosial', 'Seksi Pembangunan', 'Humas', 'Anggota pengurus'];
+const JABATAN = ['Ketua RT', 'Wakil Ketua RT', 'Sekretaris', 'Bendahara', 'Koordinator Keamanan', 'Koordinator Kebersihan', 'Seksi Keamanan', 'Satpam', 'Seksi Kebersihan', 'Seksi Sosial', 'Seksi Pembangunan', 'Humas', 'Anggota pengurus'];
 const inisial = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
 function avatarHtml(userId, namaTeks) {
   const src = userId && avatar(userId);

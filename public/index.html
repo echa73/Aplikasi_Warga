@@ -937,7 +937,8 @@ const DEFAULT_ROLES = [
   {id: 'lihat', nama: 'Lihat saja', ket: 'Hanya melihat, tanpa pengaturan', izin: {...semua('lihat'), pengaturan: 'tidak', portal: 'tidak'}},
   {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', warga: 'lihat', info: 'lihat'}},
   {id: 'koord_keamanan', nama: 'Koordinator Keamanan', ket: 'Mengelola keamanan & satpam, pengumuman; melihat data warga dan keluhan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keamanan: 'kelola', keluhan: 'lihat', info: 'kelola'}},
-  {id: 'koord_kebersihan', nama: 'Koordinator Kebersihan', ket: 'Menangani keluhan kebersihan & lingkungan, pengumuman kerja bakti; melihat data warga', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keluhan: 'kelola', info: 'kelola'}}
+  {id: 'koord_kebersihan', nama: 'Koordinator Kebersihan', ket: 'Menangani keluhan kebersihan & lingkungan, pengumuman kerja bakti; melihat data warga', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keluhan: 'kelola', info: 'kelola'}},
+  {id: 'koord_kerohanian', nama: 'Koordinator Kerohanian', ket: 'Kegiatan keagamaan (pengajian, Ramadhan, qurban, santunan), pengumuman kegiatan; melihat data warga dan program sumbangan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', info: 'kelola', sumbangan: 'lihat'}}
 ];
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
@@ -2353,7 +2354,7 @@ function openLapor() {
 }
 
 /* --- Admin: pengurus & role --- */
-const JABATAN = ['Ketua RT', 'Wakil Ketua RT', 'Sekretaris', 'Bendahara', 'Koordinator Keamanan', 'Koordinator Kebersihan', 'Seksi Keamanan', 'Satpam', 'Seksi Kebersihan', 'Seksi Sosial', 'Seksi Pembangunan', 'Humas', 'Anggota pengurus'];
+const JABATAN = ['Ketua RT', 'Wakil Ketua RT', 'Sekretaris', 'Bendahara', 'Koordinator Keamanan', 'Koordinator Kebersihan', 'Koordinator Kerohanian', 'Seksi Keamanan', 'Satpam', 'Seksi Kebersihan', 'Seksi Kerohanian', 'Seksi Sosial', 'Seksi Pembangunan', 'Humas', 'Anggota pengurus'];
 const inisial = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
 function avatarHtml(userId, namaTeks) {
   const src = userId && avatar(userId);
@@ -2365,7 +2366,7 @@ function izinRingkas(r) {
   const t = MENU_IZIN.filter(([m]) => !izinRole(r, m) || izinRole(r, m) === 'tidak').map(m => m[1]);
   return [k.length ? 'Ubah: ' + k.join(', ') : '', l.length ? 'Lihat: ' + l.join(', ') : '', t.length ? 'Tidak bisa buka: ' + t.join(', ') : ''].filter(Boolean).join(' · ') || 'Tidak bisa membuka menu apa pun';
 }
-const roleCocok = jab => { const j = String(jab || '').trim().toLowerCase(); return j ? rolesAll().find(r => r.nama.toLowerCase() === j) : null; };
+const roleCocok = jab => { const j = String(jab || '').trim().toLowerCase(); if (!j) return null; return rolesAll().find(r => r.nama.toLowerCase() === j) || (/kerohanian|keagamaan|rohani/.test(j) ? roleById('koord_kerohanian') : null) || null; };
 function roleInfoHtml(rid, jab) {
   const r = roleById(rid);
   if (!r) return 'Pilih role untuk menentukan menu yang boleh dibuka.';

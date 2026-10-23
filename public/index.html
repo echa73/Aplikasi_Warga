@@ -2660,7 +2660,7 @@ function openRole(id) {
     body: `<div class="fld"><label for="rl_nama">Nama role <span class="req">*</span></label><input type="text" id="rl_nama" name="nama" required value="${esc(x.nama)}" placeholder="mis. Seksi Keamanan"></div>
     <div class="fld"><label for="rl_ket">Keterangan</label><input type="text" id="rl_ket" name="ket" value="${esc(x.ket)}" placeholder="Tugas singkat role ini"></div>
     <div class="fld"><label>Hak akses per menu</label>
-      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Jual-beli + moderasi' : 'Jual-beli') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
+      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Lihat + moderasi' : 'Lihat saja') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
       <span class="hint">Menu yang "Tidak bisa buka" disembunyikan dari pengurus dengan role ini. Menu Admin hanya untuk Pemilik.</span></div>
     ${dipakai ? `<p class="muted" style="margin:0;font-size:.84rem">Dipakai oleh ${dipakai} pengurus. Perubahan langsung berlaku untuk mereka.</p>` : ''}`,
     onSubmit: async d => {
@@ -2924,7 +2924,7 @@ const lpSaya = () => (S.me && S.me.id) || '';
 const lpModerator = () => bisa('lapak');
 const bolehIzinLapak = () => !S.readOnly && (S.sesi === 'pemilik' ? bolehPemilik() : (pengurusSesi() || {}).peranId === 'ketua');
 const lpMinta = () => S.warga.filter(w => w.status !== 'Pindah' && !w.izinLapak && w.mintaLapak && w.mintaLapak.status === 'Menunggu');
-const lpBolehJual = () => !isWarga() || !!(wargaSaya() || {}).izinLapak;
+const lpBolehJual = () => isWarga() && !!(wargaSaya() || {}).izinLapak;
 function lpFav() { try { return new Set(JSON.parse(localStorage.getItem('lapak-fav') || '[]')); } catch (e) { return new Set(); } }
 function lpFavSet(set) { try { localStorage.setItem('lapak-fav', JSON.stringify([...set].slice(-200))); } catch (e) {} }
 const lpHarga = x => x.hargaTipe === 'gratis' ? 'Gratis' : (x.hargaTipe === 'mulai' ? 'Mulai ' : '') + rp(x.harga) + (x.satuan ? ` <small>/${esc(x.satuan)}</small>` : '') + (x.hargaTipe === 'nego' ? ' <small>nego</small>' : '');
@@ -2954,10 +2954,10 @@ function lpKartu(x) {
 function vLapak() {
   const saya = lpSaya(), mod = lpModerator(), fav = lpFav();
   const umum = S.lapak.filter(lpTampilUmum), milik = S.lapak.filter(x => x.penjualId === saya), sembunyi = S.lapak.filter(x => x.status === 'Disembunyikan');
-  const tabs = [['semua', `Semua ${umum.length}`], ['favorit', `Favorit ${S.lapak.filter(x => fav.has(x.id) && lpTampilUmum(x)).length}`], ['saya', `Lapak saya ${milik.length}`], ...(mod ? [['moderasi', `Disembunyikan ${sembunyi.length}`]] : []), ...(bolehIzinLapak() ? [['izin', `Izin penjual${lpMinta().length ? ' · ' + lpMinta().length + ' baru' : ''}`]] : [])];
+  const tabs = [['semua', `Semua ${umum.length}`], ['favorit', `Favorit ${S.lapak.filter(x => fav.has(x.id) && lpTampilUmum(x)).length}`], ...(isWarga() ? [['saya', `Lapak saya ${milik.length}`]] : []), ...(mod ? [['moderasi', `Disembunyikan ${sembunyi.length}`]] : []), ...(bolehIzinLapak() ? [['izin', `Izin penjual${lpMinta().length ? ' · ' + lpMinta().length + ' baru' : ''}`]] : [])];
   if (!tabs.some(t => t[0] === S.lpTab)) S.lpTab = 'semua';
   const headL = `<div class="sec-head"><div><h2>Lapak Warga</h2><p>Belanja dan tawarkan produk atau jasa antar tetangga ${esc(lingk())}. Transaksi langsung dengan penjual lewat WhatsApp.</p></div>
-    <button class="btn pri" data-act="lp-new">+ Jual sesuatu</button></div>`;
+    ${isWarga() ? '<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>' : ''}</div>`;
   const izinBar = isWarga() && !lpBolehJual() ? (() => { const m = (wargaSaya() || {}).mintaLapak; return `<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>${m && m.status === 'Menunggu' ? 'Permintaan izin berjualan Anda sedang menunggu persetujuan Ketua RT.' : m && m.status === 'Ditolak' ? 'Permintaan izin berjualan Anda belum disetujui' + (m.alasan ? ': ' + esc(m.alasan) : '') + '.' : 'Ingin berjualan? Ajukan izin ke Ketua RT terlebih dahulu.'}</span>${m && m.status === 'Menunggu' ? '' : '<button class="btn sm" data-act="lp-new">Ajukan izin</button>'}</div>`; })() : '';
   const tabBar = `<div class="toolbar"><div class="seg" role="group" aria-label="Tampilan lapak">${tabs.map(([k, l]) => `<button type="button" data-act="lp-tab" data-k="${k}" aria-pressed="${S.lpTab === k}">${esc(l)}</button>`).join('')}</div></div>`;
   if (S.lpTab === 'izin') return headL + tabBar + vLapakIzin();
@@ -2968,7 +2968,7 @@ function vLapak() {
   const nilaiH = x => x.hargaTipe === 'gratis' ? 0 : Number(x.harga) || 0, tersedia = x => (x.status === 'Tersedia' ? 0 : 1);
   L = [...L].sort((a, b) => tersedia(a) - tersedia(b) || (S.lpSort === 'murah' ? nilaiH(a) - nilaiH(b) : S.lpSort === 'mahal' ? nilaiH(b) - nilaiH(a) : String(b.dibuat || '').localeCompare(String(a.dibuat || ''))));
   const kats = [['', 'Semua'], ...LP_KAT.map(([k, e]) => [k, e + ' ' + k])].map(([k, l]) => `<button type="button" data-act="lp-kat" data-k="${esc(k)}" aria-pressed="${S.lpKat === k}">${esc(l)}</button>`).join('');
-  const kosong = S.lpTab === 'saya' ? `Anda belum memasang lapak.<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>` : S.lpTab === 'favorit' ? 'Belum ada favorit. Ketuk ♡ pada produk untuk menyimpannya.' : S.lpTab === 'moderasi' ? 'Tidak ada lapak yang disembunyikan.' : (q || S.lpKat ? 'Tidak ada yang cocok dengan pencarian.' : 'Belum ada yang berjualan. Jadilah yang pertama!<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>');
+  const kosong = S.lpTab === 'saya' ? `Anda belum memasang lapak.<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>` : S.lpTab === 'favorit' ? 'Belum ada favorit. Ketuk ♡ pada produk untuk menyimpannya.' : S.lpTab === 'moderasi' ? 'Tidak ada lapak yang disembunyikan.' : (q || S.lpKat ? 'Tidak ada yang cocok dengan pencarian.' : isWarga() ? 'Belum ada yang berjualan. Jadilah yang pertama!<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>' : 'Belum ada warga yang berjualan.');
   return headL + izinBar + tabBar + `
 <div class="toolbar"><input class="search" type="search" id="qLapak" placeholder="Cari produk, jasa, atau nomor rumah…" value="${esc(S.lpQ)}" aria-label="Cari di lapak">
     <select id="fLpSort" aria-label="Urutkan" style="width:auto"><option value="baru" ${S.lpSort === 'baru' ? 'selected' : ''}>Terbaru</option><option value="murah" ${S.lpSort === 'murah' ? 'selected' : ''}>Harga terendah</option><option value="mahal" ${S.lpSort === 'mahal' ? 'selected' : ''}>Harga tertinggi</option></select></div>
@@ -3103,9 +3103,10 @@ function vLapakIzin() {
   <div class="panel"><h3>Warga yang boleh berjualan <small>${penjual.length} rumah</small></h3>
     ${penjual.length ? penjual.map(w => `<div class="row"><span class="house">${esc(w.blok)}</span><div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${w.izinLapakOleh ? 'Disetujui ' + esc(w.izinLapakOleh) + (w.izinLapakTgl ? ' · ' + esc(tgl(w.izinLapakTgl)) : '') + ' · ' : ''}${nLapak(w)} lapak tayang</div></div>
       <button class="btn sm ghost" data-act="lp-izin-cabut" data-id="${esc(w.id)}" style="color:var(--bad)">Cabut izin</button></div>`).join('') : '<p class="muted" style="margin:0">Belum ada. Izin juga bisa diberikan lewat menu Data warga (centang "Boleh berjualan di Lapak Warga").</p>'}</div>
-  <p class="muted" style="font-size:.8rem">Pengurus RT bisa berjualan tanpa izin. Izin hanya bisa diubah Pemilik (admin) atau Ketua RT.</p>`;
+  <p class="muted" style="font-size:.8rem">Hanya warga yang sudah diizinkan yang bisa berjualan. Pengurus RT, Ketua RT, dan admin tidak berjualan di Lapak Warga. Izin hanya bisa diubah Pemilik (admin) atau Ketua RT.</p>`;
 }
 function openLapakIzin() {
+  if (!isWarga()) return;
   const w = wargaSaya(); if (!w) return;
   const m = w.mintaLapak;
   if (m && m.status === 'Menunggu') { openDlg({title: 'Izin berjualan', body: `<p style="margin:0">Permintaan Anda dikirim ${esc(lamaLalu(m.waktu))} dan sedang menunggu persetujuan Ketua RT.</p>${m.usaha ? `<p class="muted" style="margin:0">Yang akan dijual: ${esc(m.usaha)}</p>` : ''}`}); return; }
@@ -5421,7 +5422,7 @@ document.addEventListener('click', async e => {
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
   else if (a === 'lp-buka') openLapakDetail(b.dataset.id);
-  else if (a === 'lp-new') { if (lpBolehJual()) openLapak(); else openLapakIzin(); }
+  else if (a === 'lp-new') { if (!isWarga()) toast('Pengurus RT dan admin tidak diperbolehkan berjualan di Lapak Warga.', 'bad'); else if (lpBolehJual()) openLapak(); else openLapakIzin(); }
   else if (a === 'lp-izin-buka') { S.tab = 'lapak'; S.lpTab = 'izin'; render(); window.scrollTo(0, 0); }
   else if (a === 'lp-izin-ya') { const w = wById(b.dataset.id); if (w && bolehIzinLapak()) { b.disabled = true; if (await lpIzinSimpan(w, true)) toast(`${w.nama} sekarang boleh berjualan di Lapak Warga.`); } }
   else if (a === 'lp-izin-tolak') openLapakTolak(b.dataset.id);

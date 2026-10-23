@@ -264,3 +264,5 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- rohani: terbaca semua pengurus & warga; ditulis izin rohani = kelola.
 -- qurban: terbaca izin rohani = kelola atau kas >= lihat, warga hanya miliknya; ditulis izin rohani = kelola.
 -- Role koord_kerohanian: izin rohani = kelola.
+
+-- 2026-10-23: info_publik() menyembunyikan pengumuman kategori 'Berita duka' yang dibuat lebih dari 7 hari lalu.

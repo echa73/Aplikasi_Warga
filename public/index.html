@@ -2974,7 +2974,7 @@ function rhAgKartu(x, kel) {
       <div class="m">${a.jam ? `<span>🕒 ${esc(rhJam(a))}</span>` : ''}${a.tempat ? `<span>📍 ${esc(a.tempat)}</span>` : ''}${a.pemimpin ? `<span>🎙️ ${esc(a.pemimpin)}</span>` : ''}${a.pj ? `<span>PJ: ${esc(a.pj)}</span>` : ''}</div>
       ${a.petugas ? `<div class="m" style="margin-top:4px;white-space:pre-line;display:block">${esc(a.petugas)}</div>` : ''}
       ${a.keterangan ? `<p style="margin:6px 0 0;font-size:.86rem;white-space:pre-line">${esc(a.keterangan)}</p>` : ''}
-      <div class="act"><a class="btn wa sm" href="${esc(waShare(teksRhAgenda(a, t)))}" target="_blank" rel="noopener">Bagikan</a>${kel ? `<button class="btn sm" data-act="rh-ag" data-id="${esc(a.id)}">Ubah</button>${bisa('info') ? `<button class="btn ghost sm" data-act="rh-umum" data-id="${esc(a.id)}" data-t="${esc(t)}">Umumkan</button>` : ''}` : ''}</div></div></article>`;
+      <div class="act"><a class="btn wa sm" href="${esc(waShare(teksRhAgenda(a, t)))}" target="_blank" rel="noopener">Bagikan</a>${kel ? `<button class="btn sm" data-act="rh-ag" data-id="${esc(a.id)}">Ubah</button>${bisa('info') ? (S.pengumuman.some(p => p.id === 'pg-' + a.id + '-' + t) ? '<span class="chip ok plain">Sudah diumumkan</span>' : `<button class="btn ghost sm" data-act="rh-umum" data-id="${esc(a.id)}" data-t="${esc(t)}">Umumkan</button>`) : ''}` : ''}</div></div></article>`;
 }
 function vRhBeranda(kel) {
   const st = rhSet(), hari = todayISO();
@@ -3020,7 +3020,7 @@ function rhDukaKartu(x, kel) {
     ${x.hubungan || x.blok ? `<div class="muted" style="font-size:.86rem">${esc([x.hubungan, x.blok && 'Rumah ' + x.blok].filter(Boolean).join(' · '))}</div>` : ''}
     <dl><dt>Wafat</dt><dd>${esc(hariTgl(x.tanggal))}${x.jam ? ', ' + esc(x.jam.replace(':', '.')) + ' WIB' : ''}</dd>${x.rumahDuka ? `<dt>Disemayamkan</dt><dd>${esc(x.rumahDuka)}</dd>` : ''}${x.makam ? `<dt>Pemakaman</dt><dd>${esc((x.waktuMakam ? x.waktuMakam + ' · ' : '') + x.makam)}</dd>` : ''}</dl>
     ${x.keterangan ? `<p style="margin:0;font-size:.86rem;white-space:pre-line">${esc(x.keterangan)}</p>` : ''}
-    <div class="meta" style="gap:6px;display:flex;flex-wrap:wrap"><a class="btn wa sm" href="${esc(waShare(teksRhDuka(x)))}" target="_blank" rel="noopener">Bagikan berita duka</a>${kel ? `<button class="btn sm" data-act="rh-duka" data-id="${esc(x.id)}">Ubah</button>` : ''}${bisa('sumbangan') ? `<button class="btn ghost sm" data-act="rh-santun" data-id="${esc(x.id)}">Buat program santunan</button>` : ''}${kel && bisa('info') ? `<button class="btn ghost sm" data-act="rh-umum-duka" data-id="${esc(x.id)}">Umumkan</button>` : ''}</div></article>`;
+    <div class="meta" style="gap:6px;display:flex;flex-wrap:wrap"><a class="btn wa sm" href="${esc(waShare(teksRhDuka(x)))}" target="_blank" rel="noopener">Bagikan berita duka</a>${kel ? `<button class="btn sm" data-act="rh-duka" data-id="${esc(x.id)}">Ubah</button>` : ''}${bisa('sumbangan') ? `<button class="btn ghost sm" data-act="rh-santun" data-id="${esc(x.id)}">Buat program santunan</button>` : ''}${kel && bisa('info') ? (rhPengumuman(x).length ? '<span class="chip ok plain">Sudah diumumkan</span>' : `<button class="btn ghost sm" data-act="rh-umum-duka" data-id="${esc(x.id)}">Umumkan</button>`) : ''}</div></article>`;
 }
 function vRhDuka(kel) {
   const L = rhDuka();
@@ -3115,17 +3115,31 @@ function openRhAgenda(id) {
         tempat: String(d.tempat || '').trim(), pemimpin: String(d.pemimpin || '').trim(), pj: String(d.pj || '').trim(), petugas: String(d.petugas || '').trim(), keterangan: String(d.keterangan || '').trim(), diperbarui: todayISO()};
       if (!x) { row.dibuat = todayISO(); row.dibuatOleh = namaSesi(); }
       const nid = x ? x.id : 'ag_' + uid(), ok = await put('rohani', nid, row);
-      if (ok && d.umumkan) await rhUmumkan(row, (rhKejadian(row, todayISO(), '9999-12-31')[0]) || row.tanggal);
+      if (ok && d.umumkan) await rhUmumkan({...row, id: nid}, (rhKejadian(row, todayISO(), '9999-12-31')[0]) || row.tanggal);
       if (ok) toast(x ? 'Agenda diperbarui.' : 'Agenda kegiatan disimpan.');
       return ok;
     },
-    onDelete: x ? async () => { const ok = await del('rohani', x.id); if (ok) toast('Agenda dihapus.'); return ok; } : null, deleteLabel: 'Hapus agenda'});
+    onDelete: x ? () => rhHapus(x, 'Agenda') : null, deleteLabel: 'Hapus agenda'});
   const u = $('#ra_u'), t = $('#ra_t');
   const upd = () => { const sw = $('#raSWrap'); if (sw) sw.hidden = u.value === 'tidak'; const h = $('#raUH'); if (h) h.textContent = u.value === 'tidak' ? '' : rhUlangTeks({tanggal: t.value, ulang: u.value}); };
   if (u) { u.addEventListener('change', upd); t.addEventListener('change', upd); upd(); }
 }
+// pengumuman yang dibuat dari agenda / kabar duka (termasuk data lama yang belum bertaut)
+function rhPengumuman(x) {
+  return S.pengumuman.filter(p => p.sumberRohani === x.id || p.id === 'pg-' + x.id || String(p.id).startsWith('pg-' + x.id + '-')
+    || (x.tipe === 'duka' && p.kategori === 'Berita duka' && p.judul === 'Berita duka: ' + x.nama)
+    || (x.tipe === 'agenda' && p.kategori === 'Keagamaan' && String(p.id).startsWith('rh_') && p.judul === x.judul));
+}
+async function rhHapus(x, label) {
+  const terkait = rhPengumuman(x);
+  const ok = await del('rohani', x.id); if (!ok) return false;
+  let n = 0; if (bisa('info')) for (const p of terkait) if (await del('pengumuman', p.id)) n++;
+  if (terkait.length && !bisa('info')) toast(`${label} dihapus, tetapi pengumumannya masih ada. Minta pengelola Pengumuman menghapusnya.`, 'bad');
+  else toast(`${label} dihapus${n ? ` beserta ${n} pengumuman terkait` : ''}.`);
+  return true;
+}
 async function rhUmumkan(a, t) {
-  const ok = await put('pengumuman', 'rh_' + uid(), {judul: a.judul, kategori: 'Keagamaan', isi: [a.pemimpin && 'Pengisi: ' + a.pemimpin, rhUlangTeks(a), a.petugas, a.keterangan].filter(Boolean).join('\n'), tanggalAcara: t, jam: a.jam || '', tempat: a.tempat || '', sematkan: false, dibuat: todayISO(), diperbarui: todayISO()});
+  const ok = await put('pengumuman', 'pg-' + a.id + '-' + t, {sumberRohani: a.id, judul: a.judul, kategori: 'Keagamaan', isi: [a.pemimpin && 'Pengisi: ' + a.pemimpin, rhUlangTeks(a), a.petugas, a.keterangan].filter(Boolean).join('\n'), tanggalAcara: t, jam: a.jam || '', tempat: a.tempat || '', sematkan: false, dibuat: todayISO(), diperbarui: todayISO()});
   if (ok) toast('Diumumkan di menu Pengumuman.');
   return ok;
 }
@@ -3151,17 +3165,18 @@ function openRhDuka(id) {
       const row = {...(x || {}), tipe: 'duka', nama, usia: d.usia || '', wargaId: w ? w.id : '', blok: w ? w.blok : '', agama: d.agama || '', hubungan: String(d.hubungan || '').trim(), tanggal: d.tanggal, jam: d.jam || '',
         rumahDuka: String(d.rumahDuka || '').trim(), waktuMakam: String(d.waktuMakam || '').trim(), makam: String(d.makam || '').trim(), keterangan: String(d.keterangan || '').trim(), diperbarui: todayISO()};
       if (!x) { row.dibuat = todayISO(); row.dibuatOleh = namaSesi(); }
-      const ok = await put('rohani', x ? x.id : 'dk_' + uid(), row);
-      if (ok && d.umumkan) await rhUmumkanDuka(row);
+      const nid = x ? x.id : 'dk_' + uid(), ok = await put('rohani', nid, row);
+      if (ok && (d.umumkan || (x && bisa('info') && rhPengumuman(x).length))) await rhUmumkanDuka({...row, id: nid}, x);
       if (ok) toast(x ? 'Kabar duka diperbarui.' : 'Kabar duka disimpan. Bagikan ke grup WhatsApp dari kartunya.');
       return ok;
     },
-    onDelete: x ? async () => { const ok = await del('rohani', x.id); if (ok) toast('Kabar duka dihapus.'); return ok; } : null, deleteLabel: 'Hapus'});
+    onDelete: x ? () => rhHapus(x, 'Kabar duka') : null, deleteLabel: 'Hapus'});
   const rw = $('#rd_w'); if (rw && !x) rw.addEventListener('change', () => { const w = wById(rw.value); if (w && w.agama) $('#rd_a').value = w.agama; });
 }
-async function rhUmumkanDuka(x) {
-  const ok = await put('pengumuman', 'dk_' + uid(), {judul: 'Berita duka: ' + x.nama, kategori: 'Berita duka', isi: teksRhDuka(x).replace(/\*/g, '').replace(/\n\n[^\n]*$/, ''), tanggalAcara: '', jam: '', tempat: x.rumahDuka || '', sematkan: true, dibuat: todayISO(), diperbarui: todayISO()});
-  if (ok) toast('Berita duka diumumkan dan disematkan.');
+async function rhUmumkanDuka(x, lama) {
+  const ada = rhPengumuman(lama || x)[0], pid = ada ? ada.id : 'pg-' + x.id;
+  const ok = await put('pengumuman', pid, {...(ada || {}), sumberRohani: x.id, judul: 'Berita duka: ' + x.nama, kategori: 'Berita duka', isi: teksRhDuka(x).replace(/\*/g, '').replace(/\n\n[^\n]*$/, ''), tanggalAcara: '', jam: '', tempat: x.rumahDuka || '', sematkan: true, dibuat: (ada && ada.dibuat) || todayISO(), diperbarui: todayISO()});
+  if (ok && !ada) toast('Berita duka diumumkan dan disematkan.');
   return ok;
 }
 function openRhSet() {

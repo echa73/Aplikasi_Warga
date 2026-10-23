@@ -207,3 +207,29 @@ begin
       values (auth.uid(), (select nama from public.profil where user_id = auth.uid()), 'reset_password', 'akun', (select nama from public.profil where user_id = target));
   else raise exception 'Tidak diizinkan'; end if;
 end $$;
+
+-- Login dengan No. HP: akun memakai alamat internal <62xxxxxxxxxx>@hp.kasuari.app
+create or replace function privat.normal_hp(t text) returns text language sql immutable as $$
+  select case when d = '' then '' when d like '0%' then '62' || substr(d, 2) when d like '8%' then '62' || d else d end
+  from (select regexp_replace(coalesce(t, ''), '\D', '', 'g') d) x $$;
+create or replace function privat.hp_email(t text) returns text language sql immutable as $$ select privat.normal_hp(t) || '@hp.kasuari.app' $$;
+grant execute on function privat.normal_hp(text), privat.hp_email(text) to authenticated;
+-- No. HP di data warga/pengurus berubah -> akun login tertaut ikut berubah; No. HP ganda ditolak
+create or replace function privat.sinkron_login_hp() returns trigger language plpgsql security definer set search_path = public as $$
+declare uid uuid; hp text; e text;
+begin
+  if new.koleksi not in ('warga', 'pengurus') then return null; end if;
+  if privat.normal_hp(old.data->>'noHp') = privat.normal_hp(new.data->>'noHp') then return null; end if;
+  if new.koleksi = 'warga' then select user_id into uid from public.profil where peran = 'warga' and warga_id = new.id limit 1;
+  else select user_id into uid from public.profil where peran = 'pengurus' and pengurus_id = new.id limit 1; end if;
+  if uid is null then return null; end if;
+  hp := privat.normal_hp(new.data->>'noHp');
+  if length(hp) < 10 then raise exception 'No HP wajib diisi (minimal 10 digit) karena dipakai untuk login.'; end if;
+  e := hp || '@hp.kasuari.app';
+  if exists (select 1 from auth.users where lower(email) = e and id <> uid) then raise exception 'No HP % sudah dipakai akun login lain.', new.data->>'noHp'; end if;
+  update auth.users set email = e, updated_at = now() where id = uid;
+  update auth.identities set identity_data = identity_data || jsonb_build_object('email', e), updated_at = now() where user_id = uid and provider = 'email';
+  return null;
+end $$;
+revoke all on function privat.sinkron_login_hp() from public, anon, authenticated;
+create or replace trigger trg_sinkron_login_hp after update on public.dokumen for each row execute function privat.sinkron_login_hp();

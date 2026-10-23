@@ -1082,6 +1082,16 @@ async function simpanProfil(row) { const {error} = await SB.from('profil').upser
 async function hapusProfil(userId) { if (!userId) return; const {error} = await SB.from('profil').delete().eq('user_id', userId); if (error) throw error; await muatProfil(); }
 const punyaProfil = uid => !!(S.profilList || []).find(p => p.user_id === uid);
 const emailWarga = u => normUser(u) + '@' + WARGA_DOMAIN;
+const HP_DOMAIN = 'hp.kasuari.app';
+const normHp = hp => { let d = String(hp || '').replace(/\D/g, ''); if (!d) return ''; if (d.startsWith('0')) d = '62' + d.slice(1); else if (d.startsWith('8')) d = '62' + d; return d; };
+const hpEmail = hp => normHp(hp) + '@' + HP_DOMAIN;
+const hpTampil = hp => { const d = normHp(hp); return d ? '0' + d.slice(2) : ''; };
+const hpDariEmail = e => String(e || '').endsWith('@' + HP_DOMAIN) ? hpTampil(String(e).split('@')[0]) : '';
+const hpValid = hp => normHp(hp).length >= 11;  // 62 + minimal 9 digit = 10 digit lokal (08…)
+const loginTerpakai = (hp, kecuali) => { const n = normHp(hp); if (!n) return null;
+  const p = S.pengurus.find(x => x.userId && x.id !== kecuali && normHp(x.noHp) === n); if (p) return 'pengurus ' + p.nama;
+  const a = S.akunWarga.find(x => x.userId && x.id !== kecuali && normHp(x.hp || (wById(x.wargaId) || {}).noHp) === n); if (a) return 'warga ' + ((wById(a.wargaId) || {}).nama || '');
+  return null; };
 
 
 /* ---------- store ---------- */
@@ -1114,6 +1124,7 @@ async function putSetting(data) {
 }
 function fail(e) {
   const c = e && e.code;
+  if (e && /No HP/i.test(String(e.message))) { toast(String(e.message).replace(/^.*?(No HP)/, 'No. HP').replace('No HP', 'No. HP'), 'bad'); return false; }
   if (c === 'ditolak') toast('Server menolak perubahan ini: role Anda tidak punya izin mengubah data tersebut.', 'bad');
   else if (c === 'quota_exceeded') toast('Penyimpanan penuh. Hapus data lama, lalu coba lagi.', 'bad');
   else if (c === 'resource_exhausted') toast('Terlalu banyak perubahan sekaligus. Tunggu sebentar lalu coba lagi.', 'bad');
@@ -1357,7 +1368,7 @@ function formWarga(w, self = false) {
   <div class="fld"><label for="f_nama">Nama kepala keluarga <span class="req">*</span></label><input type="text" id="f_nama" name="nama" required value="${esc(w.nama)}" ${ro}></div>
   <div class="grid2">
     <div class="fld"><label for="f_nik">NIK</label><input type="text" id="f_nik" name="nik" inputmode="numeric" maxlength="16" value="${esc(w.nik)}" placeholder="16 digit" autocomplete="off" ${ro}><span class="hint nik-info" id="nikInfo">${nikInfo(w.nik)}</span></div>
-    <div class="fld"><label for="f_hp">No. HP / WhatsApp</label><input type="tel" id="f_hp" name="noHp" inputmode="tel" value="${esc(w.noHp)}" placeholder="08…" autocomplete="off" ${ro}><span class="hint nik-info" id="hpInfo">${hpInfo(w.noHp)}</span></div>
+    <div class="fld"><label for="f_hp">No. HP / WhatsApp <span class="req">*</span></label><input type="tel" id="f_hp" name="noHp" inputmode="tel" value="${esc(w.noHp)}" placeholder="08…" autocomplete="off" required ${ro}><span class="hint nik-info" id="hpInfo">${hpInfo(w.noHp)}</span></div>
   </div>
   <div class="grid2">
     <div class="fld"><label for="f_jk">Jenis kelamin</label><select id="f_jk" name="jk" ${ro}><option value="L" ${w.jk !== 'P' ? 'selected' : ''}>Laki-laki</option><option value="P" ${w.jk === 'P' ? 'selected' : ''}>Perempuan</option></select></div>
@@ -1712,7 +1723,7 @@ function vPengaturan() {
   </div>
   <div class="panel" style="display:grid;gap:6px;max-width:560px">
     <h3>Akses pengurus & warga</h3>
-    <p style="margin:0" class="muted">Bagikan alamat aplikasi ini. Pengurus masuk dengan email & password, warga dengan username & password; semuanya dibuat Pemilik di menu Admin. Data tersimpan di Supabase.</p>
+    <p style="margin:0" class="muted">Bagikan alamat aplikasi ini. Pengurus dan warga masuk dengan No. HP & password yang dibuat Pemilik di menu Admin. Data tersimpan di Supabase.</p>
   </div>`;
 }
 
@@ -1777,11 +1788,11 @@ function vLoginKartu() {
         <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
         <p class="muted" style="margin:0;font-size:.82rem">Setiap kali meminta reset, tautan dan kode sebelumnya tidak berlaku lagi. Selalu pakai email yang terakhir masuk.</p></form>`
     : `${S.lupaInfo ? `<div class="notice">${esc(S.lupaInfo)}</div>` : ''}<form id="lupaForm" class="login-pin" style="border-top:0;padding-top:0">
-      <div class="fld"><label for="lupaEmail">Email pengurus</label><input type="email" id="lupaEmail" autocomplete="username" autocapitalize="none" value="${esc(S.lEmailDraft || '')}">
+      <div class="fld"><label for="lupaEmail">Email akun</label><input type="email" id="lupaEmail" autocomplete="username" autocapitalize="none" value="${esc(S.lEmailDraft || '')}">
         <span class="hint" id="lupaPesan" style="color:var(--bad)"></span></div>
       <button type="submit" class="btn pri">Kirim tautan reset</button>
       <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
-      <p class="muted" style="margin:0;font-size:.82rem">Akun warga (username) tidak memakai email. Warga yang lupa password minta direset ke pengurus RT.</p></form>`}</div>`;
+      <p class="muted" style="margin:0;font-size:.82rem">Hanya untuk akun yang masuk dengan email. Akun No. HP minta direset ke Pemilik atau pengurus RT.</p></form>`}</div>`;
   if (S.authUser && wajibGanti() && roleSaya()) return `<div class="login">${brand('Halo ' + esc(namaSesi().split(' ')[0]) + ', demi keamanan buat password baru dulu.')}
     <div class="notice" style="background:var(--info-soft);color:var(--info)">Password Anda dibuat atau direset oleh Pemilik. Ganti dengan password pribadi sebelum memakai aplikasi.</div>
     <form id="wajibForm" class="login-pin" style="border-top:0;padding-top:0">
@@ -1796,19 +1807,21 @@ function vLoginKartu() {
     const why = !S.profil ? 'Akun ini belum diberi akses ke aplikasi. Hubungi Pemilik atau pengurus RT.'
       : S.profil.peran === 'pengurus' ? 'Data pengurus untuk akun ini sudah dinonaktifkan atau dihapus. Hubungi Pemilik aplikasi.'
       : S.profil.peran === 'warga' ? 'Data rumah untuk akun ini tidak ditemukan. Hubungi pengurus RT.' : 'Akun ini belum bisa masuk.';
-    return `<div class="login">${brand('Masuk sebagai ' + esc(wargaAkun ? em.split('@')[0] : em))}<div class="notice">${esc(S.loginError || why)}</div>
+    return `<div class="login">${brand('Masuk sebagai ' + esc(hpDariEmail(em) || (wargaAkun ? em.split('@')[0] : em)))}<div class="notice">${esc(S.loginError || why)}</div>
       <button class="btn pri" data-act="keluar">Keluar & ganti akun</button></div>`;
   }
-  const modeSeg = `<div class="seg" role="group" aria-label="Jenis login" style="width:100%"><button type="button" data-act="loginmode" data-k="pengurus" aria-pressed="${S.loginMode !== 'warga'}" style="flex:1">Pengurus</button><button type="button" data-act="loginmode" data-k="warga" aria-pressed="${S.loginMode === 'warga'}" style="flex:1">Warga</button></div>`;
-  if (S.loginMode === 'warga') return `<div class="login">${brand('Masuk dengan username dan password dari pengurus RT.')}${modeSeg}${loginWargaHtml()}</div>`;
-  return `<div class="login">${brand('Masuk dengan email dan password pengurus.')}${modeSeg}
+  if (S.lupaInfoHp) return `<div class="login">${brand('Lupa password?')}
+    <div class="notice" style="background:var(--info-soft);color:var(--info)">Hubungi <b>Pemilik aplikasi</b> atau <b>pengurus RT</b>. Password Anda akan direset dari menu Admin, lalu password sementara dikirim lewat WhatsApp ke No. HP Anda.</div>
+    <button type="button" class="btn pri" data-act="lupa-hp-tutup">Kembali ke login</button>
+    <button type="button" class="linkbtn" data-act="lupa-pass">Akun dengan email? Reset lewat email</button></div>`;
+  return `<div class="login">${brand('Masuk dengan No. HP dan password.')}
     <form id="loginForm" class="login-pin" style="border-top:0;padding-top:0">
-      <div class="fld"><label for="lEmail">Email</label><input type="email" id="lEmail" autocomplete="username" autocapitalize="none" value="${esc(S.lEmailDraft || '')}"></div>
+      <div class="fld"><label for="lEmail">No. HP</label><input type="text" id="lEmail" inputmode="tel" autocomplete="username" autocapitalize="none" placeholder="08xxxxxxxxxx" value="${esc(S.lEmailDraft || '')}"></div>
       <div class="fld"><label for="lPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="lPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem">
         <button type="button" class="btn sm" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password">Lihat</button></div>
         <span class="hint" id="lPesan" style="color:var(--bad)"></span></div>
       <button type="submit" class="btn pri">Masuk</button>
-      <button type="button" class="linkbtn" data-act="lupa-pass">Lupa password?</button></form>
+      <button type="button" class="linkbtn" data-act="lupa-hp">Lupa password?</button></form>
     ${!PWA.standalone && (PWA.prompt || PWA.ios) ? '<button type="button" class="btn ghost" data-act="pwa-pasang" style="width:100%;margin-top:4px">📲 Pasang aplikasi di HP</button>' : ''}</div>`;
 }
 async function prosesLupa() {
@@ -1884,12 +1897,15 @@ async function prosesPulih() {
   await masukSesi(data.user);
 }
 async function prosesLogin() {
-  const email = String(($('#lEmail') || {}).value || '').trim().toLowerCase(), pw = ($('#lPass') || {}).value || '';
+  const isian = String(($('#lEmail') || {}).value || '').trim(), pw = ($('#lPass') || {}).value || '';
   const msg = t => { const m = $('#lPesan'); if (m) m.textContent = t; };
-  if (!email || !pw) { msg('Isi email dan password.'); return; }
+  if (!isian || !pw) { msg('Isi No. HP dan password.'); return; }
+  const pakaiEmail = isian.includes('@');
+  if (!pakaiEmail && !hpValid(isian)) { msg('No. HP minimal 10 digit, mis. 081234567890.'); return; }
+  const email = pakaiEmail ? isian.toLowerCase() : hpEmail(isian);
   const btn = $('#loginForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Memeriksa…'; }
   const {data, error} = await SB.auth.signInWithPassword({email, password: pw});
-  if (error) { S.lEmailDraft = email; render(); msg(pesanAuth(error)); const p = $('#lPass'); if (p) p.focus(); return; }
+  if (error) { S.lEmailDraft = isian; render(); msg(/invalid login/i.test(error.message) ? (pakaiEmail ? 'Email atau password salah.' : 'No. HP atau password salah.') : pesanAuth(error)); const p = $('#lPass'); if (p) p.focus(); return; }
   S.lEmailDraft = ''; S.loginError = '';
   await masukSesi(data.user);
 }
@@ -1909,13 +1925,13 @@ function vAdminAkun() {
   const tanpa = wargaAktif().filter(w => !S.akunWarga.some(a => a.wargaId === w.id)).length;
   const rows = list.map(a => { const w = wById(a.wargaId); return `<div class="row" style="flex-wrap:wrap">
     ${w ? `<span class="house">${esc(w.blok)}</span>` : '<span class="house">?</span>'}
-    <div class="grow"><div class="t">${esc(w ? w.nama : 'Data warga sudah dihapus')}</div><div class="s">Username: <span class="mono">${esc(a.username)}</span>${a.userId ? '' : ' · <span style="color:var(--warn)">akun lama, buat ulang</span>'}</div></div>
+    <div class="grow"><div class="t">${esc(w ? w.nama : 'Data warga sudah dihapus')}</div><div class="s">Login No. HP: <span class="mono">${esc(hpTampil(a.hp || (w || {}).noHp) || '—')}</span>${a.userId ? '' : ' · <span style="color:var(--warn)">akun lama, buat ulang</span>'}</div></div>
     <div class="racts">${a.aktif === false ? '<span class="chip mute">Nonaktif</span>' : '<span class="chip ok plain">Aktif</span>'}<button class="btn sm" data-act="akun-edit" data-id="${esc(a.id)}">Ubah</button></div></div>`; }).join('');
   return `<div class="panel"><h3>Akun login warga <small>${list.length} akun · ${tanpa} KK belum punya akun</small></h3>
     ${list.length ? `<div class="rows">${rows}</div>` : '<p class="muted" style="margin:0">Belum ada akun warga. Buat akun supaya warga bisa melihat status iurannya sendiri dan melaporkan keluhan.</p>'}</div>
     <div class="panel" style="display:grid;gap:6px"><h3>Yang bisa dilakukan warga</h3>
-    <p class="muted" style="margin:0">Setelah masuk dengan username dan password, warga hanya melihat menu <b>Rumah saya</b> (data keluarga, status dan riwayat iuran, kwitansi), <b>Keluhan saya</b> (melapor dan memantau tanggapan), dan <b>Pengumuman</b>. Warga tidak melihat data warga lain, buku kas, surat, atau menu pengurus.</p>
-    <p class="muted" style="margin:0">Kirim alamat aplikasi ini beserta username dan password ke warga. Warga lupa password? Buka Ubah pada akunnya lalu isi Reset password.</p></div>`;
+    <p class="muted" style="margin:0">Setelah masuk dengan No. HP dan password, warga hanya melihat menu <b>Rumah saya</b> (data keluarga, status dan riwayat iuran, kwitansi), <b>Keluhan saya</b> (melapor dan memantau tanggapan), dan <b>Pengumuman</b>. Warga tidak melihat data warga lain, buku kas, surat, atau menu pengurus.</p>
+    <p class="muted" style="margin:0">Login warga memakai No. HP kepala keluarga di Data warga. Bila No. HP diubah, login otomatis ikut berubah. Warga lupa password? Buka Ubah pada akunnya lalu isi Reset password.</p></div>`;
 }
 function openAkun(id) {
   const a = id ? S.akunWarga.find(x => x.id === id) : null;
@@ -1926,63 +1942,56 @@ function openAkun(id) {
   const pass0 = a ? '' : passAcak();
   openDlg({
     title: a ? 'Ubah akun warga' : 'Buat akun warga', area: 'admin', submitLabel: a ? 'Simpan' : 'Buat akun',
-    body: `<div class="fld"><label for="ak_w">Warga (kepala keluarga) <span class="req">*</span></label><select id="ak_w" name="wargaId" required ${a ? 'disabled' : ''}>${opsi.map(w => `<option value="${esc(w.id)}" ${w0 && w0.id === w.id ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select>
-      ${a ? `<input type="hidden" name="wargaId" value="${esc(a.wargaId)}">` : ''}</div>
-    <div class="fld"><label for="ak_u">Username <span class="req">*</span></label><input type="text" id="ak_u" name="username" required autocomplete="off" autocapitalize="none" value="${esc(a ? a.username : sarankanUser(w0 || {}))}"><span class="hint">Huruf kecil, angka, titik atau garis bawah. 3–30 karakter.${a ? ' Bila diganti, warga login dengan username baru.' : ''}</span></div>
+    body: `<div class="fld"><label for="ak_w">Warga (kepala keluarga) <span class="req">*</span></label><select id="ak_w" name="wargaId" required ${a ? 'disabled' : ''}>${opsi.map(w => `<option value="${esc(w.id)}" ${w0 && w0.id === w.id ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}${w.noHp ? ' · ' + esc(hpTampil(w.noHp)) : ' · (No. HP kosong)'}</option>`).join('')}</select>
+      ${a ? `<input type="hidden" name="wargaId" value="${esc(a.wargaId)}">` : ''}
+      <span class="hint">Login memakai <b>No. HP warga</b> di Data warga${a ? ': <span class="mono">' + esc(hpTampil(a.hp || (w0 || {}).noHp)) + '</span>' : ''}.</span></div>
     ${a ? `<div class="fld"><label for="ak_s">Status</label><select id="ak_s" name="aktif"><option value="1" ${a.aktif !== false ? 'selected' : ''}>Aktif</option><option value="0" ${a.aktif === false ? 'selected' : ''}>Nonaktif (tidak bisa masuk)</option></select></div>
       ${a.userId ? `<div class="fld"><label for="ak_pr">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="ak_pr" name="passwordBaru" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="akun-acak">Acak</button></div>
         <span class="hint">Isi untuk mengganti password warga yang lupa. Password baru ditampilkan sekali untuk dikirim ke warga.</span></div>` : ''}`
-    : `<div class="fld"><label for="ak_p">Password <span class="req">*</span></label>
+    : `<div class="fld"><label for="ak_p">Password awal <span class="req">*</span></label>
       <div style="display:flex;gap:6px"><input type="text" id="ak_p" name="password" autocomplete="off" autocapitalize="none" value="${esc(pass0)}" placeholder="Minimal 8 karakter" style="flex:1">
       <button type="button" class="btn sm" data-act="akun-acak">Acak</button></div>
-      <span class="hint">Catat atau kirim password ini ke warga. Setelah disimpan, password tidak bisa dilihat lagi.</span></div>`}`,
+      <span class="hint">Catat atau kirim password ini ke warga. Saat pertama masuk, warga diminta membuat password pribadi.</span></div>`}`,
     onSubmit: async d => {
-      const u = normUser(d.username), pw = String(d.password || '');
+      const pw = String(d.password || '');
       const w = wById(d.wargaId); if (!w) { pesanDlg('Pilih warga.', 'ak_w'); return false; }
       if (a) {
         const aktif = d.aktif !== '0', pb = String(d.passwordBaru || '');
         if (pb && pb.length < 8) { pesanDlg('Password baru minimal 8 karakter.', 'ak_pr'); return false; }
-        let uname = a.username;
-        if (u !== a.username) {
-          if (!/^[a-z0-9._]{3,30}$/.test(u)) { pesanDlg('Username 3–30 karakter: huruf kecil, angka, titik atau garis bawah.', 'ak_u'); return false; }
-          if (S.akunWarga.some(x => x.username === u && x.id !== a.id)) { pesanDlg(`Username "${u}" sudah dipakai.`, 'ak_u'); return false; }
-          if (a.userId) { try { await ubahEmail(a.userId, emailWarga(u)); } catch (e) { pesanDlg('Gagal mengganti username: ' + pesanAuth(e), 'ak_u'); return false; } }
-          uname = u;
-        }
         if (pb) { try { await resetPassword(a.userId, pb); } catch (e) { pesanDlg('Gagal mereset password: ' + pesanAuth(e)); return false; } }
         try {
           if (a.userId) { if (aktif) await simpanProfil({user_id: a.userId, nama: w.nama, peran: 'warga', warga_id: w.id, pengurus_id: null}); else await hapusProfil(a.userId); }
         } catch (e) { pesanDlg('Gagal mengubah akses login: ' + pesanAuth(e)); return false; }
-        const ok = await put('akunWarga', a.id, {...a, username: uname, aktif, diperbarui: todayISO()});
-        if (ok && pb) setTimeout(() => tampilKredensial(w, uname, pb), 50);
-        else if (ok) toast(uname !== a.username ? `Username diganti menjadi ${uname}.` : aktif ? 'Akun warga aktif.' : 'Akun warga dinonaktifkan.');
+        const ok = await put('akunWarga', a.id, {...a, hp: normHp(w.noHp), aktif, diperbarui: todayISO()});
+        if (ok && pb) setTimeout(() => tampilKredensial(w, hpTampil(w.noHp), pb), 50);
+        else if (ok) toast(aktif ? 'Akun warga aktif.' : 'Akun warga dinonaktifkan.');
         return ok;
       }
-      if (!/^[a-z0-9._]{3,30}$/.test(u)) { pesanDlg('Username 3–30 karakter: huruf kecil, angka, titik atau garis bawah.', 'ak_u'); return false; }
-      if (S.akunWarga.some(x => x.username === u)) { pesanDlg(`Username "${u}" sudah dipakai.`, 'ak_u'); return false; }
+      if (!hpValid(w.noHp)) { pesanDlg(`No. HP ${w.nama} belum diisi atau kurang dari 10 digit. Lengkapi dulu di menu Data warga.`, 'ak_w'); return false; }
+      const dipakai = loginTerpakai(w.noHp); if (dipakai) { pesanDlg(`No. HP ${hpTampil(w.noHp)} sudah dipakai login ${dipakai}. Satu No. HP hanya untuk satu akun.`, 'ak_w'); return false; }
       if (pw.length < 8) { pesanDlg('Password minimal 8 karakter.', 'ak_p'); return false; }
       let userId;
-      try { userId = await buatAkunAuth(emailWarga(u), pw); } catch (e) { pesanDlg(pesanAuth(e), 'ak_u'); return false; }
+      try { userId = await buatAkunAuth(hpEmail(w.noHp), pw); } catch (e) { pesanDlg(/sudah dipakai|registered/i.test(String(e && e.message)) ? 'No. HP ini sudah dipakai akun login lain.' : pesanAuth(e), 'ak_w'); return false; }
       try { await simpanProfil({user_id: userId, nama: w.nama, peran: 'warga', warga_id: w.id, pengurus_id: null, wajib_ganti: true}); }
       catch (e) { pesanDlg('Akun login terbuat, tetapi gagal memberi akses: ' + pesanAuth(e)); return false; }
-      const ok = await put('akunWarga', uid(), {username: u, wargaId: w.id, userId, aktif: true, dibuat: todayISO(), diperbarui: todayISO()});
-      if (ok) setTimeout(() => tampilKredensial(w, u, pw), 50);
+      const ok = await put('akunWarga', uid(), {hp: normHp(w.noHp), wargaId: w.id, userId, aktif: true, dibuat: todayISO(), diperbarui: todayISO()});
+      if (ok) setTimeout(() => tampilKredensial(w, hpTampil(w.noHp), pw), 50);
       return ok;
     },
     onDelete: a ? async () => {
       try { await hapusProfil(a.userId); } catch (e) { pesanDlg('Gagal mencabut akses: ' + pesanAuth(e)); return false; }
-      const ok = await del('akunWarga', a.id); if (ok) toast('Akun warga dihapus. Akun login di Supabase bisa dihapus dari Authentication → Users.'); return ok;
+      const ok = await del('akunWarga', a.id); if (ok) toast('Akun warga dihapus.'); return ok;
     } : null,
     deleteLabel: 'Hapus akun'
   });
 }
 function tampilKredensial(w, u, pw) {
-  const teks = `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nBerikut akun aplikasi Warga ${lingk()} untuk melihat status iuran dan melaporkan keluhan:\n\nUsername: ${u}\nPassword: ${pw}\n\nBuka ${location.origin}${location.pathname.replace(/index\.html$/, '')}, pilih "Warga" di layar login, lalu masukkan username dan password di atas. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.\n\n${pengirim()}`;
+  const teks = `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nBerikut akun aplikasi Warga ${lingk()} untuk melihat status iuran dan melaporkan keluhan:\n\nNo. HP: ${u}\nPassword: ${pw}\n\nBuka ${location.origin}${location.pathname.replace(/index\.html$/, '')}, lalu masuk dengan No. HP dan password di atas. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.\n\n${pengirim()}`;
   const bisaWa = w.noHp && waNomor(w.noHp).length >= 10;
   openDlg({
     title: 'Akun warga siap',
     body: `<div class="kw"><div class="kw-h"><div><b>${esc(w.nama)}</b><span class="l">${esc(w.blok)}</span></div><span class="chip ok">Aktif</span></div>
-      <dl class="kw-d"><dt>Username</dt><dd class="mono">${esc(u)}</dd><dt>Password</dt><dd class="mono">${esc(pw)}</dd></dl></div>
+      <dl class="kw-d"><dt>No. HP</dt><dd class="mono">${esc(u)}</dd><dt>Password</dt><dd class="mono">${esc(pw)}</dd></dl></div>
       <p class="muted" style="margin:0;font-size:.84rem">Password ini hanya ditampilkan sekarang. Kirim ke warga sebelum menutup jendela ini.</p>`,
     foot: `${bisaWa ? `<a class="btn wa" href="${esc(waLink(w.noHp, teks))}" target="_blank" rel="noopener">Kirim ke WhatsApp</a>` : ''}<button type="button" class="btn" data-act="salin" data-teks="${esc(teks)}">Salin</button>`
   });
@@ -2110,14 +2119,14 @@ function vAdmin() {
   if (S.admTab === 'log') return head + vAdminLog();
   if (S.admTab === 'permintaan') return head + vAdminMinta();
   const list = [...S.pengurus].sort((a, b) => (a.aktif === false) - (b.aktif === false) || JABATAN.indexOf(a.jabatan) - JABATAN.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
-  const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div></div><span class="chip ok plain">Pemilik</span></div>` : '';
+  const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div><div class="s">${hpDariEmail(S.authUser && S.authUser.email) ? `Login No. HP: <span class="mono">${esc(hpDariEmail(S.authUser.email))}</span>` : '<span style="color:var(--warn)">Masih login dengan email. Atur No. HP login Anda.</span>'}</div></div><span class="chip ok plain">Pemilik</span><button class="btn sm" data-act="pemilik-hp">${hpDariEmail(S.authUser && S.authUser.email) ? 'Ubah No. HP' : 'Atur No. HP login'}</button></div>` : '';
   const rows = list.map(p => {
     const r = roleById(p.peranId), akun = p.userId ? nama(p.userId) : '';
     return `<div class="row" style="flex-wrap:wrap">${avatarHtml(p.userId, p.nama)}
       <div class="grow"><div class="t">${esc(p.nama)}${p.userId && S.me && p.userId === S.me.id ? ' <span class="muted">(Anda)</span>' : ''}</div>
         <div class="s">${esc(p.jabatan || 'Tanpa jabatan')}${p.noHp ? ' · ' + esc(p.noHp) : ''}${p.wargaId && wById(p.wargaId) ? ' · Rumah ' + esc(wById(p.wargaId).blok) : ''}</div>
         ${r && roleCocok(p.jabatan) && roleCocok(p.jabatan).id !== r.id ? `<div class="s" style="color:var(--warn)">⚠ Jabatan ${esc(p.jabatan)}, tetapi role ${esc(r.nama)}</div>` : ''}
-        <div class="s">${p.userId && p.email ? `Login: <span class="mono">${esc(p.email)}</span>${p.aktif !== false && !punyaProfil(p.userId) ? ' · <span style="color:var(--warn)">akses login belum aktif</span>' : ''}` : '<span style="color:var(--warn)">Belum punya login. Buka Ubah untuk membuatkan email & password.</span>'}</div></div>
+        <div class="s">${p.userId ? `Login No. HP: <span class="mono">${esc(hpTampil(p.noHp) || '—')}</span>${p.aktif !== false && !punyaProfil(p.userId) ? ' · <span style="color:var(--warn)">akses login belum aktif</span>' : ''}` : '<span style="color:var(--warn)">Belum punya login. Buka Ubah untuk membuatkan password.</span>'}</div></div>
       <div class="racts">${r ? `<span class="chip info plain">${esc(r.nama)}</span>` : '<span class="chip bad plain">Role dihapus</span>'}${p.aktif === false ? '<span class="chip mute">Nonaktif</span>' : ''}
         <button class="btn sm" data-act="pgr-edit" data-id="${esc(p.id)}">Ubah</button></div></div>`;
   }).join('');
@@ -2183,7 +2192,7 @@ function openPengurus(id, prefill) {
     body: `<div class="fld"><label for="pg_nama">Nama lengkap <span class="req">*</span></label><input type="text" id="pg_nama" name="nama" required value="${esc(x.nama)}"></div>
     <div class="grid2">
       <div class="fld"><label for="pg_jab">Jabatan</label><input type="text" id="pg_jab" name="jabatan" list="jabList" value="${esc(x.jabatan)}" placeholder="mis. Bendahara"><datalist id="jabList">${JABATAN.map(j => `<option value="${j}">`).join('')}</datalist></div>
-      <div class="fld"><label for="f_hp">No. HP / WhatsApp</label><input type="tel" id="f_hp" name="noHp" inputmode="tel" value="${esc(x.noHp)}" placeholder="08…" autocomplete="off"><span class="hint nik-info" id="hpInfo">${hpInfo(x.noHp)}</span></div>
+      <div class="fld"><label for="f_hp">No. HP / WhatsApp <span class="req">*</span></label><input type="tel" id="f_hp" name="noHp" inputmode="tel" value="${esc(x.noHp)}" placeholder="08…" autocomplete="off" required><span class="hint">Dipakai juga untuk login.</span><span class="hint nik-info" id="hpInfo">${hpInfo(x.noHp)}</span></div>
     </div>
     <div class="fld"><label for="pg_rumah">Rumah / data warga</label><select id="pg_rumah" name="wargaId"><option value="">— tidak ditautkan —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${x.wargaId === w.id ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select>
       <span class="hint">Untuk menu Rumah saya: pengurus melihat iuran dan data keluarganya sendiri.</span></div>
@@ -2193,21 +2202,19 @@ function openPengurus(id, prefill) {
       <div class="fld"><label for="pg_aktif">Status</label><select id="pg_aktif" name="aktif"><option value="1" ${x.aktif !== false ? 'selected' : ''}>Aktif</option><option value="0" ${x.aktif === false ? 'selected' : ''}>Nonaktif (tidak bisa masuk)</option></select></div>
       <div class="fld"><label for="pg_mulai">Menjabat sejak</label><input type="date" id="pg_mulai" name="mulai" value="${esc(x.mulai)}"></div>
     </div>
-    ${x.userId ? `<div class="fld"><label for="pg_email2">Email login</label><input type="email" id="pg_email2" name="emailBaru" autocomplete="off" autocapitalize="none" value="${esc(x.email || '')}"><span class="hint">Ubah bila email pengurus salah atau ganti. Login berikutnya memakai email baru.</span></div>
+    ${x.userId ? `<div class="fld"><label>Login</label><div class="muted" style="font-size:.88rem">Masuk dengan <b>No. HP di atas</b>. Bila No. HP diubah, login otomatis ikut berubah.</div></div>
       <div class="fld"><label for="pg_reset">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="pg_reset" name="passwordBaru" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak2">Acak</button></div></div>`
-    : `<div class="grid2"><div class="fld"><label for="pg_email">Email login</label><input type="email" id="pg_email" name="email" autocomplete="off" autocapitalize="none" placeholder="nama@email.com"></div>
+    : `<div class="grid2"><div class="fld"><label>Login</label><div class="muted" style="font-size:.88rem;padding-top:8px">Memakai <b>No. HP di atas</b></div></div>
       <div class="fld"><label for="pg_pass">Password awal</label><div style="display:flex;gap:6px"><input type="text" id="pg_pass" name="password" autocomplete="off" autocapitalize="none" placeholder="Minimal 8 karakter" style="flex:1"><button type="button" class="btn sm" data-act="pg-acak">Acak</button></div></div></div>
-      <p class="muted" style="margin:-4px 0 0;font-size:.82rem">Isi keduanya supaya pengurus ini bisa masuk. Boleh dikosongkan dan dibuat nanti.</p>`}`,
+      <p class="muted" style="margin:-4px 0 0;font-size:.82rem">Isi password awal supaya pengurus ini bisa masuk dengan No. HP-nya. Boleh dikosongkan dan dibuat nanti.</p>`}`,
     onSubmit: async d => {
       const hp = String(d.noHp || '').replace(/\D/g, '').length;
-      if (hp && hp < 10) { pesanDlg(`No. HP minimal 10 digit (sekarang ${hp} digit), atau kosongkan.`, 'f_hp'); return false; }
+      if (!hp) { pesanDlg('No. HP wajib diisi karena dipakai untuk login.', 'f_hp'); return false; }
+      if (hp < 10) { pesanDlg(`No. HP minimal 10 digit (sekarang ${hp} digit).`, 'f_hp'); return false; }
+      const dipakai = loginTerpakai(d.noHp, p && p.id); if (dipakai && (!p || normHp(p.noHp) !== normHp(d.noHp))) { pesanDlg(`No. HP ini sudah dipakai login ${dipakai}.`, 'f_hp'); return false; }
       if (!roleById(d.peranId)) { pesanDlg('Pilih role untuk pengurus ini.', 'pg_role'); return false; }
-      const email = String(d.email || '').trim().toLowerCase(), pw = String(d.password || '');
-      if ((email || pw) && !(p && p.userId)) {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { pesanDlg('Isi email login yang valid.', 'pg_email'); return false; }
-        if (email.endsWith('@' + WARGA_DOMAIN)) { pesanDlg('Gunakan email pribadi pengurus.', 'pg_email'); return false; }
-        if (pw.length < 8) { pesanDlg('Password awal minimal 8 karakter.', 'pg_pass'); return false; }
-      }
+      const pw = String(d.password || ''), email = pw && !(p && p.userId) ? hpEmail(d.noHp) : '';
+      if (pw && !(p && p.userId) && pw.length < 8) { pesanDlg('Password awal minimal 8 karakter.', 'pg_pass'); return false; }
       const pinData = {}, pb = String(d.passwordBaru || '');
       if (pb && pb.length < 8) { pesanDlg('Password baru minimal 8 karakter.', 'pg_reset'); return false; }
       const row = {...(p || {}), nama: d.nama.trim(), jabatan: String(d.jabatan || '').trim(), noHp: String(d.noHp || '').trim(), peranId: d.peranId, wargaId: d.wargaId || '', aktif: d.aktif !== '0', mulai: d.mulai || '', userId: (p && p.userId) || '', email: (p && p.email) || '', diperbarui: todayISO()};
@@ -2215,15 +2222,9 @@ function openPengurus(id, prefill) {
       if (!p) row.dibuat = todayISO();
       const pid = p ? p.id : uid();
       if (await seedRoles() === false) return false;
-      const eb = String(d.emailBaru || '').trim().toLowerCase();
-      if (row.userId && eb && eb !== String(row.email || '').toLowerCase()) {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eb)) { pesanDlg('Format email tidak valid.', 'pg_email2'); return false; }
-        if (eb.endsWith('@' + WARGA_DOMAIN)) { pesanDlg('Gunakan email pribadi pengurus.', 'pg_email2'); return false; }
-        try { await ubahEmail(row.userId, eb); row.email = eb; } catch (e) { pesanDlg('Gagal mengganti email: ' + pesanAuth(e), 'pg_email2'); return false; }
-      }
       let akunBaru = false;
       if (email && pw && !row.userId) {
-        try { row.userId = await buatAkunAuth(email, pw); row.email = email; akunBaru = true; } catch (e) { pesanDlg(pesanAuth(e), 'pg_email'); return false; }
+        try { row.userId = await buatAkunAuth(email, pw); row.email = ''; akunBaru = true; } catch (e) { pesanDlg(/sudah dipakai|registered/i.test(String(e && e.message)) ? 'No. HP ini sudah dipakai akun login lain.' : pesanAuth(e), 'f_hp'); return false; }
       }
       const ok = await put('pengurus', pid, row);
       if (!ok) return false;
@@ -2233,8 +2234,8 @@ function openPengurus(id, prefill) {
         catch (e) { pesanDlg('Data tersimpan, tetapi akses login gagal diatur: ' + pesanAuth(e)); return false; }
       }
       if (pb && row.userId) { try { await resetPassword(row.userId, pb); } catch (e) { pesanDlg('Data tersimpan, tetapi reset password gagal: ' + pesanAuth(e)); return false; } }
-      if (email && pw) setTimeout(() => tampilLoginPengurus(row, email, pw), 50);
-      else if (pb && row.userId) setTimeout(() => tampilLoginPengurus(row, row.email, pb), 50);
+      if (email && pw) setTimeout(() => tampilLoginPengurus(row, hpTampil(row.noHp), pw), 50);
+      else if (pb && row.userId) setTimeout(() => tampilLoginPengurus(row, hpTampil(row.noHp), pb), 50);
       else toast(p ? 'Data pengurus diperbarui.' : `${row.nama} ditambahkan sebagai ${(roleById(row.peranId) || {}).nama || 'pengurus'}.`);
       return true;
     },
@@ -2246,15 +2247,28 @@ function openPengurus(id, prefill) {
   });
 }
 function tampilLoginPengurus(p, email, pw) {
-  const teks = `Halo ${p.nama},\n\nBerikut akun pengurus aplikasi Warga ${lingk()}:\n\nAlamat: ${location.origin}${location.pathname.replace(/index\.html$/, '')}\nEmail: ${email}\nPassword: ${pw}\n\nPilih "Pengurus" di layar login. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.`;
+  const teks = `Halo ${p.nama},\n\nBerikut akun pengurus aplikasi Warga ${lingk()}:\n\nAlamat: ${location.origin}${location.pathname.replace(/index\.html$/, '')}\nNo. HP: ${email}\nPassword: ${pw}\n\nMasuk dengan No. HP dan password di atas. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.`;
   const bisaWa = p.noHp && waNomor(p.noHp).length >= 10;
   openDlg({
     title: 'Login pengurus siap',
     body: `<div class="kw"><div class="kw-h"><div><b>${esc(p.nama)}</b><span class="l">${esc(p.jabatan || 'Pengurus')}</span></div><span class="chip ok">Aktif</span></div>
-      <dl class="kw-d"><dt>Email</dt><dd class="mono">${esc(email)}</dd><dt>Password</dt><dd class="mono">${esc(pw)}</dd></dl></div>
+      <dl class="kw-d"><dt>No. HP</dt><dd class="mono">${esc(email)}</dd><dt>Password</dt><dd class="mono">${esc(pw)}</dd></dl></div>
       <p class="muted" style="margin:0;font-size:.84rem">Password ini hanya ditampilkan sekarang. Kirim ke pengurus sebelum menutup jendela ini.</p>`,
     foot: `${bisaWa ? `<a class="btn wa" href="${esc(waLink(p.noHp, teks))}" target="_blank" rel="noopener">Kirim ke WhatsApp</a>` : ''}<button type="button" class="btn" data-act="salin" data-teks="${esc(teks)}">Salin</button>`
   });
+}
+function openPemilikHp() {
+  const kini = hpDariEmail(S.authUser && S.authUser.email);
+  openDlg({title: 'No. HP login Pemilik', area: 'admin', submitLabel: 'Simpan',
+    body: `<div class="fld"><label for="ph_hp">No. HP <span class="req">*</span></label><input type="tel" id="ph_hp" name="hp" inputmode="tel" required value="${esc(kini)}" placeholder="08xxxxxxxxxx"></div>
+      <p class="muted" style="margin:0;font-size:.84rem">Setelah disimpan, Anda masuk dengan No. HP ini dan password yang sama. ${kini ? '' : 'Email lama tidak bisa dipakai login lagi.'}</p>`,
+    onSubmit: async d => {
+      if (!hpValid(d.hp)) { pesanDlg('No. HP minimal 10 digit.', 'ph_hp'); return false; }
+      const dipakai = loginTerpakai(d.hp); if (dipakai) { pesanDlg(`No. HP ini sudah dipakai login ${dipakai}.`, 'ph_hp'); return false; }
+      try { await ubahEmail(S.me.id, hpEmail(d.hp)); } catch (e) { pesanDlg(/sudah dipakai/i.test(String(e && e.message)) ? 'No. HP ini sudah dipakai akun login lain.' : pesanAuth(e), 'ph_hp'); return false; }
+      S.authUser = {...S.authUser, email: hpEmail(d.hp)}; render();
+      toast(`No. HP login diatur: ${hpTampil(d.hp)}. Masuk berikutnya pakai No. HP ini.`); return true;
+    }});
 }
 function openPinPemilik() {
   const ada = !!S.keamanan.pinHash;
@@ -3639,7 +3653,8 @@ function openWarga(id) {
       d.nik = String(d.nik || '').replace(/\D/g, '');
       if (d.nik && d.nik.length !== 16) { pesanDlg(`NIK harus 16 digit (sekarang ${d.nik.length} digit), atau kosongkan.`, 'f_nik'); return false; }
       const hpDigit = String(d.noHp || '').replace(/\D/g, '').length;
-      if (hpDigit && hpDigit < 10) { pesanDlg(`No. HP minimal 10 digit (sekarang ${hpDigit} digit), atau kosongkan.`, 'f_hp'); return false; }
+      if (!hpDigit) { pesanDlg('No. HP wajib diisi karena dipakai untuk login dan WhatsApp.', 'f_hp'); return false; }
+      if (hpDigit < 10) { pesanDlg(`No. HP minimal 10 digit (sekarang ${hpDigit} digit).`, 'f_hp'); return false; }
       d.noHp = String(d.noHp || '').trim();
       const blok = String(d.blok).trim().toUpperCase();
       const dup = S.warga.find(x => x.id !== (w && w.id) && x.status !== 'Pindah' && String(x.blok).toUpperCase() === blok && d.status !== 'Pindah');
@@ -3675,7 +3690,8 @@ function openWargaSaya() {
       const nik = String(d.nik || '').replace(/\D/g, '');
       if (nik && nik.length !== 16) { pesanDlg(`NIK harus 16 digit (sekarang ${nik.length} digit), atau kosongkan.`, 'f_nik'); return false; }
       const hpDigit = String(d.noHp || '').replace(/\D/g, '').length;
-      if (hpDigit && hpDigit < 10) { pesanDlg(`No. HP minimal 10 digit (sekarang ${hpDigit} digit), atau kosongkan.`, 'f_hp'); return false; }
+      if (!hpDigit) { pesanDlg('No. HP wajib diisi karena dipakai untuk login dan WhatsApp.', 'f_hp'); return false; }
+      if (hpDigit < 10) { pesanDlg(`No. HP minimal 10 digit (sekarang ${hpDigit} digit).`, 'f_hp'); return false; }
       const ag = agAmbil();
       const tn = ag.find(x => !x.nama); if (tn) { pesanDlg('Nama anggota keluarga belum diisi. Isi namanya, atau hapus baris anggota itu.', tn._namaId); return false; }
       const an = ag.find(x => x.nik && x.nik.length !== 16); if (an) { pesanDlg(`NIK ${an.nama} harus 16 digit (sekarang ${an.nik.length} digit), atau kosongkan.`, an._nikId); return false; }
@@ -3795,12 +3811,15 @@ document.addEventListener('click', async e => {
   else if (a === 'pilih-user') { S.pilih = S.pilih === b.dataset.id ? null : b.dataset.id; S.pinGagal = 0; render(); const f = $('#pinMasuk') || $('#loginForm button'); if (f) f.focus(); }
   else if (a === 'keluar') { b.disabled = true; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); }
   else if (a === 'pin-pemilik') openPinPemilik();
+  else if (a === 'pemilik-hp') openPemilikHp();
   else if (a === 'loginmode') { S.loginMode = b.dataset.k; S.pilih = null; S.pinGagal = 0; render(); const f = $(S.loginMode === 'warga' ? '#wUser' : '.user-opt'); if (f) f.focus(); }
   else if (a === 'lihat-pass') { const i = $('#' + (b.dataset.for || 'wPass')); if (i) { i.type = i.type === 'password' ? 'text' : 'password'; b.textContent = i.type === 'password' ? 'Lihat' : 'Sembunyikan'; } }
   else if (a === 'akun-new') openAkun();
   else if (a === 'akun-edit') openAkun(b.dataset.id);
   else if (a === 'akun-acak') { const i = $('#ak_p') || $('#ak_pr'); if (i) i.value = passAcak(); }
-  else if (a === 'lupa-pass') { S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
+  else if (a === 'lupa-hp') { S.lupaInfoHp = true; render(); }
+  else if (a === 'lupa-hp-tutup') { S.lupaInfoHp = false; render(); }
+  else if (a === 'lupa-pass') { S.lupaInfoHp = false; S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
   else if (a === 'ganti-pass') openGantiPass();
   else if (a === 'pwa-pasang') pwaPasang();
   else if (a === 'pwa-tutup') { try { localStorage.setItem(pwaTutupKey, String(Date.now() + 7 * 864e5)); } catch (err) {} const el = document.getElementById('pwaBar'); if (el) el.remove(); }

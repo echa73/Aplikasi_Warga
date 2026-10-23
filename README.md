@@ -25,8 +25,9 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
    Alternatif manual: upload isi folder `public/` (index.html + _headers).
 
 ## Login
-- Pemilik & pengurus: email + password (dibuat di menu Admin).
-- Warga: username + password (tercatat sebagai `username@warga.kasuari.app`).
+- Semua akun (Pemilik, pengurus, warga) masuk dengan **No. HP + password**. Di Supabase tercatat sebagai `62xxxxxxxxxx@hp.kasuari.app`.
+- Login pengurus memakai No. HP di data pengurus; login warga memakai No. HP kepala keluarga di Data warga. No. HP wajib diisi.
+- Bila No. HP diubah, akun login ikut berubah otomatis (trigger `privat.sinkron_login_hp`); satu No. HP hanya untuk satu akun.
 - Reset password: Supabase → Authentication → Users.
 
 > Jangan commit secret/service_role key atau file berisi data warga asli.

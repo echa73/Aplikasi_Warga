@@ -1,7 +1,7 @@
 /* Warga Kasuari · service worker
    - Halaman & aset aplikasi: ambil dari jaringan dulu (selalu versi terbaru), simpan cadangan untuk dibuka saat offline.
    - Data (Supabase) dan pustaka dari CDN tidak disentuh: selalu langsung ke internet. */
-const VERSI = 'warga-kasuari-v1';
+const VERSI = 'warga-kasuari-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
 self.addEventListener('install', e => {
@@ -33,5 +33,28 @@ self.addEventListener('fetch', e => {
       if (hit) return hit;
       throw err;
     }
+  })());
+});
+
+/* Notifikasi (Web Push): SOS ke satpam/pengurus, kabar SOS ditangani ke warga */
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = {isi: e.data ? e.data.text() : ''}; }
+  const penting = !!d.penting;
+  e.waitUntil(self.registration.showNotification(d.judul || 'Warga Kasuari', {
+    body: d.isi || '', icon: './icons/icon-192.png', badge: './icons/favicon-32.png', tag: d.tag || undefined, renotify: !!d.tag,
+    requireInteraction: penting, vibrate: penting ? [500, 200, 500, 200, 900, 300, 500] : [200, 100, 200],
+    data: {url: d.url || './'}, lang: 'id'
+  }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil((async () => {
+    const list = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
+    for (const c of list) {
+      if (new URL(c.url).origin === self.location.origin) { await c.focus(); c.postMessage({buka: new URL(url).hash}); return; }
+    }
+    await self.clients.openWindow(url);
   })());
 });

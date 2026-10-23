@@ -56,3 +56,6 @@ Menu **Warga → Kerohanian**: jadwal sholat harian (metode Kemenag, lokasi bisa
 
 ## Lapak Warga
 Menu **Lingkungan → Lapak Warga**: marketplace antar warga. Warga yang sudah diizinkan Ketua RT/admin memasang produk/jasa (pengurus & admin tidak berjualan) (maks. 5 foto, otomatis diperkecil dan disimpan di Supabase Storage bucket `lapak`), harga pas/nego/mulai dari/gratis, kategori, pencarian, urutan harga, favorit, tandai terjual/stok habis, masa tayang 60 hari + perpanjang. Pembeli menghubungi penjual lewat WhatsApp (nomor dari data warga/pengurus, diisi server). Moderator (izin Lapak Warga = "Jual-beli + moderasi") bisa menyembunyikan lapak dengan alasan.
+
+## Notifikasi HP (Web Push)
+Menu **Keamanan → Pos jaga** (satpam/pengurus) dan **Aman** (warga): tombol "Aktifkan notifikasi" + "Kirim tes". SOS baru membuat HP satpam & pengurus berbunyi walau aplikasi ditutup; warga pelapor mendapat kabar saat SOS ditangani. iPhone: iOS 16.4+ dan aplikasi harus ditambahkan ke Layar Utama. Server: tabel `push_langganan`, trigger `push_darurat` (pg_net) → edge function `supabase/functions/kirim-push`.

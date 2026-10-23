@@ -1179,6 +1179,7 @@ async function masukSesi(user) {
   S.tab = prof.peran === 'warga' ? 'portal' : 'ringkasan';
   S.loaded = true; render(); window.scrollTo(0, 0);
   if (sudahMasuk()) toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.');
+  pushCek = false; pushSub = null; pushSegarkan();
 }
 const pesanAuth = e => {
   const m = String((e && e.message) || e || '');
@@ -1381,7 +1382,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: () => vRingkasan() + panelLokasi(), aman: () => vAman() + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: () => vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2932,6 +2933,67 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Notifikasi HP (Web Push) ---------- */
+const pushDidukung = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const iosBelumInstal = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches);
+let pushSub = null, pushCek = false;
+function b64uKeArr(s) { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+function namaPerangkat() { const u = navigator.userAgent; return (/android/i.test(u) ? 'Android' : /iphone|ipad/i.test(u) ? 'iPhone/iPad' : /windows/i.test(u) ? 'Windows' : /mac/i.test(u) ? 'Mac' : 'Perangkat') + ' · ' + (/edg\//i.test(u) ? 'Edge' : /chrome/i.test(u) ? 'Chrome' : /firefox/i.test(u) ? 'Firefox' : /safari/i.test(u) ? 'Safari' : 'Browser'); }
+async function pushSegarkan() {
+  if (!pushDidukung() || !SB || !S.authUser) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration(); pushSub = reg ? await reg.pushManager.getSubscription() : null;
+    if (pushSub && Notification.permission === 'granted') { const j = pushSub.toJSON(); await SB.rpc('push_daftar', {p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_perangkat: namaPerangkat()}); }
+  } catch (e) {}
+  pushCek = true; sbSched();
+}
+function pushStatus() {
+  if (!pushDidukung()) return iosBelumInstal() ? 'ios' : 'tidak';
+  if (Notification.permission === 'denied') return 'ditolak';
+  return pushSub && Notification.permission === 'granted' ? 'aktif' : 'belum';
+}
+async function pushAktifkan(b) {
+  if (b) b.disabled = true;
+  try {
+    const izin = await Notification.requestPermission();
+    if (izin !== 'granted') { toast(izin === 'denied' ? 'Izin notifikasi ditolak. Aktifkan lewat pengaturan browser/HP.' : 'Izin notifikasi belum diberikan.', 'bad'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const {data: kunci, error} = await SB.rpc('push_kunci_publik'); if (error || !kunci) throw error || new Error('kunci');
+    pushSub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64uKeArr(kunci)});
+    const j = pushSub.toJSON();
+    const r = await SB.rpc('push_daftar', {p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_perangkat: namaPerangkat()}); if (r.error) throw r.error;
+    toast('Notifikasi aktif di perangkat ini. Coba tekan "Kirim tes".');
+  } catch (e) { toast('Notifikasi gagal diaktifkan. Pastikan aplikasi dibuka lewat https dan coba lagi.', 'bad'); }
+  finally { if (b) b.disabled = false; render(); }
+}
+async function pushMatikan(b) {
+  if (b) b.disabled = true;
+  try { if (pushSub) { const ep = pushSub.endpoint; await pushSub.unsubscribe(); await SB.rpc('push_lepas', {p_endpoint: ep}); } } catch (e) {}
+  pushSub = null; toast('Notifikasi dimatikan di perangkat ini.'); render();
+}
+async function pushTes(b) {
+  if (b) b.disabled = true;
+  try {
+    const {data, error} = await SB.functions.invoke('kirim-push', {body: {jenis: 'tes'}});
+    if (error) throw error;
+    toast(data && data.terkirim ? `Tes terkirim ke ${data.terkirim} perangkat Anda. Notifikasi muncul dalam beberapa detik.` : 'Tidak ada perangkat aktif yang menerima tes.', data && data.terkirim ? '' : 'bad');
+  } catch (e) { toast('Tes gagal dikirim. Periksa koneksi internet.', 'bad'); }
+  finally { if (b) b.disabled = false; }
+}
+function panelNotif(untuk) {
+  if (!pushCek) return '';
+  const st = pushStatus(), warga = untuk === 'warga';
+  const judul = warga ? 'Kabar SOS di HP ini' : 'Alarm SOS di HP ini';
+  const ket = warga ? 'Dapatkan notifikasi saat panggilan darurat Anda sedang ditangani petugas.' : 'HP berbunyi dan bergetar saat warga menekan SOS, walau aplikasi sedang ditutup.';
+  const isi = st === 'aktif' ? `<span class="chip ok">Aktif</span><span class="muted" style="font-size:.84rem">${esc(namaPerangkat())}</span><button type="button" class="btn sm" data-act="push-tes">Kirim tes</button><button type="button" class="btn sm ghost" data-act="push-off">Matikan</button>`
+    : st === 'belum' ? `<button type="button" class="btn sm pri" data-act="push-on">🔔 Aktifkan notifikasi</button>`
+    : st === 'ditolak' ? '<span class="chip bad">Diblokir</span><span class="muted" style="font-size:.84rem">Izinkan notifikasi untuk situs ini di pengaturan browser/HP, lalu muat ulang.</span>'
+    : st === 'ios' ? '<span class="muted" style="font-size:.84rem">Di iPhone: buka menu Bagikan → "Tambahkan ke Layar Utama", lalu buka aplikasi dari ikon tersebut untuk mengaktifkan notifikasi (iOS 16.4+).</span>'
+    : '<span class="muted" style="font-size:.84rem">Browser ini belum mendukung notifikasi. Gunakan Chrome di Android atau aplikasi yang sudah diinstal.</span>';
+  if (st === 'aktif' && !warga && S.kmTab !== 'pos') return '';
+  return `<div class="panel" style="display:grid;gap:8px;${st === 'belum' && !warga ? 'border-color:var(--sun);background:var(--sun-soft)' : ''}"><h3 style="margin:0">${judul}</h3><p class="muted" style="margin:0;font-size:.86rem">${ket}</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${isi}</div></div>`;
+}
+
 /* ---------- Lokasi lingkungan (peta) ---------- */
 const LOKASI_DEF = {lat: -6.3403724, lng: 106.9677112, placeId: 'ChIJFUB5FACTaS4RjOJ6MsWYaWI', alamat: 'Jl. Vila Nusa Indah 5 Cluster Kasuari, Ciangsana, Kec. Gunung Putri, Kabupaten Bogor, Jawa Barat 16968'};
 const lokasiRT = () => ({...LOKASI_DEF, ...((S.set && S.set.lokasi) || {})});
@@ -4751,7 +4813,7 @@ function vKeamanan() {
   const cnt = {tamu: dalam, paket: dipos, titip};
   const head = `<div class="sec-head"><div><h2>Keamanan</h2><p>Pos jaga satpam: tamu, paket, rumah yang dititipkan, kejadian dan jadwal jaga.</p></div></div>
     <div class="toolbar"><div class="seg km-seg" role="group" aria-label="Bagian keamanan">${tabs.map(([k, l]) => `<button type="button" data-act="kmtab" data-k="${k}" aria-pressed="${S.kmTab === k}">${l}${cnt[k] ? ` <span class="seg-ct">${cnt[k]}</span>` : ''}</button>`).join('')}</div></div>`;
-  return head + ({pos: kmPos, tamu: kmTamu, paket: kmPaket, titip: kmTitip, kejadian: kmKejadian, jaga: kmJaga})[S.kmTab]();
+  return head + panelNotif('pengurus') + ({pos: kmPos, tamu: kmTamu, paket: kmPaket, titip: kmTitip, kejadian: kmKejadian, jaga: kmJaga})[S.kmTab]();
 }
 function kmPos() {
   const sk = shiftSekarang(), j = S.jaga.find(x => x.id === sk.tanggal + '_' + sk.shift);
@@ -5455,6 +5517,9 @@ document.addEventListener('click', async e => {
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'push-on') pushAktifkan(b);
+  else if (a === 'push-off') pushMatikan(b);
+  else if (a === 'push-tes') pushTes(b);
   else if (a === 'peta-muat') { try { localStorage.setItem('peta-muat', '1'); } catch (err) {} render(); }
   else if (a === 'lp-buka') openLapakDetail(b.dataset.id);
   else if (a === 'lp-new') { if (!isWarga()) toast('Pengurus RT dan admin tidak diperbolehkan berjualan di Lapak Warga.', 'bad'); else if (lpBolehJual()) openLapak(); else openLapakIzin(); }
@@ -5526,7 +5591,7 @@ document.addEventListener('click', async e => {
     if (dlgDelete) { b.disabled = true; const ok = await dlgDelete(); if (ok !== false) dlg.close(); }
   }
   else if (a === 'pilih-user') { S.pilih = S.pilih === b.dataset.id ? null : b.dataset.id; S.pinGagal = 0; render(); const f = $('#pinMasuk') || $('#loginForm button'); if (f) f.focus(); }
-  else if (a === 'keluar') { b.disabled = true; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
+  else if (a === 'keluar') { b.disabled = true; try { if (pushSub) { const ep = pushSub.endpoint; await pushSub.unsubscribe(); await SB.rpc('push_lepas', {p_endpoint: ep}); pushSub = null; } } catch (err) {} try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
   else if (a === 'pin-pemilik') openPinPemilik();
   else if (a === 'pemilik-hp') openPemilikHp();
   else if (a === 'loginmode') { S.loginMode = b.dataset.k; S.pilih = null; S.pinGagal = 0; render(); const f = $(S.loginMode === 'warga' ? '#wUser' : '.user-opt'); if (f) f.focus(); }
@@ -5779,6 +5844,7 @@ addEventListener('beforeinstallprompt', e => { e.preventDefault(); PWA.prompt = 
 addEventListener('appinstalled', () => { PWA.prompt = null; PWA.standalone = true; pwaBar(); toast('Warga Kasuari terpasang. Buka dari layar utama HP Anda.'); });
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   let muatUlang = false;
+  navigator.serviceWorker.addEventListener('message', e => { const h = e.data && e.data.buka; if (h) { const k = h.slice(1); if (TABS.some(t => t[0] === k) && tabBoleh(k)) { if (dlg.open) dlg.close(); S.tab = k; if (k === 'keamanan') S.kmTab = 'pos'; render(); window.scrollTo(0, 0); } } });
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (muatUlang) return; muatUlang = true; location.reload(); });
   addEventListener('load', async () => {
     try {

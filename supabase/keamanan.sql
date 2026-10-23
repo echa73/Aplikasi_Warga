@@ -284,3 +284,13 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Warga boleh mengajukan lewat warga.data.mintaLapak (status dipaksa 'Menunggu').
 -- privat.jaga_lapak: warga tanpa izinLapak tidak bisa memasang lapak baru.
 -- 2026-10-23 (lapak_hanya_warga): hanya akun warga yang boleh berjualan; pengurus, Ketua RT, dan pemilik ditolak.
+
+-- 2026-10-23: Push notification SOS (migrasi push_notifikasi + push_daftar_lepas)
+-- Ekstensi pg_net. Kunci VAPID & kunci pemicu disimpan di Supabase Vault: push_vapid_public, push_vapid_private, push_kunci
+--   (dibuat langsung lewat SQL, tidak disimpan di migrasi/kode).
+-- Tabel public.push_langganan (endpoint, user_id, p256dh, auth, perangkat); RLS milik sendiri.
+-- RPC: push_daftar / push_lepas (authenticated), push_kunci_publik (authenticated),
+--      push_rahasia & push_penerima (hanya service_role, dipakai edge function).
+-- Trigger privat.push_darurat: SOS baru -> notifikasi ke pemilik & pengurus ber-izin keamanan;
+--      SOS 'Ditangani' -> notifikasi ke warga pelapor. Memanggil edge function kirim-push via pg_net + header x-kunci.
+-- Edge function: supabase/functions/kirim-push (verify_jwt = false, autentikasi sendiri).

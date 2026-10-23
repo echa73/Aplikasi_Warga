@@ -4,9 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F7A4D">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.pji{display:grid;gap:6px}
+<style>.lp-cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:12px}
+.lp-cats button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 12px;font:inherit;font-size:.84rem;cursor:pointer;white-space:nowrap}
+.lp-cats button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.lp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.lp-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative;transition:box-shadow .15s,border-color .15s;text-align:left;padding:0;font:inherit;color:inherit}
+.lp-card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.lp-img{aspect-ratio:1/1;background:var(--sunk);display:grid;place-items:center;font-size:2.6rem;position:relative;overflow:hidden}
+.lp-img img{width:100%;height:100%;object-fit:cover;display:block}
+.lp-img .st{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;font-weight:800;font-size:1rem;letter-spacing:.06em;text-transform:uppercase}
+.lp-img .n{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:.7rem;border-radius:99px;padding:1px 7px}
+.lp-fav{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.92);display:grid;place-items:center;cursor:pointer;color:#6b6b6b;z-index:2}
+.lp-fav svg{width:18px;height:18px}.lp-fav.on{color:#e0245e}.lp-fav.on svg{fill:currentColor}
+.lp-body{padding:10px 12px 12px;display:grid;gap:3px}
+.lp-harga{font-weight:800;font-size:1.02rem;font-variant-numeric:tabular-nums}.lp-harga small{font-weight:500;color:var(--muted);font-size:.74rem}
+.lp-judul{font-size:.9rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.lp-meta{font-size:.76rem;color:var(--muted);display:flex;gap:4px;flex-wrap:wrap}
+.lp-tag{font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--sunk);color:var(--ink)}
+.lp-galeri{display:grid;gap:8px}
+.lp-galeri .utama{aspect-ratio:4/3;background:var(--sunk);border-radius:14px;overflow:hidden;display:grid;place-items:center;font-size:4rem}
+.lp-galeri .utama.kosong{aspect-ratio:16/6;font-size:3rem}.lp-galeri .utama img{width:100%;height:100%;object-fit:contain;background:#111}
+.lp-thumbs{display:flex;gap:6px;overflow-x:auto}
+.lp-thumbs button{flex:none;width:58px;height:58px;border-radius:10px;overflow:hidden;border:2px solid transparent;padding:0;cursor:pointer;background:var(--sunk)}
+.lp-thumbs button[aria-pressed=true]{border-color:var(--accent)}.lp-thumbs img{width:100%;height:100%;object-fit:cover}
+.lp-up{display:flex;gap:8px;flex-wrap:wrap}
+.lp-up .t{width:84px;height:84px;border-radius:12px;overflow:hidden;position:relative;background:var(--sunk);border:1px solid var(--line)}
+.lp-up .t img{width:100%;height:100%;object-fit:cover}
+.lp-up .t button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:.8rem;line-height:1}
+.lp-up label.add{width:84px;height:84px;border-radius:12px;border:1.5px dashed var(--line);display:grid;place-items:center;text-align:center;font-size:.76rem;color:var(--muted);cursor:pointer;padding:6px}
+.lp-up .t.load::after{content:"…";position:absolute;inset:0;display:grid;place-items:center;background:rgba(255,255,255,.7);font-weight:800}
+.lp-seller{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--sunk)}
+.lp-seller .av{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+@media(max-width:560px){.lp-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lp-body{padding:8px 10px 10px}}
+.pji{display:grid;gap:6px}
 .pji-row,.pji-hd{display:grid;grid-template-columns:minmax(0,1.7fr) 54px 68px minmax(104px,1.2fr) 92px 30px;gap:6px;align-items:center}
 .pji-hd{font-size:.74rem;color:var(--muted);font-weight:600;padding:0 2px}
 .pji-row input{min-width:0;padding-inline:8px}
@@ -953,7 +985,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], rohani: [], qurban: [], rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -964,7 +996,7 @@ const S = {
   sesi: null, pilih: null, keamanan: {}, pinGagal: 0, pinKunci: 0
 };
 let U = null;
-const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['keamanan', 'Keamanan (satpam)'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
+const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['keamanan', 'Keamanan (satpam)'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['lapak', 'Lapak Warga'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
 const LVL = {tidak: 0, lihat: 1, kelola: 2};
 const LVL_LBL = {tidak: 'Tidak bisa buka', lihat: 'Lihat saja', kelola: 'Lihat & ubah'};
 const semua = v => Object.fromEntries(MENU_IZIN.map(([k]) => [k, v]));
@@ -982,7 +1014,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {qurban: 'rohani', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -1010,7 +1042,7 @@ function izin(area) {
   const v = izinRole(r, area);
   return LVL[v] !== undefined ? v : 'tidak';
 }
-function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan') ? iz.kas : m === 'rohani' ? iz.info : undefined; }
+function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan') ? iz.kas : (m === 'rohani' || m === 'lapak') ? iz.info : undefined; }
 const lihat = area => LVL[izin(area)] >= 1;
 function bisa(area) { if (S.readOnly) return false; return izin(area) === 'kelola'; }
 const hanyaLihat = () => !['admin', ...MENU_IZIN.map(m => m[0])].some(bisa);
@@ -1032,7 +1064,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'lapak', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -1181,8 +1213,9 @@ const loginTerpakai = (hp, kecuali) => { const n = normHp(hp); if (!n) return nu
 function clean(o) { const c = {...o}; delete c.id; return c; }
 async function put(col, id, data) {
   const milikSendiri = isWarga() && wargaSaya() && ((col === 'warga' && id === wargaSaya().id) || ((col === 'darurat' || col === 'titip' || col === 'donasi') && data && data.wargaId === wargaSaya().id));
+  const lapakSendiri = col === 'lapak' && !!S.sesi && data && data.penjualId === (S.me && S.me.id);
   const ajuanSendiri = col === 'pengajuan' && bolehAjukan() && (!data.status || data.status === 'Menunggu' || data.status === 'Dibatalkan') && (!data.pemohonId || data.pemohonId === (S.me && S.me.id));
-  if (!milikSendiri && !ajuanSendiri && !bisa(areaOf(col)) && !(col === 'kas' && data && data.jenis !== 'masuk' && bisa('pengeluaran'))) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
+  if (!milikSendiri && !ajuanSendiri && !lapakSendiri && !bisa(areaOf(col)) && !(col === 'kas' && data && data.jenis !== 'masuk' && bisa('pengeluaran'))) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
   if (S.me && S.me.id) data = {...data, oleh: S.me.id};
   if (S.sesi) data = {...data, olehSesi: S.sesi};
   if (!DB) {
@@ -1194,7 +1227,7 @@ async function put(col, id, data) {
   catch (e) { return fail(e); }
 }
 async function del(col, id) {
-  if (!bisa(areaOf(col)) && !(col === 'kas' && bisa('pengeluaran') && (S.kas.find(x => x.id === id) || {}).jenis !== 'masuk')) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
+  if (!(col === 'lapak' && (S.lapak.find(x => x.id === id) || {}).penjualId === (S.me && S.me.id)) && !bisa(areaOf(col)) && !(col === 'kas' && bisa('pengeluaran') && (S.kas.find(x => x.id === id) || {}).jenis !== 'masuk')) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
   if (!DB) { S[col] = S[col].filter(x => x.id !== id); render(); return true; }
   try { await DB.collection(col).doc(id).delete(); return true; }
   catch (e) { return fail(e); }
@@ -1243,14 +1276,16 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'rohani' ? (isWarga() || lihat('rohani')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  lapak: '<path d="M4 9.5 5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12v8.5h13V12"/><path d="M10 20.5v-5h4v5"/>',
+  hati: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
   rohani: '<path d="M3.5 21h17"/><path d="M5.5 21v-8.5h13V21"/><path d="M7 12.5a5 5 0 0 1 10 0"/><path d="M12 7.5V3.5M10.6 4.8h2.8"/><path d="M10.5 21v-3.5a1.5 1.5 0 0 1 3 0V21"/>',
   sumbangan: '<path d="M12 20.5s-7.5-4.6-7.5-10.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 2.5c0 5.8-7.5 10.4-7.5 10.4z"/><path d="M12 10.6v5.2M9.4 13.2h5.2"/>',
   bell: '<path d="M6 9.5a6 6 0 1 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14 6 9.5z"/><path d="M10 19a2 2 0 0 0 4 0"/>',
@@ -1336,7 +1371,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2370,7 +2405,8 @@ function vPortal() {
       <td class="r num">${a.lahir ? esc(umur(a.lahir).replace(' tahun', ' th')) : '—'}</td><td><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(i) ? fmtNik(a.nik) : maskNik(a.nik))}</span>${a.nik ? `<button type="button" class="btn sm ghost" data-act="nik-lihat" data-i="${i}" aria-pressed="${S.nikBuka.has(i)}" aria-label="${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'} NIK ${esc(a.nama)}">${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'}</button>` : ''}</span></td></tr>`).join('')}
     </tbody></table></div>
   <p class="muted" style="margin:10px 0 0;font-size:.82rem">${isWarga() ? 'Tambah, ubah atau hapus anggota keluarga lewat tombol Ubah data keluarga.' : bisa('warga') ? `Data ini diambil dari menu Data warga. <a href="#warga" data-act="warga-edit" data-id="${esc(w.id)}" style="color:var(--accent)">Ubah data rumah ini</a>` : 'Data ini diambil dari menu Data warga.'}</p></div>
-  <div class="panel"><h3>Riwayat iuran <small>12 bulan terakhir</small></h3><div class="rows">${rowBln || '<p class="muted" style="margin:0">Belum ada tagihan.</p>'}</div></div>`;
+  <div class="panel"><h3>Riwayat iuran <small>12 bulan terakhir</small></h3><div class="rows">${rowBln || '<p class="muted" style="margin:0">Belum ada tagihan.</p>'}</div></div>
+  ${vLapakBaru()}`;
 }
 function vLapor() {
   const w = wargaSaya(); if (!w) return '<div class="empty">Data rumah Anda tidak ditemukan.</div>';
@@ -2452,7 +2488,7 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_KOL = {lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn']};
 async function muatLog() {
   S.logAkt = 'memuat'; render();
@@ -2618,7 +2654,7 @@ function openRole(id) {
     body: `<div class="fld"><label for="rl_nama">Nama role <span class="req">*</span></label><input type="text" id="rl_nama" name="nama" required value="${esc(x.nama)}" placeholder="mis. Seksi Keamanan"></div>
     <div class="fld"><label for="rl_ket">Keterangan</label><input type="text" id="rl_ket" name="ket" value="${esc(x.ket)}" placeholder="Tugas singkat role ini"></div>
     <div class="fld"><label>Hak akses per menu</label>
-      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || 'tidak') === v ? 'selected' : ''}>${LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
+      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Jual-beli + moderasi' : 'Jual-beli') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
       <span class="hint">Menu yang "Tidak bisa buka" disembunyikan dari pengurus dengan role ini. Menu Admin hanya untuk Pemilik.</span></div>
     ${dipakai ? `<p class="muted" style="margin:0;font-size:.84rem">Dipakai oleh ${dipakai} pengurus. Perubahan langsung berlaku untuk mereka.</p>` : ''}`,
     onSubmit: async d => {
@@ -2873,6 +2909,183 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Lapak warga (marketplace) ---------- */
+const LP_KAT = [['Makanan & minuman', '🍱'], ['Kue & camilan', '🧁'], ['Kebutuhan rumah', '🧺'], ['Fashion', '👕'], ['Elektronik & gadget', '📱'], ['Barang bekas (preloved)', '♻️'], ['Jasa', '🛠️'], ['Les & kursus', '📚'], ['Sewa / properti', '🏠'], ['Tanaman & hewan', '🪴'], ['Lainnya', '🛍️']];
+const lpEmoji = k => (LP_KAT.find(x => x[0] === k) || LP_KAT[LP_KAT.length - 1])[1];
+const LP_HARGA = [['pas', 'Harga pas'], ['nego', 'Bisa nego'], ['mulai', 'Mulai dari'], ['gratis', 'Gratis']];
+const LP_HARI = 60;
+const lpSaya = () => (S.me && S.me.id) || '';
+const lpModerator = () => bisa('lapak');
+function lpFav() { try { return new Set(JSON.parse(localStorage.getItem('lapak-fav') || '[]')); } catch (e) { return new Set(); } }
+function lpFavSet(set) { try { localStorage.setItem('lapak-fav', JSON.stringify([...set].slice(-200))); } catch (e) {} }
+const lpHarga = x => x.hargaTipe === 'gratis' ? 'Gratis' : (x.hargaTipe === 'mulai' ? 'Mulai ' : '') + rp(x.harga) + (x.satuan ? ` <small>/${esc(x.satuan)}</small>` : '') + (x.hargaTipe === 'nego' ? ' <small>nego</small>' : '');
+const lpHargaTeks = x => x.hargaTipe === 'gratis' ? 'Gratis' : (x.hargaTipe === 'mulai' ? 'Mulai ' : '') + rp(x.harga) + (x.satuan ? '/' + x.satuan : '') + (x.hargaTipe === 'nego' ? ' (nego)' : '');
+const lpKedaluwarsa = x => !!x.berlaku && x.berlaku < todayISO();
+function lamaLalu(iso) {
+  if (!iso) return ''; const d = new Date(iso.length <= 10 ? iso + 'T00:00' : iso), m = Math.round((Date.now() - d) / 6e4);
+  if (m < 2) return 'baru saja'; if (m < 60) return m + ' mnt lalu'; if (m < 1440) return Math.floor(m / 60) + ' jam lalu'; if (m < 10080) return Math.floor(m / 1440) + ' hari lalu'; return tgl(iso.slice(0, 10));
+}
+// tampil untuk umum: bukan disembunyikan, belum kedaluwarsa, terjual masih tampil 7 hari
+function lpTampilUmum(x) {
+  if (x.status === 'Disembunyikan' || lpKedaluwarsa(x)) return false;
+  if (x.status === 'Terjual' && x.terjualPada && (Date.now() - new Date(x.terjualPada)) / 864e5 > 7) return false;
+  return true;
+}
+function lpKartu(x) {
+  const fav = lpFav().has(x.id), foto = (x.foto || [])[0], habis = x.status === 'Terjual' || x.status === 'Habis';
+  return `<article class="lp-card" data-act="lp-buka" data-id="${esc(x.id)}" tabindex="0">
+    <div class="lp-img">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy" decoding="async">` : `<span aria-hidden="true">${lpEmoji(x.kategori)}</span>`}
+      ${habis ? `<span class="st">${esc(x.status)}</span>` : x.status === 'Disembunyikan' ? '<span class="st">Disembunyikan</span>' : lpKedaluwarsa(x) ? '<span class="st">Kedaluwarsa</span>' : ''}
+      ${(x.foto || []).length > 1 ? `<span class="n">${x.foto.length} foto</span>` : ''}</div>
+    <button type="button" class="lp-fav${fav ? ' on' : ''}" data-act="lp-fav" data-id="${esc(x.id)}" aria-label="${fav ? 'Hapus dari favorit' : 'Simpan ke favorit'}" aria-pressed="${fav}">${ico('hati')}</button>
+    <div class="lp-body"><div class="lp-harga">${lpHarga(x)}</div><div class="lp-judul">${esc(x.judul)}</div>
+      <div class="lp-meta">${x.penjual && x.penjual.blok ? `<span>${esc(x.penjual.blok)}</span>·` : ''}<span>${esc(lamaLalu(x.dibuat))}</span></div>
+      ${x.antar || x.po || x.kondisi === 'Bekas' ? `<div class="lp-meta">${x.antar ? '<span class="lp-tag">Bisa antar</span>' : ''}${x.po ? '<span class="lp-tag">Pre-order</span>' : ''}${x.kondisi === 'Bekas' ? '<span class="lp-tag">Bekas</span>' : ''}</div>` : ''}</div></article>`;
+}
+function vLapak() {
+  const saya = lpSaya(), mod = lpModerator(), fav = lpFav();
+  const umum = S.lapak.filter(lpTampilUmum), milik = S.lapak.filter(x => x.penjualId === saya), sembunyi = S.lapak.filter(x => x.status === 'Disembunyikan');
+  const tabs = [['semua', `Semua ${umum.length}`], ['favorit', `Favorit ${S.lapak.filter(x => fav.has(x.id) && lpTampilUmum(x)).length}`], ['saya', `Lapak saya ${milik.length}`], ...(mod ? [['moderasi', `Disembunyikan ${sembunyi.length}`]] : [])];
+  if (!tabs.some(t => t[0] === S.lpTab)) S.lpTab = 'semua';
+  let L = S.lpTab === 'saya' ? milik : S.lpTab === 'moderasi' ? sembunyi : S.lpTab === 'favorit' ? S.lapak.filter(x => fav.has(x.id) && lpTampilUmum(x)) : umum;
+  const q = S.lpQ.trim().toLowerCase();
+  if (S.lpKat) L = L.filter(x => x.kategori === S.lpKat);
+  if (q) L = L.filter(x => [x.judul, x.deskripsi, x.kategori, x.penjual && x.penjual.nama, x.penjual && x.penjual.blok].some(v => String(v || '').toLowerCase().includes(q)));
+  const nilaiH = x => x.hargaTipe === 'gratis' ? 0 : Number(x.harga) || 0, tersedia = x => (x.status === 'Tersedia' ? 0 : 1);
+  L = [...L].sort((a, b) => tersedia(a) - tersedia(b) || (S.lpSort === 'murah' ? nilaiH(a) - nilaiH(b) : S.lpSort === 'mahal' ? nilaiH(b) - nilaiH(a) : String(b.dibuat || '').localeCompare(String(a.dibuat || ''))));
+  const kats = [['', 'Semua'], ...LP_KAT.map(([k, e]) => [k, e + ' ' + k])].map(([k, l]) => `<button type="button" data-act="lp-kat" data-k="${esc(k)}" aria-pressed="${S.lpKat === k}">${esc(l)}</button>`).join('');
+  const kosong = S.lpTab === 'saya' ? `Anda belum memasang lapak.<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>` : S.lpTab === 'favorit' ? 'Belum ada favorit. Ketuk ♡ pada produk untuk menyimpannya.' : S.lpTab === 'moderasi' ? 'Tidak ada lapak yang disembunyikan.' : (q || S.lpKat ? 'Tidak ada yang cocok dengan pencarian.' : 'Belum ada yang berjualan. Jadilah yang pertama!<button class="btn pri" data-act="lp-new">+ Jual sesuatu</button>');
+  return `<div class="sec-head"><div><h2>Lapak Warga</h2><p>Belanja dan tawarkan produk atau jasa antar tetangga ${esc(lingk())}. Transaksi langsung dengan penjual lewat WhatsApp.</p></div>
+    <button class="btn pri" data-act="lp-new">+ Jual sesuatu</button></div>
+  <div class="toolbar"><div class="seg" role="group" aria-label="Tampilan lapak">${tabs.map(([k, l]) => `<button type="button" data-act="lp-tab" data-k="${k}" aria-pressed="${S.lpTab === k}">${esc(l)}</button>`).join('')}</div></div>
+  <div class="toolbar"><input class="search" type="search" id="qLapak" placeholder="Cari produk, jasa, atau nomor rumah…" value="${esc(S.lpQ)}" aria-label="Cari di lapak">
+    <select id="fLpSort" aria-label="Urutkan" style="width:auto"><option value="baru" ${S.lpSort === 'baru' ? 'selected' : ''}>Terbaru</option><option value="murah" ${S.lpSort === 'murah' ? 'selected' : ''}>Harga terendah</option><option value="mahal" ${S.lpSort === 'mahal' ? 'selected' : ''}>Harga tertinggi</option></select></div>
+  <div class="lp-cats" role="group" aria-label="Kategori">${kats}</div>
+  ${L.length ? `<div class="lp-grid">${L.map(lpKartu).join('')}</div>` : `<div class="empty">${kosong}</div>`}
+  <p class="muted" style="font-size:.78rem;margin-top:14px">Lapak tampil ${LP_HARI} hari dan bisa diperpanjang penjual. Pengurus RT tidak ikut dalam transaksi; periksa barang sebelum membayar.</p>`;
+}
+function openLapakDetail(id) {
+  const x = S.lapak.find(l => l.id === id); if (!x) return;
+  const milik = x.penjualId === lpSaya(), mod = lpModerator(), foto = x.foto || [], pj = x.penjual || {};
+  const wa = pj.hp && waNomor(pj.hp).length >= 10, saya = wargaSaya();
+  const pesan = `Halo ${pj.nama || ''}, saya ${namaSesi()}${saya ? ' (' + saya.blok + ')' : ''} tertarik dengan "${x.judul}" (${lpHargaTeks(x)}) di Lapak Warga ${lingk()}. Apakah masih tersedia?`;
+  const bagi = `*${x.judul}*\n${lpHargaTeks(x)}\n${x.deskripsi ? x.deskripsi.slice(0, 300) + '\n' : ''}\nPenjual: ${pj.nama || ''}${pj.blok ? ' (' + pj.blok + ')' : ''}${pj.hp ? '\nWA: ' + pj.hp : ''}\n\nLapak Warga ${lingk()}`;
+  const habis = x.status !== 'Tersedia';
+  openDlg({title: x.judul,
+    body: `<div class="lp-galeri"><div class="utama${foto.length ? '' : ' kosong'}" id="lpUtama">${foto[0] ? `<img src="${esc(foto[0])}" alt="${esc(x.judul)}">` : `<span aria-hidden="true">${lpEmoji(x.kategori)}</span>`}</div>
+        ${foto.length > 1 ? `<div class="lp-thumbs">${foto.map((f, i) => `<button type="button" data-act="lp-foto" data-src="${esc(f)}" aria-pressed="${i === 0}" aria-label="Foto ${i + 1}"><img src="${esc(f)}" alt=""></button>`).join('')}</div>` : ''}</div>
+      <div><div class="lp-harga" style="font-size:1.35rem">${lpHarga(x)}</div>
+        <div class="lp-meta" style="margin-top:4px"><span class="chip mute plain">${lpEmoji(x.kategori)} ${esc(x.kategori || 'Lainnya')}</span>${x.kondisi && x.kategori !== 'Jasa' ? `<span class="chip mute plain">${esc(x.kondisi)}</span>` : ''}${x.antar ? '<span class="chip info plain">Bisa antar</span>' : ''}${x.ambil ? '<span class="chip info plain">Ambil di rumah</span>' : ''}${x.po ? '<span class="chip warn plain">Pre-order</span>' : ''}<span class="chip ${x.status === 'Tersedia' ? 'ok' : x.status === 'Disembunyikan' ? 'bad' : 'mute'}">${esc(x.status || 'Tersedia')}</span></div></div>
+      ${x.deskripsi ? `<p style="margin:0;white-space:pre-line;font-size:.92rem">${esc(x.deskripsi)}</p>` : ''}
+      <div class="lp-seller"><span class="av">${esc((pj.nama || '?').trim().charAt(0).toUpperCase())}</span><div style="flex:1;min-width:0"><b>${esc(pj.nama || 'Warga')}</b><div class="muted" style="font-size:.82rem">${pj.blok ? 'Rumah ' + esc(pj.blok) + ' · ' : ''}dipasang ${esc(lamaLalu(x.dibuat))}${x.berlaku ? ' · tayang s.d. ' + esc(tgl(x.berlaku)) : ''}</div></div></div>
+      ${x.status === 'Disembunyikan' && x.moderasi ? `<div class="notice" style="font-size:.86rem">Disembunyikan pengurus${x.moderasi.oleh ? ' (' + esc(x.moderasi.oleh) + ')' : ''}: ${esc(x.moderasi.alasan || '-')}</div>` : ''}
+      ${milik && lpKedaluwarsa(x) ? '<div class="notice" style="font-size:.86rem">Masa tayang lapak ini sudah habis. Tekan "Perpanjang" agar tampil lagi.</div>' : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${!milik && wa && !habis ? `<a class="btn wa" href="${esc(waLink(pj.hp, pesan))}" target="_blank" rel="noopener">Chat penjual di WhatsApp</a>` : ''}
+        ${!milik && !wa ? '<span class="muted" style="font-size:.84rem">Penjual belum mengisi No. HP.</span>' : ''}
+        <a class="btn" href="${esc(waShare(bagi))}" target="_blank" rel="noopener">Bagikan</a>
+        ${milik && x.status !== 'Disembunyikan' ? `<button type="button" class="btn" data-act="lp-status" data-id="${esc(x.id)}" data-k="${x.status === 'Tersedia' ? 'Terjual' : 'Tersedia'}">${x.status === 'Tersedia' ? 'Tandai terjual' : 'Tandai tersedia lagi'}</button>` : ''}
+        ${milik && x.status === 'Tersedia' ? `<button type="button" class="btn ghost" data-act="lp-status" data-id="${esc(x.id)}" data-k="Habis">Stok habis</button>` : ''}
+        ${milik && (lpKedaluwarsa(x) || (x.berlaku && (dOf(x.berlaku) - dOf(todayISO())) / 864e5 < 14)) ? `<button type="button" class="btn ghost" data-act="lp-panjang" data-id="${esc(x.id)}">Perpanjang ${LP_HARI} hari</button>` : ''}
+        ${mod && !milik ? (x.status === 'Disembunyikan' ? `<button type="button" class="btn ghost" data-act="lp-tampil" data-id="${esc(x.id)}">Tampilkan lagi</button>` : `<button type="button" class="btn ghost" data-act="lp-sembunyi" data-id="${esc(x.id)}" style="color:var(--bad)">Sembunyikan</button>`) : ''}
+      </div>`,
+    foot: milik ? `<button type="button" class="btn" data-act="lp-ubah" data-id="${esc(x.id)}">Ubah lapak</button>` : '',
+    onDelete: milik || mod ? async () => { const ok = await del('lapak', x.id); if (ok) { lpHapusFoto(milik ? foto : []); toast('Lapak dihapus.'); } return ok; } : null, deleteLabel: 'Hapus lapak'});
+}
+async function kecilkanFoto(file, max = 1080, q = 0.8) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise(res => c.toBlob(res, 'image/jpeg', q));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function lpUnggah(file) {
+  const blob = await kecilkanFoto(file); if (!blob) throw new Error('Foto tidak bisa dibaca');
+  if (blob.size > 1000000) throw new Error('Foto terlalu besar');
+  const path = `${lpSaya()}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}.jpg`;
+  const {error} = await SB.storage.from('lapak').upload(path, blob, {contentType: 'image/jpeg', cacheControl: '31536000', upsert: false});
+  if (error) throw error;
+  return SB.storage.from('lapak').getPublicUrl(path).data.publicUrl;
+}
+function lpPathDariUrl(u) { const m = String(u || '').match(/\/object\/public\/lapak\/(.+)$/); return m ? decodeURIComponent(m[1]) : null; }
+function lpHapusFoto(urls) { const p = (urls || []).map(lpPathDariUrl).filter(x => x && x.startsWith(lpSaya() + '/')); if (p.length && SB) SB.storage.from('lapak').remove(p).catch(() => {}); }
+function lpPenjualSaya() {
+  const w = wargaSaya(), p = pengurusSesi();
+  let hp = (p && p.noHp) || (w && w.noHp) || '';
+  if (!hp && S.me && /^62\d+@hp\./.test(S.me.email || '')) hp = '0' + S.me.email.split('@')[0].slice(2);
+  return {nama: namaSesi(), blok: (w && w.blok) || '', hp};
+}
+let lpFotoKerja = null;
+function lpRenderFoto() {
+  const box = $('#lpFoto'); if (!box || !lpFotoKerja) return;
+  box.innerHTML = lpFotoKerja.list.map((f, i) => `<div class="t${f.load ? ' load' : ''}">${f.url || f.prev ? `<img src="${esc(f.url || f.prev)}" alt="">` : ''}${f.load ? '' : `<button type="button" data-act="lp-foto-del" data-i="${i}" aria-label="Hapus foto">✕</button>`}</div>`).join('')
+    + (lpFotoKerja.list.length < 5 ? `<label class="add" for="lp_file">＋ Foto<br>(maks. 5)</label>` : '');
+}
+function openLapak(id) {
+  const x = id ? S.lapak.find(l => l.id === id) : null;
+  if (x && x.penjualId !== lpSaya()) return;
+  const v = x || {kategori: LP_KAT[0][0], hargaTipe: 'pas', kondisi: 'Baru', status: 'Tersedia', ambil: true};
+  lpFotoKerja = {list: (v.foto || []).map(u => ({url: u})), awal: [...(v.foto || [])]};
+  openDlg({title: x ? 'Ubah lapak' : 'Jual sesuatu', submitLabel: x ? 'Simpan' : 'Pasang lapak',
+    body: `<div class="fld"><label>Foto produk</label><div class="lp-up" id="lpFoto"></div><input type="file" id="lp_file" accept="image/*" multiple hidden><span class="hint">Foto pertama jadi sampul. Otomatis diperkecil agar hemat kuota.</span></div>
+    <div class="fld"><label for="lp_j">Nama produk / jasa <span class="req">*</span></label><input type="text" id="lp_j" name="judul" required maxlength="80" value="${esc(v.judul || '')}" placeholder="mis. Nasi uduk komplit / Servis AC / Sepeda anak bekas"></div>
+    <div class="grid2"><div class="fld"><label for="lp_k">Kategori</label><select id="lp_k" name="kategori">${LP_KAT.map(([k, e]) => `<option value="${esc(k)}" ${k === v.kategori ? 'selected' : ''}>${e} ${esc(k)}</option>`).join('')}</select></div>
+      <div class="fld" id="lpKondisi"${v.kategori === 'Jasa' || v.kategori === 'Les & kursus' ? ' hidden' : ''}><label for="lp_kd">Kondisi</label><select id="lp_kd" name="kondisi"><option ${v.kondisi !== 'Bekas' ? 'selected' : ''}>Baru</option><option ${v.kondisi === 'Bekas' ? 'selected' : ''}>Bekas</option></select></div></div>
+    <div class="grid2"><div class="fld"><label for="lp_ht">Jenis harga</label><select id="lp_ht" name="hargaTipe">${LP_HARGA.map(([k, l]) => `<option value="${k}" ${k === v.hargaTipe ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="fld" id="lpHargaW"${v.hargaTipe === 'gratis' ? ' hidden' : ''}><label for="lp_h">Harga (Rp) <span class="req">*</span></label><input type="number" id="lp_h" name="harga" min="0" step="500" inputmode="numeric" value="${esc(v.harga || '')}"></div></div>
+    <div class="fld"><label for="lp_s">Satuan <span class="muted" style="font-weight:500">(opsional)</span></label><input type="text" id="lp_s" name="satuan" maxlength="20" value="${esc(v.satuan || '')}" placeholder="mis. porsi, kg, jam, bulan"></div>
+    <div class="fld"><label for="lp_d">Deskripsi</label><textarea id="lp_d" name="deskripsi" rows="4" maxlength="1500" placeholder="Jelaskan produk, ukuran, rasa, jam buka, area layanan, cara pesan…">${esc(v.deskripsi || '')}</textarea></div>
+    <div style="display:flex;gap:6px 18px;flex-wrap:wrap">
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="antar" ${v.antar ? 'checked' : ''}> Bisa antar</label>
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="ambil" ${v.ambil ? 'checked' : ''}> Ambil di rumah</label>
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="po" ${v.po ? 'checked' : ''}> Pre-order</label></div>
+    ${x ? `<div class="fld"><label for="lp_st">Status</label><select id="lp_st" name="status" ${x.status === 'Disembunyikan' ? 'disabled' : ''}>${['Tersedia', 'Habis', 'Terjual'].map(k => `<option ${k === x.status ? 'selected' : ''}>${k}</option>`).join('')}${x.status === 'Disembunyikan' ? '<option selected>Disembunyikan</option>' : ''}</select></div>` : ''}
+    <p class="muted" style="margin:0;font-size:.8rem">Pembeli menghubungi Anda lewat WhatsApp di No. HP yang terdaftar di aplikasi. Dengan memasang, Anda setuju: barang/jasa legal, deskripsi jujur, tidak menyinggung SARA. Transaksi menjadi tanggung jawab penjual dan pembeli.</p>`,
+    onSubmit: async d => {
+      if (lpFotoKerja.list.some(f => f.load)) { pesanDlg('Tunggu, foto masih diunggah.'); return false; }
+      const judul = String(d.judul || '').trim(); if (!judul) { pesanDlg('Isi nama produk / jasa.', 'lp_j'); return false; }
+      const harga = Math.round(Number(d.harga) || 0);
+      if (d.hargaTipe !== 'gratis' && harga <= 0) { pesanDlg('Isi harga, atau pilih jenis harga "Gratis".', 'lp_h'); return false; }
+      const foto = lpFotoKerja.list.map(f => f.url).filter(Boolean);
+      const status = x ? (x.status === 'Disembunyikan' ? 'Disembunyikan' : d.status || x.status) : 'Tersedia';
+      const row = {...(x || {}), judul, kategori: d.kategori, kondisi: d.kategori === 'Jasa' || d.kategori === 'Les & kursus' ? '' : d.kondisi, hargaTipe: d.hargaTipe, harga: d.hargaTipe === 'gratis' ? 0 : harga, satuan: String(d.satuan || '').trim(),
+        deskripsi: String(d.deskripsi || '').trim(), antar: !!d.antar, ambil: !!d.ambil, po: !!d.po, foto, status, penjualId: lpSaya(), penjual: lpPenjualSaya(), diperbarui: new Date().toISOString()};
+      if (status === 'Terjual' && (!x || x.status !== 'Terjual')) row.terjualPada = new Date().toISOString();
+      if (!x) { row.dibuat = new Date().toISOString(); const b = new Date(); b.setDate(b.getDate() + LP_HARI); row.berlaku = isoD(b); }
+      const ok = await put('lapak', x ? x.id : 'lp_' + uid(), row);
+      if (ok) { lpHapusFoto(lpFotoKerja.awal.filter(u => !foto.includes(u))); lpFotoKerja = null; toast(x ? 'Lapak diperbarui.' : 'Lapak dipasang. Bagikan ke grup WhatsApp agar cepat laku!'); if (!x) S.lpTab = 'saya'; }
+      return ok;
+    }});
+  lpRenderFoto();
+  const f = $('#lp_file'), kat = $('#lp_k'), ht = $('#lp_ht');
+  kat.addEventListener('change', () => { $('#lpKondisi').hidden = kat.value === 'Jasa' || kat.value === 'Les & kursus'; });
+  ht.addEventListener('change', () => { $('#lpHargaW').hidden = ht.value === 'gratis'; });
+  f.addEventListener('change', async () => {
+    const files = [...f.files].slice(0, 5 - lpFotoKerja.list.length); f.value = '';
+    const ker = lpFotoKerja;
+    for (const file of files) {
+      const item = {load: true, prev: URL.createObjectURL(file)}; ker.list.push(item); lpRenderFoto();
+      try { item.url = await lpUnggah(file); } catch (e) { ker.list.splice(ker.list.indexOf(item), 1); toast('Foto gagal diunggah' + (e && e.message ? ': ' + e.message : '') + '.', 'bad'); }
+      item.load = false; URL.revokeObjectURL(item.prev); delete item.prev; if (lpFotoKerja === ker) lpRenderFoto();
+    }
+  });
+}
+function openLapakSembunyi(id) {
+  const x = S.lapak.find(l => l.id === id); if (!x || !lpModerator()) return;
+  openDlg({title: 'Sembunyikan lapak', area: 'lapak', submitLabel: 'Sembunyikan',
+    body: `<p style="margin:0"><b>${esc(x.judul)}</b> · ${esc((x.penjual || {}).nama || '')}${x.penjual && x.penjual.blok ? ' (' + esc(x.penjual.blok) + ')' : ''}</p>
+      <div class="fld"><label for="ls_a">Alasan (terlihat oleh penjual) <span class="req">*</span></label><select id="ls_a" name="alasan">${['Barang/jasa terlarang', 'Penipuan / informasi menyesatkan', 'Konten tidak pantas / SARA', 'Bukan warga lingkungan', 'Duplikat / spam', 'Lainnya'].map(a => `<option>${a}</option>`).join('')}</select></div>
+      <div class="fld"><label for="ls_c">Catatan</label><input type="text" id="ls_c" name="catatan" maxlength="200"></div>`,
+    onSubmit: async d => { const ok = await put('lapak', x.id, {...x, status: 'Disembunyikan', statusSebelum: x.status, moderasi: {oleh: namaSesi(), alasan: d.alasan + (d.catatan ? ' – ' + String(d.catatan).trim() : ''), waktu: nowDT()}}); if (ok) toast('Lapak disembunyikan dari warga.'); return ok; }});
+}
+function vLapakBaru() {
+  const L = S.lapak.filter(x => lpTampilUmum(x) && x.status === 'Tersedia').sort((a, b) => String(b.dibuat || '').localeCompare(String(a.dibuat || ''))).slice(0, 4);
+  return L.length ? `<div class="panel"><h3>Baru di Lapak Warga <small><button class="btn sm" data-act="tab" data-k="lapak">Lihat semua</button></small></h3><div class="lp-grid">${L.map(lpKartu).join('')}</div></div>` : '';
+}
+
 /* ---------- Kerohanian ---------- */
 const AGAMA = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Lintas agama'];
 const JENIS_RH = ['Pengajian rutin', 'Kajian / majelis taklim', 'Peringatan hari besar', 'Ibadah / persekutuan doa', 'Santunan & bakti sosial', 'Ramadhan / buka bersama', 'Doa bersama', 'Lainnya'];
@@ -5153,6 +5366,18 @@ document.addEventListener('click', async e => {
   else if (a === 'papan-buka') bukaPapan();
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
+  else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'lp-buka') openLapakDetail(b.dataset.id);
+  else if (a === 'lp-new') openLapak();
+  else if (a === 'lp-ubah') openLapak(b.dataset.id);
+  else if (a === 'lp-tab') { S.lpTab = b.dataset.k; render(); }
+  else if (a === 'lp-kat') { S.lpKat = b.dataset.k; render(); }
+  else if (a === 'lp-foto') { const u = $('#lpUtama'); if (u) u.innerHTML = `<img src="${esc(b.dataset.src)}" alt="">`; document.querySelectorAll('.lp-thumbs button').forEach(t => t.setAttribute('aria-pressed', t === b)); }
+  else if (a === 'lp-foto-del') { if (lpFotoKerja) { lpFotoKerja.list.splice(Number(b.dataset.i), 1); lpRenderFoto(); } }
+  else if (a === 'lp-status') { const x = S.lapak.find(l => l.id === b.dataset.id); if (x) { b.disabled = true; const ok = await put('lapak', x.id, {...x, status: b.dataset.k, terjualPada: b.dataset.k === 'Terjual' ? new Date().toISOString() : x.terjualPada || '', diperbarui: new Date().toISOString()}); if (ok) { toast(b.dataset.k === 'Terjual' ? 'Selamat, sudah laku! 🎉' : b.dataset.k === 'Habis' ? 'Ditandai stok habis.' : 'Lapak tersedia lagi.'); openLapakDetail(x.id); } } }
+  else if (a === 'lp-panjang') { const x = S.lapak.find(l => l.id === b.dataset.id); if (x) { const d = new Date(); d.setDate(d.getDate() + LP_HARI); b.disabled = true; const ok = await put('lapak', x.id, {...x, berlaku: isoD(d), diperbarui: new Date().toISOString()}); if (ok) { toast('Lapak diperpanjang sampai ' + tgl(isoD(d)) + '.'); openLapakDetail(x.id); } } }
+  else if (a === 'lp-sembunyi') openLapakSembunyi(b.dataset.id);
+  else if (a === 'lp-tampil') { const x = S.lapak.find(l => l.id === b.dataset.id); if (x && lpModerator()) { b.disabled = true; const ok = await put('lapak', x.id, {...x, status: x.statusSebelum && x.statusSebelum !== 'Disembunyikan' ? x.statusSebelum : 'Tersedia', moderasi: null}); if (ok) { toast('Lapak ditampilkan lagi.'); dlg.close(); } } }
   else if (a === 'rht') { if (S.tab !== 'rohani') { if (!tabBoleh('rohani')) return; S.tab = 'rohani'; } S.rhTab = b.dataset.k; render(); }
   else if (a === 'rhaf') { S.rhAgF = b.dataset.k; render(); }
   else if (a === 'rh-ag') openRhAgenda(b.dataset.id);
@@ -5289,6 +5514,7 @@ document.addEventListener('input', e => {
     if (sbm === 'q') { z.q = e.target.value; render(); sbMzBar(); const el = $('#sbmQ'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }
     return;
   }
+  if (e.target.id === 'qLapak') { S.lpQ = e.target.value; render(); const el = $('#qLapak'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } return; }
   if (e.target.id === 'qSb') { S.sbQ = e.target.value; render(); const el = $('#qSb'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } return; }
   const mz = e.target.dataset && e.target.dataset.mz;
   if (mz) {
@@ -5325,6 +5551,7 @@ document.addEventListener('change', async e => {
   }
   if (e.target.id === 'fBlok') { S.blok = e.target.value; render(); }
   if (e.target.id === 'fPgKat') { S.pgKat = e.target.value; render(); }
+  if (e.target.id === 'fLpSort') { S.lpSort = e.target.value; render(); }
   if (e.target.id === 'fRhAgama') { S.rhAgama = e.target.value; render(); }
   if (e.target.id === 'lapDari') { S.lapDari = e.target.value; render(); }
   if (e.target.id === 'lapSampai') { S.lapSampai = e.target.value; render(); }

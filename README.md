@@ -53,3 +53,6 @@ Menu **Keuangan → Sumbangan** (role dengan izin Sumbangan = kelola, default Be
 
 ## Kerohanian
 Menu **Warga → Kerohanian**: jadwal sholat harian (metode Kemenag, lokasi bisa diatur) + tanggal Hijriah, agenda kegiatan keagamaan semua agama (bisa berulang mingguan/bulanan/"Jumat pertama"), kabar duka (bagikan ke WA, umumkan, buat program santunan), dan qurban (harga per tahun, peserta, kelompok sapi 1/7 otomatis, status bayar, Excel). Dikelola role dengan izin Kerohanian = kelola (default Koordinator Kerohanian; role lama mengikuti izin Pengumuman).
+
+## Lapak Warga
+Menu **Lingkungan → Lapak Warga**: marketplace antar warga. Warga & pengurus memasang produk/jasa (maks. 5 foto, otomatis diperkecil dan disimpan di Supabase Storage bucket `lapak`), harga pas/nego/mulai dari/gratis, kategori, pencarian, urutan harga, favorit, tandai terjual/stok habis, masa tayang 60 hari + perpanjang. Pembeli menghubungi penjual lewat WhatsApp (nomor dari data warga/pengurus, diisi server). Moderator (izin Lapak Warga = "Jual-beli + moderasi") bisa menyembunyikan lapak dengan alasan.

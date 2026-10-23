@@ -270,3 +270,11 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- 2026-10-23: public.saldo_kas() (authenticated, pemilik/pengurus saja) -> {saldo, menunggu}.
 -- Rumus sama dengan buku kas: saldo cut-off + iuran + kas masuk - kas keluar + sumbangan diterima - penyaluran (program masuk kas),
 -- semua sejak tanggal cut-off. Dipakai untuk peringatan "dana tidak mencukupi" di Pengajuan dana.
+
+-- 2026-10-23: Lapak Warga (migrasi lapak_storage + lapak_akses)
+-- Storage bucket publik 'lapak' (maks 1 MB, jpeg/webp/png). Unggah/ubah/hapus hanya di folder <auth.uid()>/ (pemilik boleh hapus semua).
+-- Koleksi 'lapak': terbaca semua pengguna login kecuali status 'Disembunyikan' (kecuali penjualnya / moderator).
+-- Tulis: penjual sendiri (penjualId = auth.uid()) atau moderator (izin 'lapak' = kelola, fallback izin 'info').
+-- Warga: policy tambah/ubah/hapus lapak miliknya ("warga hapus lapak").
+-- Trigger privat.jaga_lapak: penjualId & data penjual (nama, blok, HP) selalu diisi server; non-moderator tidak bisa
+--   menyembunyikan/menampilkan kembali lapak yang disembunyikan moderator.

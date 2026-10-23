@@ -1543,6 +1543,19 @@ function mzUpdBar() {
   if (el) el.innerHTML = r.kk ? `<b>${r.kk} KK</b> · ${r.bulan} bulan · <b>${esc(rp(r.total))}</b>` : '<span class="muted">Belum ada KK yang dipilih</span>';
   if (b) { b.disabled = !r.kk; b.textContent = r.kk ? `Simpan ${r.kk} pembayaran` : 'Simpan pembayaran'; }
 }
+// KK yang membayar bulan lalu, wajib iuran & belum membayar bulan ini
+function mzDariLalu() {
+  const lalu = paidMap(addM(S.per, -1)), kini = paidMap(S.per);
+  return S.warga.filter(w => wajib(w, S.per) && lalu.has(w.id) && !kini.has(w.id)).map(w => ({w, p: lalu.get(w.id)}));
+}
+function mzAmbilLalu() {
+  const z = mzState(), daftar = mzDariLalu();
+  if (!daftar.length) { toast(`Tidak ada KK dari ${perLbl(addM(S.per, -1), true)} yang bisa diambil.`, 'bad'); return; }
+  z.dariLalu = new Set();
+  for (const {w, p} of daftar) { z.sel.add(w.id); z.jml[w.id] = nominal(); z.bln[w.id] = 1; if (p.metode) z.met[w.id] = p.metode; z.dariLalu.add(w.id); }
+  render(); mzUpdBar();
+  toast(`${daftar.length} KK dari ${perLbl(addM(S.per, -1), true)} dipilih dengan nominal ${rp(nominal())}. Status ${perLbl(S.per, true)} masih Belum bayar sampai Anda klik Simpan.`);
+}
 function vIuranMassal() {
   const z = mzState(), pm = paidMap(S.per), q = z.q.trim().toLowerCase();
   let list = S.warga.filter(w => wajib(w, S.per)).sort(sortHouse);
@@ -1555,7 +1568,7 @@ function vIuranMassal() {
     const p = pm.get(w.id), on = z.sel.has(w.id), t = tunggakan(w);
     if (p) return `<tr class="off"><td></td><td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td><td colspan="3"><span class="chip ok">Lunas</span> <span class="muted" style="font-size:.84rem">${esc(rp(p.jumlah))} · ${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}</span></td><td></td></tr>`;
     return `<tr class="${on ? 'pick' : ''}" data-row="${esc(w.id)}"><td><input type="checkbox" class="mz-ck" data-mz="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''} aria-label="Pilih ${esc(w.nama)}"></td>
-      <td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td>
+      <td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}${z.dariLalu && z.dariLalu.has(w.id) ? ' <span class="chip info plain" style="font-size:.7rem">dari bulan lalu</span>' : ''}</td>
       <td><input type="number" min="0" step="1000" data-mz="jml" data-id="${esc(w.id)}" value="${esc(z.jml[w.id] ?? nominal())}" aria-label="Nominal per bulan"></td>
       <td>${blnOpt(z.bln[w.id] || 1, `data-mz="bln" data-id="${esc(w.id)}" aria-label="Jumlah bulan"`)}</td>
       <td>${metOpt(z.met[w.id] || z.metode, `data-mz="met" data-id="${esc(w.id)}" aria-label="Metode"`)}</td>
@@ -1564,7 +1577,7 @@ function vIuranMassal() {
   const rowsM = list.map(w => {
     const p = pm.get(w.id), on = z.sel.has(w.id);
     if (p) return `<div class="mz-card" style="opacity:.6"><div class="row" style="padding:0;border:0"><span class="house">${esc(w.blok)}</span><div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">Lunas · ${esc(rp(p.jumlah))}</div></div></div></div>`;
-    return `<div class="mz-card ${on ? 'pick' : ''}" data-row="${esc(w.id)}"><label class="row" style="padding:0;border:0;cursor:pointer"><input type="checkbox" class="mz-ck" data-mz="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''}><span class="house">${esc(w.blok)}</span><span class="grow"><span class="t">${esc(w.nama)}</span><span class="s">${tunggakan(w) ? `Tunggakan ${tunggakan(w)} bln` : 'Tidak ada tunggakan'}</span></span></label>
+    return `<div class="mz-card ${on ? 'pick' : ''}" data-row="${esc(w.id)}"><label class="row" style="padding:0;border:0;cursor:pointer"><input type="checkbox" class="mz-ck" data-mz="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''}><span class="house">${esc(w.blok)}</span><span class="grow"><span class="t">${esc(w.nama)}${z.dariLalu && z.dariLalu.has(w.id) ? ' <span class="chip info plain" style="font-size:.7rem">dari bulan lalu</span>' : ''}</span><span class="s">${tunggakan(w) ? `Tunggakan ${tunggakan(w)} bln` : 'Tidak ada tunggakan'}</span></span></label>
       <div class="g"><input type="number" min="0" step="1000" inputmode="numeric" data-mz="jml" data-id="${esc(w.id)}" value="${esc(z.jml[w.id] ?? nominal())}" aria-label="Nominal per bulan">${blnOpt(z.bln[w.id] || 1, `data-mz="bln" data-id="${esc(w.id)}" aria-label="Jumlah bulan"`)}</div>
       ${metOpt(z.met[w.id] || z.metode, `data-mz="met" data-id="${esc(w.id)}" aria-label="Metode"`)}</div>`;
   }).join('');
@@ -1576,6 +1589,7 @@ function vIuranMassal() {
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button type="button" class="btn sm" data-act="mz-semua" ${belum.length ? '' : 'disabled'}>${semuaDipilih ? 'Batal pilih semua' : `Pilih semua belum bayar (${belum.length})`}</button>
+        <button type="button" class="btn sm pri" data-act="mz-lalu" ${mzDariLalu().length ? '' : 'disabled'} title="Pilih KK yang membayar di ${esc(perLbl(addM(S.per, -1), true))}, nominal sesuai Pengaturan">↻ Ambil data bulan lalu (${mzDariLalu().length})</button>
         <span class="muted" style="font-size:.84rem">Bulan ${esc(perLbl(S.per, true))} · ${list.length - list.filter(w => !pm.has(w.id)).length} lunas, ${belum.length} belum bayar. Pilih "2 bln" dst. untuk bayar beberapa bulan sekaligus (bulan yang sudah lunas dilewati).</span>
       </div></div>
     ${list.length ? `<div class="tbl-wrap hide-m"><table class="mz-tbl"><thead><tr><th style="width:36px"></th><th>Rumah</th><th>Kepala keluarga</th><th>Nominal/bln (Rp)</th><th>Bulan</th><th>Metode</th><th>Tunggakan</th></tr></thead><tbody>${rowsT}</tbody></table></div>
@@ -4065,6 +4079,7 @@ document.addEventListener('click', async e => {
   else if (a === 'iurf') { S.iurFilter = b.dataset.k; render(); }
   else if (a === 'iurmode') { S.iurMode = b.dataset.k; render(); if (S.iurMode === 'massal') mzUpdBar(); }
   else if (a === 'mz-semua') { const z = mzState(), pm = paidMap(S.per), belum = S.warga.filter(w => wajib(w, S.per) && !pm.has(w.id)); const all = belum.length && belum.every(w => z.sel.has(w.id)); belum.forEach(w => all ? z.sel.delete(w.id) : z.sel.add(w.id)); render(); mzUpdBar(); }
+  else if (a === 'mz-lalu') mzAmbilLalu();
   else if (a === 'mz-reset') { S.mz = null; render(); mzUpdBar(); }
   else if (a === 'mz-simpan') mzSimpan();
   else if (a === 'kelf') { S.kelFilter = b.dataset.k; render(); }

@@ -1455,8 +1455,8 @@ async function bacaXlsx(file) {
   return hasil;
 }
 const kunciKolom = h => String(h || '').toLowerCase().replace(/\*/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-const KOL_WARGA = {'no rumah': 'blok', 'blok': 'blok', 'nama kepala keluarga': 'nama', 'nama': 'nama', 'no hp': 'noHp', 'hp': 'noHp', 'nik kk': 'nik', 'nik': 'nik', 'jenis kelamin': 'jk', 'tanggal lahir': 'lahir', 'status huni': 'statusHuni', 'wajib iuran mulai': 'mulaiIuran', 'status': 'status', 'catatan': 'catatan'};
-const KOL_AG = {'no rumah': 'blok', 'nama': 'nama', 'hubungan': 'hubungan', 'jenis kelamin': 'jk', 'tanggal lahir': 'lahir', 'nik': 'nik'};
+const KOL_WARGA = {'no rumah': 'blok', 'blok': 'blok', 'nama kepala keluarga': 'nama', 'nama': 'nama', 'no hp': 'noHp', 'hp': 'noHp', 'nik kk': 'nik', 'nik': 'nik', 'jenis kelamin': 'jk', 'agama': 'agama', 'tanggal lahir': 'lahir', 'status huni': 'statusHuni', 'wajib iuran mulai': 'mulaiIuran', 'status': 'status', 'catatan': 'catatan'};
+const KOL_AG = {'no rumah': 'blok', 'nama': 'nama', 'hubungan': 'hubungan', 'jenis kelamin': 'jk', 'agama': 'agama', 'tanggal lahir': 'lahir', 'nik': 'nik'};
 function tglExcel(v) {
   if (v === '' || v == null) return '';
   if (typeof v === 'number') { if (v < 1 || v > 80000) return null; const d = new Date(Math.round((v - 25569) * 864e5)); return d.toISOString().slice(0, 10); }
@@ -1485,26 +1485,27 @@ function siapkanImpor(book) {
   const A = shA ? petaBaris(book[shA], KOL_AG) : {data: []};
   const normJk = v => { const t = String(v || '').trim().toLowerCase(); return !t ? '' : t[0] === 'p' || t === 'w' || t.startsWith('wan') ? 'P' : t[0] === 'l' || t.startsWith('pri') ? 'L' : null; };
   const normHuni = v => { const t = String(v || '').trim().toLowerCase(); if (!t) return 'Pemilik'; if (t.startsWith('kontrak') || t.startsWith('sewa')) return 'Kontrak / sewa'; if (t.startsWith('keluarga')) return 'Keluarga pemilik'; if (t.startsWith('pemilik')) return 'Pemilik'; return null; };
+  const normAgama = v => { const t = String(v || '').trim().toLowerCase().replace(/\s+/g, ' '); if (!t) return ''; if (t.startsWith('islam') || t === 'muslim') return 'Islam'; if (t.startsWith('kristen') || t.startsWith('protestan')) return 'Kristen'; if (t.startsWith('katol') || t.startsWith('katholik')) return 'Katolik'; if (t.startsWith('hindu')) return 'Hindu'; if (t.startsWith('budd') || t.startsWith('budha')) return 'Buddha'; if (t.startsWith('kong') || t.startsWith('khong')) return 'Konghucu'; if (t.startsWith('keperc') || t.startsWith('penghayat')) return 'Kepercayaan'; return null; };
   const normHub = v => { const t = String(v || '').trim().toLowerCase(); if (!t) return 'Lainnya'; return HUBUNGAN.find(h => h.toLowerCase() === t) || HUBUNGAN.find(h => t.startsWith(h.toLowerCase().slice(0, 4))) || 'Lainnya'; };
   const agPer = {}, agErr = [];
   for (const g of A.data) {
     const blok = String(g.blok || '').trim().toUpperCase(), e = [];
-    const nik = teksNum(g.nik).replace(/\D/g, ''), lahir = tglExcel(g.lahir), jk = normJk(g.jk);
+    const nik = teksNum(g.nik).replace(/\D/g, ''), lahir = tglExcel(g.lahir), jk = normJk(g.jk), agama = normAgama(g.agama);
     if (!blok) e.push('No. Rumah kosong'); if (!String(g.nama || '').trim()) e.push('Nama kosong');
-    if (nik && nik.length !== 16) e.push(`NIK ${nik.length} digit`); if (lahir === null) e.push('Tanggal lahir tidak dikenali'); if (jk === null) e.push('Jenis kelamin harus L/P');
+    if (nik && nik.length !== 16) e.push(`NIK ${nik.length} digit`); if (lahir === null) e.push('Tanggal lahir tidak dikenali'); if (jk === null) e.push('Jenis kelamin harus L/P'); if (agama === null) e.push('Agama tidak dikenali');
     if (e.length) { agErr.push({baris: g._baris, blok, nama: g.nama, err: e}); continue; }
-    (agPer[blok] = agPer[blok] || []).push({nama: String(g.nama).trim(), hubungan: normHub(g.hubungan), jk: jk || 'L', lahir: lahir || '', nik});
+    (agPer[blok] = agPer[blok] || []).push({nama: String(g.nama).trim(), hubungan: normHub(g.hubungan), jk: jk || 'L', agama: agama || '', lahir: lahir || '', nik});
   }
   const lihatBlok = new Map(), lihatHp = new Map(), hasil = [];
   for (const x of W.data) {
     const e = [], blok = String(x.blok || '').trim().toUpperCase(), nama = String(x.nama || '').trim();
     const hpAsli = teksNum(x.noHp), hpD = hpAsli.replace(/\D/g, ''), nik = teksNum(x.nik).replace(/\D/g, '');
-    const lahir = tglExcel(x.lahir), mulai = tglExcel(x.mulaiIuran), jk = normJk(x.jk), huni = normHuni(x.statusHuni);
+    const lahir = tglExcel(x.lahir), mulai = tglExcel(x.mulaiIuran), jk = normJk(x.jk), huni = normHuni(x.statusHuni), agama = normAgama(x.agama);
     const st = String(x.status || '').trim().toLowerCase(), status = !st || st === 'aktif' ? 'Aktif' : st === 'pindah' ? 'Pindah' : null;
     if (!blok) e.push('No. Rumah kosong'); if (!nama) e.push('Nama kosong');
     if (!hpD) e.push('No. HP kosong'); else if (hpD.length < 10) e.push(`No. HP ${hpD.length} digit`);
     if (nik && nik.length !== 16) e.push(`NIK ${nik.length} digit`);
-    if (jk === null) e.push('Jenis kelamin harus L/P'); if (huni === null) e.push('Status huni tidak dikenali');
+    if (jk === null) e.push('Jenis kelamin harus L/P'); if (agama === null) e.push('Agama tidak dikenali'); if (huni === null) e.push('Status huni tidak dikenali');
     if (status === null) e.push('Status harus Aktif/Pindah'); if (lahir === null) e.push('Tanggal lahir tidak dikenali'); if (mulai === null) e.push('Tanggal wajib iuran tidak dikenali');
     if (blok && lihatBlok.has(blok)) e.push(`No. Rumah sama dengan baris ${lihatBlok.get(blok)}`);
     const peringatan = [];
@@ -1512,7 +1513,7 @@ function siapkanImpor(book) {
     if (blok) lihatBlok.set(blok, x._baris); if (hpD) lihatHp.set(normHp(hpD), x._baris);
     const ada = S.warga.find(w => String(w.blok).toUpperCase() === blok && w.status !== 'Pindah');
     const anggota = agPer[blok] || [];
-    hasil.push({baris: x._baris, blok, nama, err: e, peringatan, ada, row: {blok, nama, noHp: hpAsli, nik, jk: jk || 'L', lahir: lahir || '', statusHuni: huni || 'Pemilik', mulaiIuran: mulai || todayISO(), status: status || 'Aktif', catatan: String(x.catatan || '').trim(), anggota, jumlahJiwa: 1 + anggota.length}});
+    hasil.push({baris: x._baris, blok, nama, err: e, peringatan, ada, row: {blok, nama, noHp: hpAsli, nik, jk: jk || 'L', agama: agama || '', lahir: lahir || '', statusHuni: huni || 'Pemilik', mulaiIuran: mulai || todayISO(), status: status || 'Aktif', catatan: String(x.catatan || '').trim(), anggota, jumlahJiwa: 1 + anggota.length}});
   }
   const blokFile = new Set(hasil.map(h => h.blok));
   for (const [b, list] of Object.entries(agPer)) if (!blokFile.has(b) && !S.warga.some(w => String(w.blok).toUpperCase() === b)) agErr.push({baris: '-', blok: b, nama: list.map(x => x.nama).join(', '), err: ['No. Rumah tidak ada di sheet Data Warga']});
@@ -1556,6 +1557,7 @@ function pratinjauImpor(siap, timpa, namaFile) {
       if (!jalan.length) return true;
       const docs = jalan.map(h => {
         const lama = h.ada, row = {...(lama || {}), ...h.row, diperbarui: todayISO()};
+        if (lama && !h.row.agama && lama.agama) row.agama = lama.agama;
         if (lama && !h.row.anggota.length) { row.anggota = lama.anggota || []; row.jumlahJiwa = Math.max(Number(lama.jumlahJiwa) || 1, 1 + row.anggota.length); }
         if (!lama) row.dibuat = todayISO();
         delete row.id; row.sumber = 'impor';
@@ -1619,8 +1621,9 @@ function formWarga(w, self = false) {
   </div>
   <div class="grid2">
     <div class="fld"><label for="f_jk">Jenis kelamin</label><select id="f_jk" name="jk" ${ro}><option value="L" ${w.jk !== 'P' ? 'selected' : ''}>Laki-laki</option><option value="P" ${w.jk === 'P' ? 'selected' : ''}>Perempuan</option></select></div>
-    <div class="fld"><label for="f_lahir">Tanggal lahir</label><input type="date" id="f_lahir" name="lahir" value="${esc(w.lahir)}" ${ro}><span class="hint">Dipakai di surat pengantar</span></div>
+    <div class="fld"><label for="f_agama">Agama</label><select id="f_agama" name="agama" ${ro}>${agamaOpts(w.agama)}</select></div>
   </div>
+  <div class="fld"><label for="f_lahir">Tanggal lahir</label><input type="date" id="f_lahir" name="lahir" value="${esc(w.lahir)}" ${ro}><span class="hint">Dipakai di surat pengantar</span></div>
   ${self ? '' : `<div class="grid2">
     <div class="fld"><label for="f_huni">Status huni</label><select id="f_huni" name="statusHuni" ${ro}>${HUNI.map(h => `<option ${w.statusHuni === h ? 'selected' : ''}>${h}</option>`).join('')}</select></div>
     <div class="fld"><label for="f_status">Status warga</label><select id="f_status" name="status" ${ro}>${['Aktif', 'Pindah'].map(h => `<option ${w.status === h ? 'selected' : ''}>${h}</option>`).join('')}</select></div>
@@ -1660,6 +1663,9 @@ function nikInfo(v) {
   if (n < 16) return `⚠ Baru ${n} dari 16 digit, kurang ${16 - n} digit`;
   return '✓ 16 digit, NIK lengkap';
 }
+const AGAMA_W = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Kepercayaan'];
+const agamaLbl = a => a === 'Kepercayaan' ? 'Kepercayaan terhadap Tuhan YME' : a || '';
+const agamaOpts = (v, kosong = '— Pilih agama —') => `<option value="">${kosong}</option>` + AGAMA_W.map(a => `<option value="${a}" ${v === a ? 'selected' : ''}>${agamaLbl(a)}</option>`).join('');
 const HUBUNGAN = ['Istri', 'Suami', 'Anak', 'Orang tua', 'Mertua', 'Menantu', 'Cucu', 'Saudara', 'Lainnya'];
 function umur(tglLahir) {
   if (!tglLahir) return '';
@@ -1681,6 +1687,7 @@ function agRow(a, ro) {
       <div class="fld"><label for="${k}_lahir">Tanggal lahir</label><input type="date" id="${k}_lahir" class="ag-lahir" value="${esc(a.lahir)}" ${ro}><span class="hint ag-umur">${esc(umur(a.lahir))}</span></div>
       <div class="fld"><label for="${k}_nik">NIK</label><input type="text" id="${k}_nik" class="ag-nik" inputmode="numeric" maxlength="16" value="${esc(a.nik)}" placeholder="16 digit" autocomplete="off" ${ro}><span class="hint nik-info">${nikInfo(a.nik)}</span></div>
     </div>
+    <div class="fld"><label for="${k}_agama">Agama</label><select id="${k}_agama" class="ag-agama" ${ro}>${agamaOpts(a.agama, 'Sama dengan kepala keluarga')}</select></div>
   </div>`;
 }
 function agRefresh(tambah) {
@@ -1694,7 +1701,7 @@ function agRefresh(tambah) {
 function agAmbil() {
   return [...document.querySelectorAll('#agList .ag-row')].map(r => ({
     nama: r.querySelector('.ag-nama').value.trim(), hubungan: r.querySelector('.ag-hub').value, jk: r.querySelector('.ag-jk').value,
-    lahir: r.querySelector('.ag-lahir').value, nik: r.querySelector('.ag-nik').value.replace(/\D/g, ''), _nikId: r.querySelector('.ag-nik').id, _namaId: r.querySelector('.ag-nama').id
+    lahir: r.querySelector('.ag-lahir').value, agama: (r.querySelector('.ag-agama') || {}).value || '', nik: r.querySelector('.ag-nik').value.replace(/\D/g, ''), _nikId: r.querySelector('.ag-nik').id, _namaId: r.querySelector('.ag-nama').id
   }));
 }
 function cekNik(el, info = $('#nikInfo')) {
@@ -2335,6 +2342,7 @@ function vPortal() {
       <div><dt>Kepala keluarga</dt><dd>${esc(w.nama)}</dd></div>
       <div><dt>NIK</dt><dd><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(0) ? fmtNik(w.nik) : maskNik(w.nik))}</span>${w.nik ? `<button type="button" class="btn sm ghost" data-act="nik-lihat" data-i="0">${S.nikBuka.has(0) ? 'Sembunyikan' : 'Lihat'}</button>` : ''}</span></dd></div>
       <div><dt>Jenis kelamin</dt><dd>${w.jk === 'P' ? 'Perempuan' : w.jk === 'L' ? 'Laki-laki' : '—'}</dd></div>
+      <div><dt>Agama</dt><dd>${esc(agamaLbl(w.agama) || '—')}</dd></div>
       <div><dt>Tanggal lahir</dt><dd>${w.lahir ? esc(tgl(w.lahir)) + ' · ' + esc(umur(w.lahir)) : '—'}</dd></div>
       <div><dt>No. HP / WhatsApp</dt><dd class="mono">${esc(w.noHp || '—')}</dd></div>
       <div><dt>Status huni</dt><dd>${esc(w.statusHuni || '—')}</dd></div>
@@ -2344,10 +2352,10 @@ function vPortal() {
     ${w.diubahWarga ? `<p class="muted" style="margin:10px 0 0;font-size:.8rem">Terakhir Anda perbarui ${esc(tgl(w.diubahWarga))}.</p>` : ''}
   </div>
   <div class="panel"><h3>Data keluarga <small>${isWarga() ? '<button class="btn sm" data-act="rumah-ubah">Ubah data keluarga</button>' : `${1 + ang.length} orang`}</small></h3>
-    <div class="tbl-wrap kel-tbl"><table><thead><tr><th class="r">No</th><th>Nama lengkap</th><th>Hubungan</th><th>Jenis kelamin</th><th>Tanggal lahir</th><th class="r">Umur</th><th>NIK</th></tr></thead><tbody>
-    ${[{nama: w.nama, hubungan: 'Kepala keluarga', jk: w.jk, lahir: w.lahir, nik: w.nik}, ...ang].map((a, i) => `<tr>
+    <div class="tbl-wrap kel-tbl"><table><thead><tr><th class="r">No</th><th>Nama lengkap</th><th>Hubungan</th><th>Jenis kelamin</th><th>Agama</th><th>Tanggal lahir</th><th class="r">Umur</th><th>NIK</th></tr></thead><tbody>
+    ${[{nama: w.nama, hubungan: 'Kepala keluarga', jk: w.jk, agama: w.agama, lahir: w.lahir, nik: w.nik}, ...ang].map((a, i) => `<tr>
       <td class="r num">${i + 1}</td><td style="font-weight:600">${esc(a.nama)}</td><td>${esc(a.hubungan || '—')}</td>
-      <td>${a.jk === 'P' ? 'Perempuan' : a.jk === 'L' ? 'Laki-laki' : '—'}</td><td class="num">${a.lahir ? esc(tgl(a.lahir)) : '—'}</td>
+      <td>${a.jk === 'P' ? 'Perempuan' : a.jk === 'L' ? 'Laki-laki' : '—'}</td><td>${esc(agamaLbl(a.agama || w.agama) || '—')}</td><td class="num">${a.lahir ? esc(tgl(a.lahir)) : '—'}</td>
       <td class="r num">${a.lahir ? esc(umur(a.lahir).replace(' tahun', ' th')) : '—'}</td><td><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(i) ? fmtNik(a.nik) : maskNik(a.nik))}</span>${a.nik ? `<button type="button" class="btn sm ghost" data-act="nik-lihat" data-i="${i}" aria-pressed="${S.nikBuka.has(i)}" aria-label="${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'} NIK ${esc(a.nama)}">${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'}</button>` : ''}</span></td></tr>`).join('')}
     </tbody></table></div>
   <p class="muted" style="margin:10px 0 0;font-size:.82rem">${isWarga() ? 'Tambah, ubah atau hapus anggota keluarga lewat tombol Ubah data keluarga.' : bisa('warga') ? `Data ini diambil dari menu Data warga. <a href="#warga" data-act="warga-edit" data-id="${esc(w.id)}" style="color:var(--accent)">Ubah data rumah ini</a>` : 'Data ini diambil dari menu Data warga.'}</p></div>
@@ -2983,8 +2991,14 @@ function vRhBeranda(kel) {
   const qs = qbSet(S.qbTh), qn = S.qurban.filter(x => Number(x.tahun) === S.qbTh).length;
   const qbBanner = qs.tanggal && qs.tanggal >= hari && (dOf(qs.tanggal) - dOf(hari)) / 864e5 <= 75
     ? `<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🐄 Idul Adha ${esc(tglSurat(qs.tanggal))} · ${Math.round((dOf(qs.tanggal) - dOf(hari)) / 864e5)} hari lagi${isWarga() || !(bisa('rohani') || lihat('kas')) ? '' : ` · ${qn} peserta qurban terdaftar`}</span>${isWarga() || bisa('rohani') || lihat('kas') ? '<button class="btn sm" data-act="rht" data-k="qurban">Lihat qurban</button>' : ''}</div>` : '';
+  const komp = isWarga() ? '' : (() => {
+    const m = {}; let n = 0, kosong = 0;
+    for (const w of wargaAktif()) for (const o of [w, ...(w.anggota || [])]) { const a = o === w ? w.agama : (o.agama || w.agama); n++; if (a) m[a] = (m[a] || 0) + 1; else kosong++; }
+    const L = AGAMA_W.filter(a => m[a]).map(a => [a, m[a]]), max = Math.max(1, ...L.map(x => x[1]));
+    return n ? `<div class="panel"><h3>Komposisi agama warga <small>${n} jiwa${kosong ? ` · ${kosong} belum diisi` : ''}</small></h3>${L.length ? `<div class="cat-bars">${L.map(([a, v]) => `<div class="cat-bar"><span>${esc(agamaLbl(a))}</span><span class="num">${v} jiwa · ${Math.round(v / n * 100)}%</span><div class="tr"><i style="width:${v / max * 100}%;background:var(--accent)"></i></div></div>`).join('')}</div>` : ''}${kosong ? `<p class="muted" style="margin:8px 0 0;font-size:.82rem">Lengkapi agama di menu Data warga agar data lebih akurat.</p>` : ''}</div>` : '';
+  })();
   return hero + qbBanner + (duka.length ? `<div class="rh-list" style="margin-bottom:14px">${duka.map(x => rhDukaKartu(x, kel)).join('')}</div>` : '')
-    + `<div class="panel"><h3>Agenda 30 hari ke depan <small>${ag.length ? ag.length + ' kegiatan' : ''}</small></h3>${ag.length ? `<div class="rh-list">${ag.map(x => rhAgKartu(x, kel)).join('')}</div>` : `<p class="muted" style="margin:0">Belum ada agenda kegiatan.${kel ? ' Tambahkan pengajian rutin, kajian, atau peringatan hari besar.' : ''}</p>`}</div>`;
+    + `<div class="panel"><h3>Agenda 30 hari ke depan <small>${ag.length ? ag.length + ' kegiatan' : ''}</small></h3>${ag.length ? `<div class="rh-list">${ag.map(x => rhAgKartu(x, kel)).join('')}</div>` : `<p class="muted" style="margin:0">Belum ada agenda kegiatan.${kel ? ' Tambahkan pengajian rutin, kajian, atau peringatan hari besar.' : ''}</p>`}</div>` + komp;
 }
 function vRhAgenda(kel) {
   const segF = [['datang', 'Akan datang'], ['semua', 'Semua agenda']].map(([k, l]) => `<button type="button" data-act="rhaf" data-k="${k}" aria-pressed="${S.rhAgF === k}">${l}</button>`).join('');
@@ -3122,7 +3136,7 @@ function openRhDuka(id) {
     body: `<div class="grid2"><div class="fld"><label for="rd_n">Nama almarhum/almarhumah <span class="req">*</span></label><input type="text" id="rd_n" name="nama" required maxlength="100" value="${esc(v.nama || '')}" ${ro}></div>
       <div class="fld"><label for="rd_u">Usia (tahun)</label><input type="number" id="rd_u" name="usia" min="0" max="130" value="${esc(v.usia || '')}" ${ro}></div></div>
     <div class="grid2"><div class="fld"><label for="rd_w">Keluarga dari rumah</label><select id="rd_w" name="wargaId" ${ro}><option value="">— bukan warga / kerabat luar —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${w.id === v.wargaId ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select></div>
-      <div class="fld"><label for="rd_a">Agama</label><select id="rd_a" name="agama" ${ro}>${AGAMA.filter(a => a !== 'Lintas agama').map(a => `<option ${a === v.agama ? 'selected' : ''}>${a}</option>`).join('')}<option value="" ${!v.agama ? 'selected' : ''}>Tidak disebutkan</option></select></div></div>
+      <div class="fld"><label for="rd_a">Agama</label><select id="rd_a" name="agama" ${ro}>${agamaOpts(v.agama, 'Tidak disebutkan')}</select></div></div>
     <div class="fld"><label for="rd_h">Hubungan / keterangan keluarga</label><input type="text" id="rd_h" name="hubungan" maxlength="120" value="${esc(v.hubungan || '')}" placeholder="mis. Ayahanda dari Bpk. Budi Santoso" ${ro}></div>
     <div class="grid2"><div class="fld"><label for="rd_t">Tanggal wafat <span class="req">*</span></label><input type="date" id="rd_t" name="tanggal" required value="${esc(v.tanggal)}" ${ro}></div>
       <div class="fld"><label for="rd_j">Jam</label><input type="time" id="rd_j" name="jam" value="${esc(v.jam || '')}" ${ro}></div></div>
@@ -3143,6 +3157,7 @@ function openRhDuka(id) {
       return ok;
     },
     onDelete: x ? async () => { const ok = await del('rohani', x.id); if (ok) toast('Kabar duka dihapus.'); return ok; } : null, deleteLabel: 'Hapus'});
+  const rw = $('#rd_w'); if (rw && !x) rw.addEventListener('change', () => { const w = wById(rw.value); if (w && w.agama) $('#rd_a').value = w.agama; });
 }
 async function rhUmumkanDuka(x) {
   const ok = await put('pengumuman', 'dk_' + uid(), {judul: 'Berita duka: ' + x.nama, kategori: 'Berita duka', isi: teksRhDuka(x).replace(/\*/g, '').replace(/\n\n[^\n]*$/, ''), tanggalAcara: '', jam: '', tempat: x.rumahDuka || '', sematkan: true, dibuat: todayISO(), diperbarui: todayISO()});
@@ -4724,6 +4739,7 @@ function suratIsi(x) {
       <tr><td>NIK</td><td>:</td><td>${esc(p.nik || '-')}</td></tr>
       <tr><td>Jenis kelamin</td><td>:</td><td>${esc(p.jk === 'P' ? 'Perempuan' : p.jk === 'L' ? 'Laki-laki' : '-')}</td></tr>
       <tr><td>Tanggal lahir</td><td>:</td><td>${p.lahir ? esc(tglSurat(p.lahir)) : '-'}</td></tr>
+      ${p.agama ? `<tr><td>Agama</td><td>:</td><td>${esc(agamaLbl(p.agama))}</td></tr>` : ''}
       <tr><td>Alamat</td><td>:</td><td>${esc(p.alamat)}</td></tr>
     </table>
     <p>${esc(ISI_SURAT[x.jenis] || ISI_SURAT['Surat Pengantar Lainnya'])}</p>
@@ -4773,8 +4789,8 @@ function openSuratBaru() {
       if (!w) { pesanDlg('Pilih warga pemohon.', 'sr_p'); return false; }
       const a = Number(idx) >= 0 ? (w.anggota || [])[Number(idx)] : null;
       const alamat = `${lingk()} Blok ${w.blok}${S.set.rt ? ', ' + rtrw() : ''}${S.set.kelurahan ? ', Kel. ' + S.set.kelurahan : ''}`;
-      const pemohon = a ? {nama: a.nama, nik: a.nik || '', jk: a.jk || '', lahir: a.lahir || '', alamat, wargaId: w.id}
-        : {nama: w.nama, nik: w.nik || '', jk: w.jk || '', lahir: w.lahir || '', alamat, wargaId: w.id};
+      const pemohon = a ? {nama: a.nama, nik: a.nik || '', jk: a.jk || '', agama: a.agama || w.agama || '', lahir: a.lahir || '', alamat, wargaId: w.id}
+        : {nama: w.nama, nik: w.nik || '', jk: w.jk || '', agama: w.agama || '', lahir: w.lahir || '', alamat, wargaId: w.id};
       const row = {jenis: d.jenis, pemohon, keperluan: d.keperluan.trim(), keterangan: String(d.keterangan || '').trim(), tanggal: d.tanggal, nomor: nomorSurat(d.tanggal), dibuat: todayISO()};
       const id = uid(), ok = await put('surat', id, row);
       if (ok) { toast(`Surat ${row.nomor} dibuat.`); setTimeout(() => openSuratLihat(id, row), 50); }
@@ -4805,10 +4821,10 @@ function ekspor(k, per) {
   const tag = lingk().replace(/\s+/g, '-');
   const W = [...S.warga].sort(sortHouse);
   let rows, name;
-  if (k === 'warga') { name = `Data-warga-${tag}`; rows = [['Blok/No','Nama kepala keluarga','NIK','No HP','Jumlah jiwa','Status huni','Status','Wajib iuran mulai','Tunggakan (bulan)','Catatan'],
-    ...W.map(w => [w.blok, w.nama, w.nik, w.noHp, w.jumlahJiwa, w.statusHuni, w.status, mulaiTgl(w), tunggakan(w), w.catatan])]; }
-  else if (k === 'anggota') { name = `Anggota-keluarga-${tag}`; rows = [['Blok/No','Kepala keluarga','Nama anggota','Hubungan','Jenis kelamin','Tanggal lahir','Umur','NIK'],
-    ...W.flatMap(w => [[w.blok, w.nama, w.nama, 'Kepala keluarga', w.jk === 'P' ? 'Perempuan' : w.jk === 'L' ? 'Laki-laki' : '', w.lahir, umur(w.lahir), w.nik], ...(w.anggota || []).map(a => [w.blok, w.nama, a.nama, a.hubungan, a.jk === 'P' ? 'Perempuan' : 'Laki-laki', a.lahir, umur(a.lahir), a.nik])])]; }
+  if (k === 'warga') { name = `Data-warga-${tag}`; rows = [['Blok/No','Nama kepala keluarga','NIK','No HP','Agama','Jumlah jiwa','Status huni','Status','Wajib iuran mulai','Tunggakan (bulan)','Catatan'],
+    ...W.map(w => [w.blok, w.nama, w.nik, w.noHp, agamaLbl(w.agama), w.jumlahJiwa, w.statusHuni, w.status, mulaiTgl(w), tunggakan(w), w.catatan])]; }
+  else if (k === 'anggota') { name = `Anggota-keluarga-${tag}`; rows = [['Blok/No','Kepala keluarga','Nama anggota','Hubungan','Jenis kelamin','Agama','Tanggal lahir','Umur','NIK'],
+    ...W.flatMap(w => [[w.blok, w.nama, w.nama, 'Kepala keluarga', w.jk === 'P' ? 'Perempuan' : w.jk === 'L' ? 'Laki-laki' : '', agamaLbl(w.agama), w.lahir, umur(w.lahir), w.nik], ...(w.anggota || []).map(a => [w.blok, w.nama, a.nama, a.hubungan, a.jk === 'P' ? 'Perempuan' : 'Laki-laki', agamaLbl(a.agama || w.agama), a.lahir, umur(a.lahir), a.nik])])]; }
   else if (k === 'iuran') { name = `Riwayat-iuran-${tag}`; rows = [['Periode','Blok/No','Nama','Jumlah','Tanggal bayar','Metode','No kwitansi','Catatan'],
     ...[...S.iuran].sort((a, b) => b.periode.localeCompare(a.periode)).map(p => { const w = wById(p.wargaId) || {}; return [p.periode, w.blok, w.nama, p.jumlah, p.tanggal, p.metode, kwNomor(p), p.catatan]; })]; }
   else if (k === 'tunggakan') { name = `Tunggakan-${tag}-${todayISO()}`; rows = [['Blok/No','Nama','No HP','Jumlah bulan','Bulan tertunggak','Total (Rp)'],
@@ -4949,7 +4965,7 @@ function openWargaSaya() {
       const tn = ag.find(x => !x.nama); if (tn) { pesanDlg('Nama anggota keluarga belum diisi. Isi namanya, atau hapus baris anggota itu.', tn._namaId); return false; }
       const an = ag.find(x => x.nik && x.nik.length !== 16); if (an) { pesanDlg(`NIK ${an.nama} harus 16 digit (sekarang ${an.nik.length} digit), atau kosongkan.`, an._nikId); return false; }
       const anggota = ag.map(({_nikId, _namaId, ...x}) => x);
-      const row = {...w, nama: String(d.nama || '').trim() || w.nama, nik, noHp: String(d.noHp || '').trim(), jk: d.jk === 'P' ? 'P' : 'L', lahir: d.lahir || '',
+      const row = {...w, nama: String(d.nama || '').trim() || w.nama, nik, noHp: String(d.noHp || '').trim(), jk: d.jk === 'P' ? 'P' : 'L', agama: AGAMA_W.includes(d.agama) ? d.agama : '', lahir: d.lahir || '',
         anggota, jumlahJiwa: Math.max(Number(d.jumlahJiwa) || 1, 1 + anggota.length), diperbarui: todayISO(), diubahWarga: todayISO()};
       const ok = await put('warga', w.id, row);
       if (ok) toast('Data rumah Anda tersimpan. Pengurus RT bisa melihat perubahannya.');

@@ -247,3 +247,13 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 
 -- 2026-10-23: info_publik() tidak lagi menampilkan pengumuman yang tanggal acaranya sudah lewat
 -- (filter tambahan: not (tanggalAcara <> '' and tanggalAcara < hari ini WIB)), termasuk yang disematkan.
+
+-- 2026-10-23: Modul Sumbangan (migrasi sumbangan_akses + sumbangan_saya_target_otomatis)
+-- Koleksi baru: sumbangan (program), donasi (penerimaan), salur (penyaluran).
+-- privat.izin: area 'sumbangan' fallback ke izin 'kas' bila role belum punya kunci 'sumbangan'.
+-- boleh_baca: sumbangan/donasi/salur terbaca oleh izin sumbangan/kas/pengeluaran/laporan/ringkasan >= lihat.
+-- boleh_tulis: sumbangan/donasi/salur hanya izin 'sumbangan' = kelola (pemilik selalu boleh).
+-- Warga: boleh membaca & menambah 'donasi' miliknya sendiri; trigger jaga_dokumen memaksa status 'Menunggu',
+--   sumber 'warga', nama/blok dari data warga, membuang 'verif', dan menolak bila program tidak aktif/tidak menerima konfirmasi.
+-- public.sumbangan_saya(): RPC (authenticated) — program yang ditampilkan ke warga + total, penyaluran,
+--   daftar penyumbang sesuai pengaturan (anonim -> "Hamba Allah"), dan donasi milik warga tersebut.

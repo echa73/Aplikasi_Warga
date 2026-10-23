@@ -6,7 +6,29 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.auth{position:relative}
+<style>.sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.sb-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;cursor:pointer;align-content:start;transition:border-color .15s,box-shadow .15s}
+.sb-card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.sb-card h4{margin:0;font-size:1rem;line-height:1.3}
+.sb-card .meta,.sb-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sb-card .meter{margin-top:0}
+.sb-amt{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.sb-amt b{font-size:1.25rem;font-variant-numeric:tabular-nums}.sb-amt span{color:var(--muted);font-size:.84rem}
+.sb-st{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.sb-card .go{justify-self:start}
+.sb-hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:center}
+.sb-hero .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.sb-hero .big{display:block;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}
+.sb-hero .meter{height:10px;margin:10px 0 6px}
+.sb-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sb-mini div{background:var(--sunk);border-radius:12px;padding:8px 12px;min-width:0}
+.sb-mini b{display:block;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.sb-mini span{font-size:.74rem;color:var(--muted)}
+.sb-tpl{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.sb-don{display:grid;gap:4px;max-height:260px;overflow:auto;margin-top:8px;font-size:.86rem}
+.sb-don div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
+.sb-back{margin-bottom:6px}
+@media(max-width:720px){.sb-hero{grid-template-columns:1fr}}
+.auth{position:relative}
 .papan-bell{position:absolute;top:18px;right:18px;z-index:5;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px 0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.10)}
 .papan-bell svg{width:20px;height:20px}.papan-bell:hover{border-color:var(--accent)}
 .papan-bell .bd{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:var(--tulip,#d33);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center;border:2px solid var(--surface)}
@@ -892,7 +914,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -903,14 +925,14 @@ const S = {
   sesi: null, pilih: null, keamanan: {}, pinGagal: 0, pinKunci: 0
 };
 let U = null;
-const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['keamanan', 'Keamanan (satpam)'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
+const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['keamanan', 'Keamanan (satpam)'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
 const LVL = {tidak: 0, lihat: 1, kelola: 2};
 const LVL_LBL = {tidak: 'Tidak bisa buka', lihat: 'Lihat saja', kelola: 'Lihat & ubah'};
 const semua = v => Object.fromEntries(MENU_IZIN.map(([k]) => [k, v]));
 const DEFAULT_ROLES = [
   {id: 'ketua', nama: 'Ketua RT', ket: 'Semua menu, termasuk pengaturan', izin: semua('kelola')},
   {id: 'pengurus', nama: 'Pengurus', ket: 'Semua menu kecuali mengubah pengaturan', izin: {...semua('kelola'), pengaturan: 'lihat'}},
-  {id: 'bendahara', nama: 'Bendahara', ket: 'Iuran dan buku kas', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'lihat', iuran: 'kelola', kas: 'kelola', keluhan: 'tidak', info: 'lihat', surat: 'tidak', pengaturan: 'tidak'}},
+  {id: 'bendahara', nama: 'Bendahara', ket: 'Iuran dan buku kas', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'lihat', iuran: 'kelola', kas: 'kelola', sumbangan: 'kelola', keluhan: 'tidak', info: 'lihat', surat: 'tidak', pengaturan: 'tidak'}},
   {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
   {id: 'lihat', nama: 'Lihat saja', ket: 'Hanya melihat, tanpa pengaturan', izin: {...semua('lihat'), pengaturan: 'tidak', portal: 'tidak'}},
   {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', warga: 'lihat', info: 'lihat'}},
@@ -920,7 +942,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -945,9 +967,10 @@ const peranSaya = () => { const r = roleSaya(); return r ? r.nama : null; };
 function izin(area) {
   if (area === 'admin') return bisaKelola() ? 'kelola' : 'tidak';
   const r = roleSaya(); if (!r || !r.izin) return 'tidak';
-  const v = r.izin[area] !== undefined ? r.izin[area] : (area === 'pengeluaran' || area === 'laporan') ? r.izin.kas : undefined;
+  const v = izinRole(r, area);
   return LVL[v] !== undefined ? v : 'tidak';
 }
+function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan') ? iz.kas : undefined; }
 const lihat = area => LVL[izin(area)] >= 1;
 function bisa(area) { if (S.readOnly) return false; return izin(area) === 'kelola'; }
 const hanyaLihat = () => !['admin', ...MENU_IZIN.map(m => m[0])].some(bisa);
@@ -969,7 +992,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -1117,7 +1140,7 @@ const loginTerpakai = (hp, kecuali) => { const n = normHp(hp); if (!n) return nu
 /* ---------- store ---------- */
 function clean(o) { const c = {...o}; delete c.id; return c; }
 async function put(col, id, data) {
-  const milikSendiri = isWarga() && wargaSaya() && ((col === 'warga' && id === wargaSaya().id) || ((col === 'darurat' || col === 'titip') && data && data.wargaId === wargaSaya().id));
+  const milikSendiri = isWarga() && wargaSaya() && ((col === 'warga' && id === wargaSaya().id) || ((col === 'darurat' || col === 'titip' || col === 'donasi') && data && data.wargaId === wargaSaya().id));
   const ajuanSendiri = col === 'pengajuan' && bolehAjukan() && (!data.status || data.status === 'Menunggu' || data.status === 'Dibatalkan') && (!data.pemohonId || data.pemohonId === (S.me && S.me.id));
   if (!milikSendiri && !ajuanSendiri && !bisa(areaOf(col)) && !(col === 'kas' && data && data.jenis !== 'masuk' && bisa('pengeluaran'))) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
   if (S.me && S.me.id) data = {...data, oleh: S.me.id};
@@ -1180,14 +1203,15 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'surat']], ['Keuangan', ['kas', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  sumbangan: '<path d="M12 20.5s-7.5-4.6-7.5-10.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 2.5c0 5.8-7.5 10.4-7.5 10.4z"/><path d="M12 10.6v5.2M9.4 13.2h5.2"/>',
   bell: '<path d="M6 9.5a6 6 0 1 1 12 0c0 4.5 1.8 6 1.8 6H4.2S6 14 6 9.5z"/><path d="M10 19a2 2 0 0 0 4 0"/>',
   pengajuan: '<path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4h4"/><path d="M12 10v7M9.5 12.2c0-.9.9-1.5 2.5-1.5s2.5.6 2.5 1.5-1 1.3-2.5 1.6-2.5.7-2.5 1.6.9 1.5 2.5 1.5 2.5-.6 2.5-1.5"/>',
   kunci: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3"/>',
@@ -1232,6 +1256,7 @@ function renderTabs() {
     const g = isWarga() ? null : grupOf(k);
     if (g && g !== grpLast) { gh = `<div class="nav-grp">${g}</div>`; grpLast = g; }
     if (k === 'warga' && S.warga.length) ct = `<span class="ct">${wargaAktif().length}</span>`;
+    if (k === 'sumbangan') { const n = S.donasi.filter(x => x.status === 'Menunggu').length; if (n && bisa('sumbangan')) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
     if (k === 'pengajuan') { const n = S.pengajuan.filter(x => x.status === 'Menunggu').length; if (n && bisa('pengeluaran')) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
     if (k === 'lapor') { const w = wargaSaya(), n = w ? S.keluhan.filter(x => x.wargaId === w.id && x.status !== 'Selesai').length : 0; if (n) ct = `<span class="ct">${n}</span>`; }
     if (k === 'keluhan' && open) ct = `<span class="ct hot">${open}</span>`;
@@ -1270,7 +1295,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2335,9 +2360,9 @@ function avatarHtml(userId, namaTeks) {
   return src ? `<img class="av" src="${esc(src)}" alt="">` : `<span class="av av-i" aria-hidden="true">${esc(inisial(namaTeks))}</span>`;
 }
 function izinRingkas(r) {
-  const k = MENU_IZIN.filter(([m]) => r.izin[m] === 'kelola').map(m => m[1]);
-  const l = MENU_IZIN.filter(([m]) => r.izin[m] === 'lihat').map(m => m[1]);
-  const t = MENU_IZIN.filter(([m]) => !r.izin[m] || r.izin[m] === 'tidak').map(m => m[1]);
+  const k = MENU_IZIN.filter(([m]) => izinRole(r, m) === 'kelola').map(m => m[1]);
+  const l = MENU_IZIN.filter(([m]) => izinRole(r, m) === 'lihat').map(m => m[1]);
+  const t = MENU_IZIN.filter(([m]) => !izinRole(r, m) || izinRole(r, m) === 'tidak').map(m => m[1]);
   return [k.length ? 'Ubah: ' + k.join(', ') : '', l.length ? 'Lihat: ' + l.join(', ') : '', t.length ? 'Tidak bisa buka: ' + t.join(', ') : ''].filter(Boolean).join(' · ') || 'Tidak bisa membuka menu apa pun';
 }
 const roleCocok = jab => { const j = String(jab || '').trim().toLowerCase(); return j ? rolesAll().find(r => r.nama.toLowerCase() === j) : null; };
@@ -2378,7 +2403,7 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_KOL = {sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn']};
 async function muatLog() {
   S.logAkt = 'memuat'; render();
@@ -2403,7 +2428,7 @@ function vAdminRole() {
   const cell = v => v === 'kelola' ? '<span class="chip ok plain">Ubah</span>' : v === 'lihat' ? '<span class="chip info plain">Lihat</span>' : '<span class="muted">—</span>';
   const pakai = id => S.pengurus.filter(p => p.peranId === id).length;
   const rowsT = rolesAll().map(r => `<tr><td><div style="font-weight:600">${esc(r.nama)}</div><div class="muted" style="font-size:.78rem">${pakai(r.id)} pengurus</div></td>
-    ${MENU_IZIN.map(([m]) => `<td>${cell(r.izin[m])}</td>`).join('')}<td class="r"><button class="btn sm" data-act="role-edit" data-id="${esc(r.id)}">Ubah</button></td></tr>`).join('');
+    ${MENU_IZIN.map(([m]) => `<td>${cell(izinRole(r, m))}</td>`).join('')}<td class="r"><button class="btn sm" data-act="role-edit" data-id="${esc(r.id)}">Ubah</button></td></tr>`).join('');
   const rowsM = rolesAll().map(r => `<div class="row"><div class="grow"><div class="t">${esc(r.nama)} <span class="muted" style="font-weight:400">· ${pakai(r.id)} pengurus</span></div><div class="s">${esc(izinRingkas(r))}</div></div>
     <button class="btn sm" data-act="role-edit" data-id="${esc(r.id)}">Ubah</button></div>`).join('');
   return `${S.peran.length ? '' : '<p class="muted" style="margin:-8px 0 0;font-size:.84rem">Ini role bawaan. Ubah atau tambah role sesuai struktur pengurus Anda.</p>'}
@@ -2544,7 +2569,7 @@ function openRole(id) {
     body: `<div class="fld"><label for="rl_nama">Nama role <span class="req">*</span></label><input type="text" id="rl_nama" name="nama" required value="${esc(x.nama)}" placeholder="mis. Seksi Keamanan"></div>
     <div class="fld"><label for="rl_ket">Keterangan</label><input type="text" id="rl_ket" name="ket" value="${esc(x.ket)}" placeholder="Tugas singkat role ini"></div>
     <div class="fld"><label>Hak akses per menu</label>
-      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${x.izin[m] === v ? 'selected' : ''}>${LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
+      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || 'tidak') === v ? 'selected' : ''}>${LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
       <span class="hint">Menu yang "Tidak bisa buka" disembunyikan dari pengurus dengan role ini. Menu Admin hanya untuk Pemilik.</span></div>
     ${dipakai ? `<p class="muted" style="margin:0;font-size:.84rem">Dipakai oleh ${dipakai} pengurus. Perubahan langsung berlaku untuk mereka.</p>` : ''}`,
     onSubmit: async d => {
@@ -2681,7 +2706,8 @@ function kasSemua() {
   for (const p of S.iuran) { if (!p.tanggal) continue; const g = byTgl.get(p.tanggal) || {n: 0, j: 0}; g.n++; g.j += Number(p.jumlah) || 0; byTgl.set(p.tanggal, g); }
   const auto = [...byTgl].map(([t, g]) => ({id: 'iur_' + t, jenis: 'masuk', tanggal: t, kategori: 'Iuran warga', uraian: `Iuran warga · ${g.n} pembayaran`, jumlah: g.j, auto: true}));
   const mulai = saldoCutoff().tanggal;
-  return [...auto, ...S.kas.filter(x => x.tanggal)].filter(x => !mulai || x.tanggal >= mulai);
+  const sb = sbKasRows();
+  return [...auto, ...sb.masuk, ...sb.keluar, ...S.kas.filter(x => x.tanggal)].filter(x => !mulai || x.tanggal >= mulai);
 }
 const nilai = x => (x.jenis === 'masuk' ? 1 : -1) * (Number(x.jumlah) || 0);
 const saldoSebelum = iso => saldoCutoff().jumlah + kasSemua().filter(x => x.tanggal < iso).reduce((s, x) => s + nilai(x), 0);
@@ -2692,7 +2718,7 @@ function rekapKas(per) {
   const keluar = list.filter(x => x.jenis !== 'masuk').reduce((s, x) => s + (Number(x.jumlah) || 0), 0);
   const awal = saldoSebelum(per + '-01');
   const perKat = {}; for (const x of list) if (x.jenis !== 'masuk') perKat[x.kategori] = (perKat[x.kategori] || 0) + (Number(x.jumlah) || 0);
-  const iur = list.filter(x => x.auto).reduce((s, x) => s + x.jumlah, 0);
+  const iur = list.filter(x => x.auto && x.kategori === 'Iuran warga').reduce((s, x) => s + x.jumlah, 0);
   return {list, masuk, keluar, awal, akhir: awal + masuk - keluar, perKat, iur};
 }
 function teksLaporanKas(per) {
@@ -2715,10 +2741,10 @@ function vKas() {
       <td class="r num in">${x.jenis === 'masuk' ? esc(rp(x.jumlah)) : ''}</td>
       <td class="r num out">${x.jenis !== 'masuk' ? esc(rp(x.jumlah)) : ''}</td>
       <td class="r num">${esc(rp(x.saldo))}</td>
-      <td class="r">${x.auto ? (lihat('iuran') ? `<button class="btn ghost sm" data-act="tab" data-k="iuran">Lihat iuran</button>` : '') : `<button class="btn sm" data-act="kas-edit" data-id="${esc(x.id)}">${bisa('kas') ? 'Ubah' : 'Lihat'}</button>`}</td></tr>`).join('');
+      <td class="r">${x.auto ? x.src === 'sb' ? `<button class="btn ghost sm" data-act="sb-buka" data-id="${esc(x.programId)}">Lihat sumbangan</button>` : (lihat('iuran') ? `<button class="btn ghost sm" data-act="tab" data-k="iuran">Lihat iuran</button>` : '') : `<button class="btn sm" data-act="kas-edit" data-id="${esc(x.id)}">${bisa('kas') ? 'Ubah' : 'Lihat'}</button>`}</td></tr>`).join('');
   const rowsM = rows.map(x => `<div class="row"><div class="grow"><div class="t">${esc(x.uraian)}</div><div class="s">${esc(tgl(x.tanggal))} · ${esc(x.kategori)}</div></div>
       <span class="${x.jenis === 'masuk' ? 'amt-in' : 'amt-out'} num">${x.jenis === 'masuk' ? '+' : '−'}${esc(nf.format(x.jumlah))}</span>
-      ${x.auto ? '' : `<button class="btn ghost sm" data-act="kas-edit" data-id="${esc(x.id)}" aria-label="Ubah">›</button>`}</div>`).join('');
+      ${x.auto ? (x.src === 'sb' ? `<button class="btn ghost sm" data-act="sb-buka" data-id="${esc(x.programId)}" aria-label="Lihat sumbangan">›</button>` : '') : `<button class="btn ghost sm" data-act="kas-edit" data-id="${esc(x.id)}" aria-label="Ubah">›</button>`}</div>`).join('');
   return head + `
   <div class="tiles">
     <div class="tile"><span class="lbl">Saldo awal</span><span class="val">${esc(rp(r.awal))}</span><span class="sub">per 1 ${esc(perLbl(S.kasPer, true))}</span></div>
@@ -2774,7 +2800,7 @@ function openKas(id, area = 'kas') {
 }
 
 /* ---------- pengeluaran ---------- */
-const pgSemua = () => S.kas.filter(x => x.jenis !== 'masuk' && x.tanggal);
+const pgSemua = () => [...S.kas.filter(x => x.jenis !== 'masuk' && x.tanggal), ...sbKasRows().keluar];
 function pgRentang() {
   if (S.pgMode === 'tahun') { const y = S.pgTh; return {awal: y + '-01-01', akhir: y + '-12-31', lbl: 'Tahun ' + y, prevAwal: (y - 1) + '-01-01', prevAkhir: (y - 1) + '-12-31', prevLbl: 'tahun ' + (y - 1)}; }
   const p = S.pgPer, pv = addM(p, -1);
@@ -2798,6 +2824,471 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Sumbangan & donasi ---------- */
+const SB_THN = (() => { const d = new Date(); return d.getFullYear() + (d.getMonth() >= 4 ? 1 : 0); })();
+const SB_JENIS = [
+  {j: 'Sumbangan sukarela', sifat: 'sukarela', kat: 'Kegiatan warga', contoh: 'Sumbangan sukarela warga'},
+  {j: 'THR keamanan & kebersihan', sifat: 'rumah', kat: 'Keamanan / satpam', contoh: 'THR Satpam & Petugas Kebersihan ' + SB_THN},
+  {j: 'HUT RI / 17 Agustus', sifat: 'rumah', kat: 'Kegiatan warga', contoh: 'Lomba & Tasyakuran HUT RI ' + (new Date().getMonth() > 7 ? new Date().getFullYear() + 1 : new Date().getFullYear())},
+  {j: 'Duka cita / santunan', sifat: 'sukarela', kat: 'Sosial / duka / sakit', contoh: 'Santunan duka cita keluarga '},
+  {j: 'Bantuan sosial / bencana', sifat: 'sukarela', kat: 'Sosial / duka / sakit', contoh: 'Bantuan untuk korban '},
+  {j: 'Pembangunan / perbaikan fasum', sifat: 'rumah', kat: 'Perbaikan fasilitas', contoh: 'Perbaikan portal & pos satpam'},
+  {j: 'Kegiatan keagamaan', sifat: 'sukarela', kat: 'Kegiatan warga', contoh: 'Santunan anak yatim'},
+  {j: 'Lainnya', sifat: 'sukarela', kat: 'Lainnya', contoh: ''}
+];
+const SB_TAMPIL = [['nama', 'Nama penyumbang saja'], ['lengkap', 'Nama & jumlah'], ['tidak', 'Jangan tampilkan daftar']];
+const sbJenis = j => SB_JENIS.find(x => x.j === j) || SB_JENIS[SB_JENIS.length - 1];
+const sbProg = id => S.sumbangan.find(p => p.id === id);
+const jml = l => l.reduce((t, x) => t + (Number(x.jumlah) || 0), 0);
+function sbHitung(p) {
+  const masuk = S.donasi.filter(d => d.programId === p.id && d.status === 'Diterima').sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')));
+  const tunggu = S.donasi.filter(d => d.programId === p.id && d.status === 'Menunggu');
+  const salur = S.salur.filter(x => x.programId === p.id).sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || '')));
+  const terkumpul = jml(masuk), disalurkan = jml(salur), totalRumah = wargaAktif().length;
+  const rumah = new Set(masuk.filter(d => d.wargaId).map(d => d.wargaId));
+  const target = Number(p.target) || (p.sifat === 'rumah' && Number(p.nominal) ? Number(p.nominal) * totalRumah : 0);
+  return {masuk, tunggu, salur, terkumpul, disalurkan, sisa: terkumpul - disalurkan, rumah, totalRumah, target, targetAuto: !Number(p.target) && !!target, pct: target ? Math.min(100, Math.round(terkumpul / target * 100)) : null, persen: target ? Math.round(terkumpul / target * 100) : null};
+}
+function sbBatas(p) {
+  if (p.status === 'Selesai') return 'Program ditutup' + (p.ditutup ? ' ' + tgl(p.ditutup) : '');
+  if (!p.selesai) return 'Tanpa batas waktu';
+  const n = Math.round((new Date(p.selesai + 'T00:00') - new Date(todayISO() + 'T00:00')) / 864e5);
+  return n > 0 ? `${n} hari lagi · s.d. ${tgl(p.selesai)}` : n === 0 ? 'Batas hari ini' : `Lewat batas ${tgl(p.selesai)}`;
+}
+// Sumbangan yang dicatat di buku kas: penerimaan dijumlahkan per program per tanggal, penyaluran per transaksi
+function sbKasRows() {
+  const prog = new Map(S.sumbangan.filter(p => p.masukKas !== false).map(p => [p.id, p])), g = new Map();
+  for (const d of S.donasi) {
+    if (d.status !== 'Diterima' || !d.tanggal || !prog.has(d.programId)) continue;
+    const k = d.programId + '|' + d.tanggal, x = g.get(k) || {p: prog.get(d.programId), t: d.tanggal, n: 0, j: 0};
+    x.n++; x.j += Number(d.jumlah) || 0; g.set(k, x);
+  }
+  const masuk = [...g.values()].map(x => ({id: 'sbm_' + x.p.id + '_' + x.t, jenis: 'masuk', tanggal: x.t, kategori: 'Sumbangan: ' + (x.p.jenis || 'Lainnya'), uraian: `Sumbangan ${x.p.nama} · ${x.n} penyumbang`, jumlah: x.j, auto: true, src: 'sb', programId: x.p.id}));
+  const keluar = S.salur.filter(x => x.tanggal && prog.has(x.programId)).map(x => { const p = prog.get(x.programId);
+    return {id: 'sbk_' + x.id, jenis: 'keluar', tanggal: x.tanggal, kategori: p.katKeluar || 'Lainnya', uraian: `${x.uraian || 'Penyaluran'} (dana ${p.nama})`, penerima: x.penerima || '', noNota: x.noNota || '', metode: x.metode || '', catatan: x.catatan || '', jumlah: Number(x.jumlah) || 0, auto: true, src: 'sb', programId: p.id}; });
+  return {masuk, keluar};
+}
+const sbNamaTampil = d => d.anonim ? 'Hamba Allah' : (d.nama || '—');
+function teksSbLaporan(p) {
+  const h = sbHitung(p), daftar = p.tampilPenyumbang === 'tidak' ? '' : h.masuk.slice().reverse().map((d, i) => `${i + 1}. ${sbNamaTampil(d)}${!d.anonim && d.blok ? ' (' + d.blok + ')' : ''}${p.tampilPenyumbang === 'lengkap' ? ' – ' + rp(d.jumlah) : ''}`).join('\n');
+  return `*Laporan ${p.nama}*\n${lingk()}\n\nTerkumpul: *${rp(h.terkumpul)}* dari ${h.masuk.length} penyumbang${h.target ? `\nTarget: ${rp(h.target)} (${h.persen}%)` : ''}${p.sifat === 'rumah' ? `\nPartisipasi: ${h.rumah.size} dari ${h.totalRumah} rumah` : ''}\nDisalurkan: ${rp(h.disalurkan)}\nSisa dana: ${rp(h.sisa)}`
+    + `${h.salur.length ? '\n\n*Penyaluran*\n' + h.salur.slice().reverse().map(x => `- ${tgl(x.tanggal)} ${x.uraian}${x.penerima ? ' (' + x.penerima + ')' : ''}: ${rp(x.jumlah)}`).join('\n') : ''}`
+    + `${daftar ? '\n\n*Terima kasih kepada*\n' + daftar : ''}\n\n${pengirim()}`;
+}
+function teksSbAjakan(p) {
+  return `*${p.nama}*\n${lingk()}\n\n${p.deskripsi ? p.deskripsi + '\n\n' : ''}${p.sifat === 'rumah' && Number(p.nominal) ? `Saran sumbangan: *${rp(p.nominal)} per rumah*\n` : 'Sumbangan sukarela, berapa pun nilainya sangat berarti.\n'}${p.selesai ? `Batas: ${tglSurat(p.selesai)}\n` : ''}`
+    + `${S.set.infoBayar ? `\nCara menyumbang:\n${S.set.infoBayar}\n` : ''}${p.konfirmasiWarga !== false && p.tampilWarga !== false ? '\nSetelah menyumbang, konfirmasi lewat aplikasi warga: menu Sumbangan.\n' : ''}\nTerima kasih.\n${pengirim()}`;
+}
+const teksSbIngat = (p, w) => `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nKami mengajak partisipasi untuk *${p.nama}*${p.sifat === 'rumah' && Number(p.nominal) ? ` sebesar ${rp(p.nominal)} per rumah` : ''}${p.selesai ? `, paling lambat ${tglSurat(p.selesai)}` : ''}.\n${S.set.infoBayar ? `\n${S.set.infoBayar}\n` : ''}\nMohon abaikan bila sudah menyumbang. Terima kasih.\n${pengirim()}`;
+const sbNoBukti = d => 'SB/' + String(d.tanggal || todayISO()).replace(/-/g, '').slice(2) + '/' + String(d.id || '').slice(-5).toUpperCase();
+const teksSbTerimaKasih = (p, d) => `*Tanda terima sumbangan*\n${lingk()}\n\nNo: ${sbNoBukti(d)}\nDiterima dari: ${d.nama}${d.blok ? ' (' + d.blok + ')' : ''}\nUntuk: ${p.nama}\nSebesar: ${rp(d.jumlah)}\nTerbilang: ${terbilang(Number(d.jumlah) || 0)}\nTanggal: ${tgl(d.tanggal)} (${d.metode || 'Tunai'})\n\nTerima kasih atas kepeduliannya, semoga menjadi berkah.\n${pengirim()}`;
+
+function vSumbangan() {
+  if (isWarga()) return vSumbanganWarga();
+  const sel = S.sbSel && sbProg(S.sbSel);
+  if (sel) return vSbDetail(sel);
+  const kel = bisa('sumbangan'), th = String(new Date().getFullYear());
+  const all = [...S.sumbangan].sort((a, b) => (a.status === 'Selesai') - (b.status === 'Selesai') || String(b.mulai || '').localeCompare(String(a.mulai || '')));
+  const H = new Map(all.map(x => [x.id, sbHitung(x)]));
+  const aktif = all.filter(x => x.status !== 'Selesai');
+  const list = S.sbFilter === 'semua' ? all : S.sbFilter === 'selesai' ? all.filter(x => x.status === 'Selesai') : aktif;
+  const tunggu = S.donasi.filter(d => d.status === 'Menunggu' && sbProg(d.programId));
+  const masukTh = jml(S.donasi.filter(d => d.status === 'Diterima' && String(d.tanggal || '').startsWith(th) && sbProg(d.programId)));
+  const salurTh = jml(S.salur.filter(x => String(x.tanggal || '').startsWith(th) && sbProg(x.programId)));
+  const sisa = [...H.values()].reduce((t, h) => t + h.sisa, 0);
+  const seg = [['aktif', `Aktif ${aktif.length}`], ['selesai', 'Selesai'], ['semua', `Semua ${all.length}`]].map(([k, l]) => `<button type="button" data-act="sbf" data-k="${k}" aria-pressed="${S.sbFilter === k}">${l}</button>`).join('');
+  const kartu = x => { const h = H.get(x.id);
+    return `<article class="sb-card" data-act="sb-buka" data-id="${esc(x.id)}">
+      <div class="meta"><span class="chip ${x.status === 'Selesai' ? 'mute' : 'ok'}">${x.status === 'Selesai' ? 'Selesai' : 'Aktif'}</span><span class="chip mute plain">${esc(x.jenis || 'Lainnya')}</span>${x.masukKas === false ? '<span class="chip info plain">Dana terpisah</span>' : ''}${h.tunggu.length ? `<span class="chip warn">${h.tunggu.length} perlu verifikasi</span>` : ''}</div>
+      <h4>${esc(x.nama)}</h4>
+      <div class="sb-amt"><b>${esc(rp(h.terkumpul))}</b>${h.target ? `<span>dari ${esc(rp(h.target))} · ${h.persen}%</span>` : ''}</div>
+      ${h.target ? `<div class="meter"><i style="width:${h.pct}%"></i></div>` : ''}
+      <div class="sb-st"><span>${h.masuk.length} penyumbang</span>${x.sifat === 'rumah' ? `<span>${h.rumah.size}/${h.totalRumah} rumah</span>` : ''}<span>Sisa dana ${esc(rp(h.sisa))}</span></div>
+      <div class="muted" style="font-size:.8rem">${esc(sbBatas(x))}</div>
+      <button type="button" class="btn sm go" data-act="sb-buka" data-id="${esc(x.id)}">${kel ? 'Kelola' : 'Lihat'} ›</button></article>`; };
+  const tpl = SB_JENIS.slice(0, 4).map(j => `<button type="button" class="btn sm" data-act="sb-new" data-j="${esc(j.j)}">+ ${esc(j.j)}</button>`).join('');
+  return `<div class="sec-head"><div><h2>Sumbangan</h2><p>Penggalangan dana warga: sumbangan sukarela, THR petugas keamanan & kebersihan, HUT RI, duka cita, dan lainnya. Penerimaan dan penyaluran otomatis masuk buku kas.</p></div>
+    ${kel ? '<button class="btn pri" data-act="sb-new">+ Program sumbangan</button>' : ''}</div>
+  ${tunggu.length && kel ? `<div class="notice" style="background:var(--sun-soft);color:#6b4a00">${tunggu.length} konfirmasi sumbangan dari warga menunggu diverifikasi (${esc(rp(jml(tunggu)))}). Buka programnya, lalu tab "Perlu verifikasi".</div>` : ''}
+  <div class="tiles">
+    <div class="tile"><span class="ti g">${ico('sumbangan')}</span><span class="lbl">Program aktif</span><span class="val">${aktif.length}</span><span class="sub">${all.length} program tercatat</span></div>
+    <div class="tile"><span class="ti b">${ico('naik')}</span><span class="lbl">Terkumpul ${th}</span><span class="val" style="color:var(--ok)">${esc(rp(masukTh))}</span><span class="sub">${S.donasi.filter(d => d.status === 'Diterima' && String(d.tanggal || '').startsWith(th)).length} sumbangan</span></div>
+    <div class="tile"><span class="ti r">${ico('pengeluaran')}</span><span class="lbl">Disalurkan ${th}</span><span class="val" style="color:var(--bad)">${esc(rp(salurTh))}</span><span class="sub">${S.salur.filter(x => String(x.tanggal || '').startsWith(th)).length} penyaluran</span></div>
+    <div class="tile"><span class="ti s">${ico('kas')}</span><span class="lbl">Sisa dana sumbangan</span><span class="val">${esc(rp(sisa))}</span><span class="sub">belum disalurkan, semua program</span></div>
+  </div>
+  ${all.length ? `<div class="toolbar"><div class="seg" role="group" aria-label="Saring program">${seg}</div></div>
+    ${list.length ? `<div class="sb-grid">${list.map(kartu).join('')}</div>` : `<div class="empty">${S.sbFilter === 'aktif' ? 'Tidak ada program yang sedang berjalan.' : 'Belum ada program selesai.'}</div>`}`
+  : `<div class="empty">Belum ada program sumbangan.${kel ? `<div style="font-size:.88rem;margin-top:6px">Mulai cepat dari salah satu jenis berikut:</div><div class="sb-tpl">${tpl}</div>` : ''}</div>`}`;
+}
+function vSbDetail(p) {
+  const h = sbHitung(p), kel = bisa('sumbangan'), buka = p.status !== 'Selesai';
+  const belum = wargaAktif().filter(w => !h.rumah.has(w.id));
+  const tabs = [['penyumbang', `Penyumbang ${h.masuk.length}`], ['belum', `${p.sifat === 'rumah' ? 'Belum menyumbang' : 'Belum ikut'} ${belum.length}`], ['salur', `Penyaluran ${h.salur.length}`]];
+  if (h.tunggu.length || S.sbTab === 'verif') tabs.push(['verif', `Perlu verifikasi ${h.tunggu.length}`]);
+  if (kel && buka) tabs.push(['keliling', 'Catat keliling']);
+  if (!tabs.some(t => t[0] === S.sbTab)) S.sbTab = 'penyumbang';
+  const seg = tabs.map(([k, l]) => `<button type="button" data-act="sbt" data-k="${k}" aria-pressed="${S.sbTab === k}">${esc(l)}</button>`).join('');
+  const head = `<div class="sec-head"><div><button class="btn ghost sm sb-back" data-act="sb-kembali">‹ Semua program</button><h2>${esc(p.nama)}</h2>
+      <div class="sb-chips"><span class="chip ${buka ? 'ok' : 'mute'}">${buka ? 'Aktif' : 'Selesai'}</span><span class="chip mute plain">${esc(p.jenis || 'Lainnya')}</span><span class="chip mute plain">${p.sifat === 'rumah' ? 'Per rumah' + (Number(p.nominal) ? ' · ' + esc(rp(p.nominal)) : '') : 'Sukarela'}</span>${p.masukKas === false ? '<span class="chip info plain">Dana terpisah dari kas RT</span>' : '<span class="chip info plain">Tercatat di buku kas</span>'}${p.tampilWarga === false ? '<span class="chip mute plain">Tidak tampil ke warga</span>' : ''}</div>
+      ${p.deskripsi ? `<p style="margin-top:8px;white-space:pre-line">${esc(p.deskripsi)}</p>` : ''}</div>
+    ${kel ? `<div class="toolbar" style="margin:0">${buka ? `<button class="btn pri" data-act="sb-catat">+ Catat sumbangan</button>` : ''}<button class="btn" data-act="sb-salur">+ Penyaluran</button><button class="btn ghost" data-act="sb-ubah" data-id="${esc(p.id)}">Ubah program</button></div>` : ''}</div>`;
+  const hero = `<div class="panel sb-hero"><div><span class="lbl">Terkumpul</span><b class="big">${esc(rp(h.terkumpul))}</b>
+      <span class="muted">${h.target ? `dari target ${esc(rp(h.target))}${h.targetAuto ? ` (${esc(rp(p.nominal))} × ${h.totalRumah} rumah)` : ''}` : 'Tanpa target'}</span>
+      ${h.target ? `<div class="meter"><i style="width:${h.pct}%"></i></div>` : '<div style="height:10px"></div>'}
+      <span class="muted" style="font-size:.84rem">${h.target ? h.persen + '% tercapai · ' : ''}${esc(sbBatas(p))}</span></div>
+    <div class="sb-mini">
+      <div><b>${h.masuk.length}</b><span>penyumbang</span></div>
+      <div><b>${h.rumah.size}/${h.totalRumah}</b><span>rumah ikut (${h.totalRumah ? Math.round(h.rumah.size / h.totalRumah * 100) : 0}%)</span></div>
+      <div><b style="color:var(--bad)">${esc(rp(h.disalurkan))}</b><span>disalurkan</span></div>
+      <div><b>${esc(rp(h.sisa))}</b><span>sisa dana</span></div>
+    </div></div>`;
+  let isi = '';
+  if (S.sbTab === 'penyumbang') {
+    const q = S.sbQ.trim().toLowerCase(), L = h.masuk.filter(d => !q || [d.nama, d.blok, d.catatan, d.metode].some(v => String(v || '').toLowerCase().includes(q)));
+    const aksi = d => { const w = d.wargaId && wById(d.wargaId), wa = w && w.noHp && waNomor(w.noHp).length >= 10;
+      return `${wa && kel ? `<a class="btn ghost sm" href="${esc(waLink(w.noHp, teksSbTerimaKasih(p, d)))}" target="_blank" rel="noopener" title="Kirim tanda terima & ucapan terima kasih">Terima kasih</a>` : ''}<button class="btn sm" data-act="sb-don" data-id="${esc(d.id)}">${kel ? 'Ubah' : 'Lihat'}</button>`; };
+    const rowsT = L.map((d, i) => `<tr><td class="c">${i + 1}</td><td class="num">${esc(tgl(d.tanggal))}</td><td><div style="font-weight:600">${esc(d.nama || '—')}${d.anonim ? ' <span class="chip mute plain" style="font-size:.7rem">anonim</span>' : ''}</div>${d.catatan ? `<div class="muted" style="font-size:.78rem">${esc(d.catatan)}</div>` : ''}</td>
+      <td>${d.blok ? `<span class="house">${esc(d.blok)}</span>` : '<span class="muted">luar</span>'}</td><td>${esc(d.metode || 'Tunai')}${d.sumber === 'warga' ? ' <span class="chip info plain" style="font-size:.7rem">dari warga</span>' : ''}</td><td class="r num amt-in">${esc(rp(d.jumlah))}</td><td class="r" style="white-space:nowrap">${aksi(d)}</td></tr>`).join('');
+    const rowsM = L.map(d => `<div class="row"><div class="grow"><div class="t">${esc(d.nama || '—')}${d.anonim ? ' · anonim' : ''}</div><div class="s">${esc(tgl(d.tanggal))}${d.blok ? ' · ' + esc(d.blok) : ''} · ${esc(d.metode || 'Tunai')}</div></div><span class="amt-in num">${esc(nf.format(d.jumlah))}</span><button class="btn ghost sm" data-act="sb-don" data-id="${esc(d.id)}" aria-label="Buka">›</button></div>`).join('');
+    isi = `<div class="toolbar"><input class="search" type="search" id="qSb" placeholder="Cari nama, rumah, catatan…" value="${esc(S.sbQ)}" aria-label="Cari penyumbang"></div>
+      ${L.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th class="c" style="width:40px">No</th><th>Tanggal</th><th>Penyumbang</th><th>Rumah</th><th>Metode</th><th class="r">Jumlah</th><th></th></tr></thead><tbody>${rowsT}
+        <tr><td></td><td colspan="4" style="font-weight:700">Total ${L.length} sumbangan</td><td class="r num amt-in" style="font-weight:800">${esc(rp(jml(L)))}</td><td></td></tr></tbody></table></div>
+        <div class="list-mobile">${rowsM}<div class="row"><div class="grow"><div class="t">Total ${L.length} sumbangan</div></div><span class="amt-in num" style="font-weight:800">${esc(rp(jml(L)))}</span></div></div>`
+      : `<div class="empty">${h.masuk.length ? 'Tidak ada yang cocok dengan pencarian.' : 'Belum ada sumbangan tercatat.'}${!h.masuk.length && kel && buka ? '<button class="btn pri" data-act="sb-catat">+ Catat sumbangan</button>' : ''}</div>`}`;
+  } else if (S.sbTab === 'belum') {
+    const baris = w => { const wa = w.noHp && waNomor(w.noHp).length >= 10;
+      return `<div class="row"><span class="house">${esc(w.blok)}</span><div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${esc(w.noHp ? hpTampil(w.noHp) : 'No. HP belum diisi')}</div></div>
+        ${wa && buka ? `<a class="btn wa sm" href="${esc(waLink(w.noHp, teksSbIngat(p, w)))}" target="_blank" rel="noopener">Ingatkan</a>` : ''}${kel && buka ? `<button class="btn sm" data-act="sb-catat" data-w="${esc(w.id)}">Catat</button>` : ''}</div>`; };
+    isi = `<div class="toolbar"><a class="btn wa" href="${esc(waShare(teksSbAjakan(p)))}" target="_blank" rel="noopener">Bagikan ajakan ke grup WhatsApp</a></div>
+      ${belum.length ? `<div class="panel" style="padding:4px 16px">${belum.map(baris).join('')}</div>` : '<div class="empty">Semua rumah sudah ikut menyumbang. 🎉</div>'}`;
+  } else if (S.sbTab === 'salur') {
+    const rowsT = h.salur.map((x, i) => `<tr><td class="c">${i + 1}</td><td class="num">${esc(tgl(x.tanggal))}</td><td><div style="font-weight:600">${esc(x.uraian)}</div>${x.catatan ? `<div class="muted" style="font-size:.78rem">${esc(x.catatan)}</div>` : ''}</td><td>${esc(x.penerima || '—')}</td><td>${esc(x.metode || '')}</td><td class="mono">${esc(x.noNota || '—')}</td><td class="r num amt-out">${esc(rp(x.jumlah))}</td><td class="r"><button class="btn sm" data-act="sb-salur" data-id="${esc(x.id)}">${kel ? 'Ubah' : 'Lihat'}</button></td></tr>`).join('');
+    const rowsM = h.salur.map(x => `<div class="row"><div class="grow"><div class="t">${esc(x.uraian)}</div><div class="s">${esc(tgl(x.tanggal))}${x.penerima ? ' · ' + esc(x.penerima) : ''}</div></div><span class="amt-out num">−${esc(nf.format(x.jumlah))}</span><button class="btn ghost sm" data-act="sb-salur" data-id="${esc(x.id)}" aria-label="Buka">›</button></div>`).join('');
+    isi = h.salur.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th class="c" style="width:40px">No</th><th>Tanggal</th><th>Uraian</th><th>Penerima</th><th>Metode</th><th>No. nota</th><th class="r">Jumlah</th><th></th></tr></thead><tbody>${rowsT}
+        <tr><td></td><td colspan="5" style="font-weight:700">Total disalurkan · sisa dana ${esc(rp(h.sisa))}</td><td class="r num amt-out" style="font-weight:800">${esc(rp(h.disalurkan))}</td><td></td></tr></tbody></table></div>
+        <div class="list-mobile">${rowsM}<div class="row"><div class="grow"><div class="t">Total disalurkan</div><div class="s">Sisa dana ${esc(rp(h.sisa))}</div></div><span class="amt-out num" style="font-weight:800">${esc(rp(h.disalurkan))}</span></div></div>`
+      : `<div class="empty">Belum ada dana yang disalurkan.${kel ? '<button class="btn pri" data-act="sb-salur">+ Catat penyaluran</button>' : ''}</div>`;
+  } else if (S.sbTab === 'verif') {
+    isi = h.tunggu.length ? `<div class="kel-list">${h.tunggu.map(d => `<article class="kel p-Sedang"><div class="meta"><span class="chip warn">Menunggu verifikasi</span><span>Dikirim ${esc(d.dikirim ? tgl(d.dikirim) + ' ' + jamDT(d.dikirim) : tgl(d.tanggal))}</span></div>
+        <h4 style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>${esc(d.nama || '—')}${d.blok ? ' · ' + esc(d.blok) : ''}${d.anonim ? ' <span class="chip mute plain">minta anonim</span>' : ''}</span><span>${esc(rp(d.jumlah))}</span></h4>
+        <p>${esc(d.metode || 'Tunai')} · tanggal ${esc(tgl(d.tanggal))}${d.catatan ? ' · ' + esc(d.catatan) : ''}</p>
+        ${kel ? `<div class="meta" style="gap:8px"><button class="btn sm pri" data-act="sb-verif" data-id="${esc(d.id)}">Periksa & terima</button><button class="btn sm" data-act="sb-tolak" data-id="${esc(d.id)}">Tolak</button></div>` : ''}</article>`).join('')}</div>`
+      : '<div class="empty">Tidak ada konfirmasi yang menunggu.</div>';
+  } else if (S.sbTab === 'keliling') isi = vSbKeliling(p, belum);
+  return head + hero + `<div class="toolbar"><div class="seg" role="group" aria-label="Bagian program">${seg}</div></div>${isi}
+  <div class="toolbar">
+    <a class="btn wa" href="${esc(waShare(teksSbLaporan(p)))}" target="_blank" rel="noopener">Bagikan laporan ke WhatsApp</a>
+    <button class="btn" data-act="sb-xlsx" data-id="${esc(p.id)}">Unduh laporan (Excel)</button>
+    ${kel ? `<button class="btn ghost" data-act="sb-tutup" data-id="${esc(p.id)}">${buka ? 'Tutup program' : 'Buka kembali program'}</button>` : ''}
+  </div>`;
+}
+function sbMzState(p) { if (!S.sbMz || S.sbMz.pid !== p.id) S.sbMz = {pid: p.id, sel: new Set(), jml: {}, tgl: todayISO(), metode: 'Tunai', q: ''}; return S.sbMz; }
+function vSbKeliling(p, belum) {
+  const z = sbMzState(p), q = z.q.trim().toLowerCase(), def = Number(p.nominal) || '';
+  const list = belum.filter(w => !q || (w.blok + ' ' + w.nama).toLowerCase().includes(q));
+  const semuaPilih = list.length && list.every(w => z.sel.has(w.id));
+  const metOpt = `<select id="sbmMet" data-sbm="metode">${METODE.map(m => `<option ${m === z.metode ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>`;
+  const rowsT = list.map(w => { const on = z.sel.has(w.id);
+    return `<tr class="${on ? 'pick' : ''}" data-row="${esc(w.id)}"><td><input type="checkbox" data-sbm="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''} aria-label="Pilih ${esc(w.nama)}"></td><td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td>
+      <td><input type="number" min="0" step="1000" inputmode="numeric" data-sbm="jml" data-id="${esc(w.id)}" value="${esc(z.jml[w.id] ?? def)}" aria-label="Jumlah sumbangan ${esc(w.nama)}"></td></tr>`; }).join('');
+  const rowsM = list.map(w => { const on = z.sel.has(w.id);
+    return `<div class="mz-card ${on ? 'pick' : ''}" data-row="${esc(w.id)}"><label class="row" style="padding:0;border:0;cursor:pointer"><input type="checkbox" data-sbm="sel" data-id="${esc(w.id)}" ${on ? 'checked' : ''}><span class="house">${esc(w.blok)}</span><span class="grow"><span class="t">${esc(w.nama)}</span></span></label>
+      <input type="number" min="0" step="1000" inputmode="numeric" data-sbm="jml" data-id="${esc(w.id)}" value="${esc(z.jml[w.id] ?? def)}" aria-label="Jumlah sumbangan ${esc(w.nama)}"></div>`; }).join('');
+  return `<div class="panel" style="display:grid;gap:12px">
+      <p class="muted" style="margin:0;font-size:.86rem">Untuk penarikan dari rumah ke rumah: centang rumah yang sudah menyerahkan sumbangan, sesuaikan jumlahnya, lalu simpan sekaligus. Hanya rumah yang belum tercatat yang tampil.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fld" style="margin:0"><label for="sbmTgl">Tanggal terima</label><input type="date" id="sbmTgl" data-sbm="tgl" value="${esc(z.tgl)}"></div>
+        <div class="fld" style="margin:0"><label for="sbmMet">Metode</label>${metOpt}</div>
+        <div class="fld" style="margin:0;flex:1;min-width:180px"><label for="sbmQ">Cari rumah / nama</label><input type="search" id="sbmQ" data-sbm="q" value="${esc(z.q)}" placeholder="mis. B-12"></div>
+      </div>
+      <div><button type="button" class="btn sm" data-act="sbm-semua" ${list.length ? '' : 'disabled'}>${semuaPilih ? 'Batal pilih semua' : `Pilih semua (${list.length})`}</button></div></div>
+    ${list.length ? `<div class="tbl-wrap hide-m"><table class="mz-tbl"><thead><tr><th style="width:36px"></th><th>Rumah</th><th>Kepala keluarga</th><th>Jumlah (Rp)</th></tr></thead><tbody>${rowsT}</tbody></table></div>
+    <div class="list-mobile"><div style="display:grid;gap:8px">${rowsM}</div></div>` : `<div class="empty">${belum.length ? 'Tidak ada rumah yang cocok.' : 'Semua rumah sudah tercatat.'}</div>`}
+    <div class="mz-bar"><span class="grow" id="sbmSum"></span><button type="button" class="btn ghost" data-act="sbm-reset">Kosongkan</button><button type="button" class="btn pri" id="sbmSave" data-act="sbm-simpan" disabled>Simpan</button></div>`;
+}
+function sbMzRingkas() {
+  const p = S.sbMz && sbProg(S.sbMz.pid); if (!p) return {n: 0, total: 0, rows: []};
+  const z = S.sbMz, rows = [];
+  for (const id of z.sel) { const w = wById(id); if (!w) continue; const j = Math.round(Number(z.jml[id] ?? p.nominal) || 0); if (j > 0) rows.push({w, j}); }
+  return {p, n: rows.length, total: rows.reduce((t, r) => t + r.j, 0), rows};
+}
+function sbMzBar() {
+  const r = sbMzRingkas(), el = $('#sbmSum'), b = $('#sbmSave');
+  if (el) el.innerHTML = r.n ? `<b>${r.n} rumah</b> · <b>${esc(rp(r.total))}</b>` : '<span class="muted">Belum ada rumah yang dipilih</span>';
+  if (b) { b.disabled = !r.n; b.textContent = r.n ? `Simpan ${r.n} sumbangan` : 'Simpan'; }
+}
+function sbMzSimpan() {
+  const r = sbMzRingkas(), z = S.sbMz; if (!r.n) { toast('Pilih rumah dan isi jumlahnya dulu.', 'bad'); return; }
+  openDlg({title: 'Simpan sumbangan keliling?', area: 'sumbangan', submitLabel: `Simpan ${r.n} sumbangan`,
+    body: `<p style="margin:0"><b>${esc(r.p.nama)}</b> · tanggal ${esc(tgl(z.tgl))} · ${esc(z.metode)} · total <b>${esc(rp(r.total))}</b></p>
+      <div class="panel" style="max-height:240px;overflow:auto;padding:10px 12px;background:var(--sunk);border:0;font-size:.86rem">${r.rows.map(x => `<div>${esc(x.w.blok)} · ${esc(x.w.nama)}: ${esc(rp(x.j))}</div>`).join('')}</div>`,
+    onSubmit: async () => {
+      if (!z.tgl) { pesanDlg('Isi tanggal terima.'); return false; }
+      const docs = r.rows.map(x => ({koleksi: 'donasi', id: r.p.id + '_' + x.w.id + '_' + uid().slice(-5), data: {programId: r.p.id, wargaId: x.w.id, nama: x.w.nama, blok: x.w.blok, jumlah: x.j, tanggal: z.tgl, metode: z.metode, status: 'Diterima', sumber: 'keliling', catatan: '', dicatat: todayISO(), dicatatOleh: namaSesi(), oleh: (S.me && S.me.id) || '', olehSesi: S.sesi || ''}}));
+      let simpan = 0;
+      for (let i = 0; i < docs.length; i += 100) {
+        const {data, error} = await SB.from('dokumen').upsert(docs.slice(i, i + 100), {onConflict: 'koleksi,id', ignoreDuplicates: true}).select('id,data');
+        if (error) { pesanDlg(`Gagal menyimpan${simpan ? ` (${simpan} sudah tersimpan)` : ''}: ${sbErr(error).code === 'ditolak' ? 'role Anda tidak punya izin mengelola sumbangan.' : error.message}`); return false; }
+        for (const d of data || []) taruh('donasi', d.id, d.data);
+        simpan += (data || []).length;
+      }
+      sinkron('donasi'); S.sbMz = null; S.sbTab = 'penyumbang'; sbSched();
+      toast(`${simpan} sumbangan tersimpan, total ${rp(r.total)}.`);
+      return true;
+    }});
+}
+function openSbProgram(id, jenisAwal) {
+  const x = id ? sbProg(id) : null;
+  const J = sbJenis((x && x.jenis) || jenisAwal || SB_JENIS[0].j);
+  const v = x || {jenis: J.j, nama: J.contoh, sifat: J.sifat, katKeluar: J.kat, mulai: todayISO(), status: 'Aktif', masukKas: true, tampilWarga: true, konfirmasiWarga: true, tampilPenyumbang: 'nama'};
+  const H = x ? sbHitung(x) : null, ro = dis('sumbangan');
+  openDlg({
+    title: x ? (bisa('sumbangan') ? 'Ubah program sumbangan' : 'Program sumbangan') : 'Program sumbangan baru', area: 'sumbangan', submitLabel: x ? 'Simpan' : 'Buat program',
+    body: `<div class="grid2">
+      <div class="fld"><label for="sbp_j">Jenis</label><select id="sbp_j" name="jenis" ${ro}>${SB_JENIS.map(j => `<option ${j.j === v.jenis ? 'selected' : ''}>${esc(j.j)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="sbp_s">Sifat</label><select id="sbp_s" name="sifat" ${ro}><option value="sukarela" ${v.sifat !== 'rumah' ? 'selected' : ''}>Sukarela (nominal bebas)</option><option value="rumah" ${v.sifat === 'rumah' ? 'selected' : ''}>Per rumah (ada nominal saran)</option></select></div>
+    </div>
+    <div class="fld"><label for="sbp_n">Nama program <span class="req">*</span></label><input type="text" id="sbp_n" name="nama" required maxlength="100" value="${esc(v.nama)}" placeholder="mis. THR Satpam & Petugas Kebersihan ${SB_THN}" ${ro}></div>
+    <div class="fld"><label for="sbp_d">Keterangan untuk warga</label><textarea id="sbp_d" name="deskripsi" rows="3" maxlength="600" placeholder="mis. THR untuk 3 satpam dan 2 petugas kebersihan, dibagikan H-7 Lebaran." ${ro}>${esc(v.deskripsi || '')}</textarea></div>
+    <div class="grid2" style="align-items:start">
+      <div class="fld" id="sbpNomWrap"${v.sifat === 'rumah' ? '' : ' hidden'}><label for="sbp_nom">Saran per rumah (Rp) <span class="req">*</span></label><input type="number" id="sbp_nom" name="nominal" min="0" step="1000" inputmode="numeric" value="${esc(v.nominal || '')}" ${ro}></div>
+      <div class="fld"><label for="sbp_t">Target dana (Rp)</label><input type="number" id="sbp_t" name="target" min="0" step="1000" inputmode="numeric" value="${esc(v.target || '')}" placeholder="opsional" ${ro}><span class="hint" id="sbpTHint"></span></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="sbp_m">Mulai</label><input type="date" id="sbp_m" name="mulai" value="${esc(v.mulai || '')}" ${ro}></div>
+      <div class="fld"><label for="sbp_b">Batas pengumpulan</label><input type="date" id="sbp_b" name="selesai" value="${esc(v.selesai || '')}" ${ro}></div>
+    </div>
+    <div class="fld"><label for="sbp_k">Kategori pengeluaran saat dana disalurkan</label><select id="sbp_k" name="katKeluar" ${ro}>${KAT_KELUAR.map(k => `<option ${k === v.katKeluar ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="masukKas" ${v.masukKas === false ? '' : 'checked'} ${ro}> <span>Catat di buku kas RT & laporan keuangan<br><span class="muted" style="font-size:.82rem">Matikan bila dana ini titipan yang dikelola terpisah dari kas RT.</span></span></label>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="tampilWarga" ${v.tampilWarga === false ? '' : 'checked'} ${ro}> <span>Tampilkan ke warga di aplikasi (progres & penyaluran)</span></label>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="konfirmasiWarga" ${v.konfirmasiWarga === false ? '' : 'checked'} ${ro}> <span>Warga bisa mengirim konfirmasi sumbangan (diverifikasi bendahara sebelum dihitung)</span></label>
+    <div class="fld"><label for="sbp_tp">Daftar penyumbang yang terlihat warga</label><select id="sbp_tp" name="tampilPenyumbang" ${ro}>${SB_TAMPIL.map(([k, l]) => `<option value="${k}" ${(v.tampilPenyumbang || 'nama') === k ? 'selected' : ''}>${l}</option>`).join('')}</select><span class="hint">Penyumbang yang memilih anonim tampil sebagai "Hamba Allah".</span></div>
+    ${H ? `<p class="muted" style="margin:0;font-size:.84rem">Tercatat ${H.masuk.length} sumbangan (${esc(rp(H.terkumpul))}) dan ${H.salur.length} penyaluran.</p>` : ''}`,
+    onSubmit: async d => {
+      const nama = String(d.nama || '').trim(), nominal = Math.round(Number(d.nominal) || 0), target = Math.round(Number(d.target) || 0);
+      if (!nama) { pesanDlg('Isi nama program.', 'sbp_n'); return false; }
+      if (d.sifat === 'rumah' && nominal <= 0) { pesanDlg('Isi saran sumbangan per rumah.', 'sbp_nom'); return false; }
+      if (d.selesai && d.mulai && d.selesai < d.mulai) { pesanDlg('Batas pengumpulan tidak boleh sebelum tanggal mulai.', 'sbp_b'); return false; }
+      const row = {...(x || {}), nama, jenis: d.jenis, sifat: d.sifat, nominal: d.sifat === 'rumah' ? nominal : 0, target, deskripsi: String(d.deskripsi || '').trim(), mulai: d.mulai || todayISO(), selesai: d.selesai || '',
+        katKeluar: d.katKeluar, masukKas: !!d.masukKas, tampilWarga: !!d.tampilWarga, konfirmasiWarga: !!d.konfirmasiWarga, tampilPenyumbang: d.tampilPenyumbang || 'nama', status: (x && x.status) || 'Aktif', diperbarui: todayISO()};
+      if (!x) { row.dibuat = todayISO(); row.dibuatOleh = namaSesi(); }
+      const nid = x ? x.id : uid();
+      const ok = await put('sumbangan', nid, row);
+      if (ok) { toast(x ? 'Program diperbarui.' : 'Program sumbangan dibuat.'); S.sbSel = nid; if (!x) S.sbTab = 'penyumbang'; }
+      return ok;
+    },
+    onDelete: x ? async () => {
+      if (H.masuk.length || H.tunggu.length || H.salur.length) { pesanDlg('Program ini sudah punya catatan sumbangan atau penyaluran, jadi tidak bisa dihapus. Gunakan "Tutup program" bila sudah selesai.'); return false; }
+      const ok = await del('sumbangan', x.id); if (ok) { S.sbSel = null; toast('Program dihapus.'); } return ok;
+    } : null, deleteLabel: 'Hapus program'
+  });
+  const sel = $('#sbp_j'), sf = $('#sbp_s'), nm = $('#sbp_n'), kat = $('#sbp_k');
+  const tHint = () => { const el = $('#sbpTHint'); if (!el) return; const n = Number(($('#sbp_nom') || {}).value) || 0; el.textContent = sf.value === 'rumah' && n ? `Kosongkan untuk target otomatis ${rp(n * wargaAktif().length)} (${wargaAktif().length} rumah)` : 'Kosongkan bila tidak ada target'; };
+  if (sf) sf.addEventListener('change', () => { $('#sbpNomWrap').hidden = sf.value !== 'rumah'; tHint(); });
+  const nomEl = $('#sbp_nom'); if (nomEl) nomEl.addEventListener('input', tHint);
+  if (sel && !x) sel.addEventListener('change', () => { const j = sbJenis(sel.value); if (!nm.dataset.ubah) nm.value = j.contoh; sf.value = j.sifat; kat.value = j.kat; $('#sbpNomWrap').hidden = j.sifat !== 'rumah'; tHint(); });
+  if (nm) nm.addEventListener('input', () => { nm.dataset.ubah = '1'; });
+  tHint();
+}
+function openSbDonasi(pid, did, wid) {
+  const p = sbProg(pid); if (!p) return;
+  const x = did ? S.donasi.find(d => d.id === did) : null;
+  if (x && x.status === 'Menunggu') { openSbVerif(x.id); return; }
+  const H = sbHitung(p), ro = dis('sumbangan');
+  const v = x || {wargaId: wid || '', tanggal: todayISO(), metode: 'Tunai', jumlah: p.sifat === 'rumah' ? p.nominal : ''};
+  const w0 = v.wargaId && wById(v.wargaId), wa = x && w0 && w0.noHp && waNomor(w0.noHp).length >= 10;
+  openDlg({
+    title: x ? (bisa('sumbangan') ? 'Ubah sumbangan' : 'Sumbangan') : 'Catat sumbangan', area: 'sumbangan', submitLabel: x ? 'Simpan' : 'Catat sumbangan',
+    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(p.nama)}</b><div class="muted" style="font-size:.84rem">${p.sifat === 'rumah' ? 'Saran ' + esc(rp(p.nominal)) + ' per rumah · ' : ''}terkumpul ${esc(rp(H.terkumpul))}</div></div>
+    <div class="fld"><label for="sbd_w">Dari</label><select id="sbd_w" name="wargaId" ${ro}><option value="">— Donatur dari luar / lainnya —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${w.id === v.wargaId ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}${H.rumah.has(w.id) && w.id !== v.wargaId ? ' ✓ sudah' : ''}</option>`).join('')}</select></div>
+    <div class="fld" id="sbdNamaWrap"${v.wargaId ? ' hidden' : ''}><label for="sbd_n">Nama donatur <span class="req">*</span></label><input type="text" id="sbd_n" name="nama" maxlength="80" value="${esc(v.wargaId ? '' : v.nama || '')}" placeholder="mis. PT Maju Jaya / Bpk. Hasan (Kluster Merak)" ${ro}></div>
+    <div class="grid2">
+      <div class="fld"><label for="sbd_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="sbd_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah)}" ${ro}><span class="hint" id="sbdRp">${v.jumlah ? esc(terbilang(Number(v.jumlah))) : ''}</span></div>
+      <div class="fld"><label for="sbd_t">Tanggal terima <span class="req">*</span></label><input type="date" id="sbd_t" name="tanggal" required value="${esc(v.tanggal)}" ${ro}></div>
+    </div>
+    <div class="fld"><label for="sbd_m">Metode</label><select id="sbd_m" name="metode" ${ro}>${METODE.map(m => `<option ${m === v.metode ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+    <label class="ck" style="font-weight:500"><input type="checkbox" name="anonim" ${v.anonim ? 'checked' : ''} ${ro}> <span>Sembunyikan nama di daftar untuk warga (tampil "Hamba Allah")</span></label>
+    <div class="fld"><label for="sbd_c">Catatan</label><input type="text" id="sbd_c" name="catatan" maxlength="200" value="${esc(v.catatan || '')}" placeholder="opsional" ${ro}></div>
+    ${x ? `<p class="muted" style="margin:0;font-size:.82rem">No. bukti ${esc(sbNoBukti(x))}${x.dicatatOleh ? ' · dicatat ' + esc(x.dicatatOleh) : ''}${x.sumber === 'warga' ? ' · dikonfirmasi warga lewat aplikasi' : x.sumber === 'keliling' ? ' · catat keliling' : ''}</p>` : ''}`,
+    foot: wa && bisa('sumbangan') ? `<a class="btn wa" href="${esc(waLink(w0.noHp, teksSbTerimaKasih(p, x)))}" target="_blank" rel="noopener">Kirim tanda terima</a>` : '',
+    onSubmit: async d => {
+      const jumlah = Math.round(Number(d.jumlah) || 0), w = d.wargaId && wById(d.wargaId), nama = w ? w.nama : String(d.nama || '').trim();
+      if (!nama) { pesanDlg('Isi nama donatur.', 'sbd_n'); return false; }
+      if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'sbd_j'); return false; }
+      if (!d.tanggal) { pesanDlg('Isi tanggal terima.', 'sbd_t'); return false; }
+      const row = {...(x || {}), programId: p.id, wargaId: w ? w.id : '', nama, blok: w ? w.blok : '', jumlah, tanggal: d.tanggal, metode: d.metode, anonim: !!d.anonim, catatan: String(d.catatan || '').trim(),
+        status: 'Diterima', sumber: (x && x.sumber) || 'bendahara', dicatat: (x && x.dicatat) || todayISO(), dicatatOleh: (x && x.dicatatOleh) || namaSesi()};
+      const ok = await put('donasi', x ? x.id : p.id + '_' + (w ? w.id : 'luar') + '_' + uid().slice(-5), row);
+      if (ok) toast(x ? 'Sumbangan diperbarui.' : `Sumbangan ${rp(jumlah)} dari ${nama} tercatat.`);
+      return ok;
+    },
+    onDelete: x ? async () => { const ok = await del('donasi', x.id); if (ok) toast('Catatan sumbangan dihapus.'); return ok; } : null, deleteLabel: 'Hapus catatan'
+  });
+  const sw = $('#sbd_w'), jj = $('#sbd_j');
+  if (sw) sw.addEventListener('change', () => { $('#sbdNamaWrap').hidden = !!sw.value; });
+  if (jj) jj.addEventListener('input', () => { const el = $('#sbdRp'); if (el) el.textContent = jj.value ? terbilang(Number(jj.value)) : ''; });
+}
+function openSbSalur(pid, sid) {
+  const p = sbProg(pid); if (!p) return;
+  const x = sid ? S.salur.find(s => s.id === sid) : null, H = sbHitung(p), ro = dis('sumbangan');
+  const v = x || {tanggal: todayISO(), metode: 'Tunai'};
+  const sisa = H.sisa + (x ? Number(x.jumlah) || 0 : 0);
+  let peringatan = false;
+  openDlg({
+    title: x ? (bisa('sumbangan') ? 'Ubah penyaluran' : 'Penyaluran') : 'Catat penyaluran dana', area: 'sumbangan', submitLabel: x ? 'Simpan' : 'Catat penyaluran',
+    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(p.nama)}</b><div class="muted" style="font-size:.84rem">Sisa dana ${esc(rp(sisa))}${p.masukKas === false ? ' · dana terpisah, tidak masuk buku kas' : ' · tercatat sebagai pengeluaran kas (' + esc(p.katKeluar || 'Lainnya') + ')'}</div></div>
+    <div class="fld"><label for="sbs_u">Uraian <span class="req">*</span></label><input type="text" id="sbs_u" name="uraian" required maxlength="140" value="${esc(v.uraian || '')}" placeholder="mis. THR Lebaran satpam shift pagi" ${ro}></div>
+    <div class="grid2">
+      <div class="fld"><label for="sbs_p">Diserahkan kepada <span class="req">*</span></label><input type="text" id="sbs_p" name="penerima" required maxlength="80" value="${esc(v.penerima || '')}" placeholder="mis. Pak Otin (satpam)" ${ro}></div>
+      <div class="fld"><label for="sbs_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="sbs_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah || '')}" ${ro}></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="sbs_t">Tanggal <span class="req">*</span></label><input type="date" id="sbs_t" name="tanggal" required value="${esc(v.tanggal)}" ${ro}></div>
+      <div class="fld"><label for="sbs_m">Metode</label><select id="sbs_m" name="metode" ${ro}>${METODE.map(m => `<option ${m === v.metode ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="sbs_n">No. nota / tanda terima</label><input type="text" id="sbs_n" name="noNota" maxlength="40" value="${esc(v.noNota || '')}" placeholder="opsional" ${ro}></div>
+      <div class="fld"><label for="sbs_c">Catatan</label><input type="text" id="sbs_c" name="catatan" maxlength="200" value="${esc(v.catatan || '')}" placeholder="opsional" ${ro}></div>
+    </div>`,
+    onSubmit: async d => {
+      const jumlah = Math.round(Number(d.jumlah) || 0);
+      if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'sbs_j'); return false; }
+      if (jumlah > sisa && !peringatan) { peringatan = true; pesanDlg(`Jumlah melebihi sisa dana program (${rp(sisa)}). Klik simpan sekali lagi bila memang kekurangannya ditutup dari dana lain.`, 'sbs_j'); return false; }
+      const row = {...(x || {}), programId: p.id, uraian: String(d.uraian || '').trim(), penerima: String(d.penerima || '').trim(), jumlah, tanggal: d.tanggal, metode: d.metode, noNota: String(d.noNota || '').trim(), catatan: String(d.catatan || '').trim(), dicatat: (x && x.dicatat) || todayISO(), dicatatOleh: (x && x.dicatatOleh) || namaSesi()};
+      const ok = await put('salur', x ? x.id : uid(), row);
+      if (ok) { toast(`Penyaluran ${rp(jumlah)} tercatat.`); S.sbTab = 'salur'; }
+      return ok;
+    },
+    onDelete: x ? async () => { const ok = await del('salur', x.id); if (ok) toast('Penyaluran dihapus.'); return ok; } : null, deleteLabel: 'Hapus penyaluran'
+  });
+}
+function openSbVerif(did) {
+  const x = S.donasi.find(d => d.id === did); if (!x || x.status !== 'Menunggu') return;
+  const p = sbProg(x.programId);
+  openDlg({title: 'Verifikasi konfirmasi sumbangan', area: 'sumbangan', submitLabel: 'Terima & catat',
+    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(x.nama || '—')}${x.blok ? ' · ' + esc(x.blok) : ''}</b><div class="muted" style="font-size:.84rem">${esc(p ? p.nama : '')} · ${esc(x.metode || 'Tunai')}${x.catatan ? ' · ' + esc(x.catatan) : ''}${x.anonim ? ' · minta anonim' : ''}</div></div>
+      <p class="muted" style="margin:0;font-size:.86rem">Cocokkan dengan mutasi rekening atau uang tunai yang diterima. Setelah diterima, sumbangan dihitung di progres${p && p.masukKas !== false ? ' dan masuk buku kas' : ''}.</p>
+      <div class="grid2">
+        <div class="fld"><label for="sbv_j">Jumlah diterima (Rp)</label><input type="number" id="sbv_j" name="jumlah" min="1" step="500" required value="${esc(x.jumlah)}"></div>
+        <div class="fld"><label for="sbv_t">Tanggal diterima</label><input type="date" id="sbv_t" name="tanggal" required value="${esc(x.tanggal || todayISO())}"></div>
+      </div>`,
+    foot: `<button type="button" class="btn" data-act="sb-tolak" data-id="${esc(x.id)}" style="color:var(--bad)">Tolak</button>`,
+    onSubmit: async d => {
+      const jumlah = Math.round(Number(d.jumlah) || 0); if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'sbv_j'); return false; }
+      const ok = await put('donasi', x.id, {...x, jumlah, tanggal: d.tanggal, status: 'Diterima', verif: {oleh: namaSesi(), waktu: nowDT()}, dicatat: todayISO(), dicatatOleh: namaSesi()});
+      if (ok) toast(`Sumbangan ${x.nama || ''} ${rp(jumlah)} diterima.`); return ok;
+    }});
+}
+function openSbTolak(did) {
+  const x = S.donasi.find(d => d.id === did); if (!x || x.status !== 'Menunggu') return;
+  openDlg({title: 'Tolak konfirmasi sumbangan', area: 'sumbangan', submitLabel: 'Tolak',
+    body: `<p style="margin:0"><b>${esc(x.nama || '—')}</b> · ${esc(rp(x.jumlah))} · ${esc(tgl(x.tanggal))}</p>
+      <div class="fld"><label for="sbx_c">Alasan (terlihat oleh warga) <span class="req">*</span></label><textarea id="sbx_c" name="catatan" rows="2" required maxlength="200" placeholder="mis. Transfer belum masuk ke rekening RT, mohon kirim bukti ke bendahara"></textarea></div>`,
+    onSubmit: async d => {
+      const c = String(d.catatan || '').trim(); if (!c) { pesanDlg('Isi alasan penolakan.', 'sbx_c'); return false; }
+      const ok = await put('donasi', x.id, {...x, status: 'Ditolak', verif: {oleh: namaSesi(), waktu: nowDT(), catatan: c}});
+      if (ok) toast('Konfirmasi ditolak.'); return ok;
+    }});
+}
+async function sbTutup(b) {
+  const p = sbProg(b.dataset.id); if (!p || !bisa('sumbangan')) return;
+  const tutup = p.status !== 'Selesai';
+  if (tutup && !b.dataset.confirm) { b.dataset.confirm = '1'; b.textContent = 'Klik lagi untuk menutup'; return; }
+  b.disabled = true;
+  const ok = await put('sumbangan', p.id, {...p, status: tutup ? 'Selesai' : 'Aktif', ditutup: tutup ? todayISO() : ''});
+  if (ok) toast(tutup ? 'Program ditutup. Data tetap tersimpan dan bisa dibuka kembali.' : 'Program dibuka kembali.');
+}
+function xlsxSumbangan(p) {
+  const st = S.set, h = sbHitung(p), W = MiniXlsx.sheet([6, 14, 34, 12, 16, 16, 22]), K = W.ST;
+  const sec = t => W.skip().put(0, t, K.bold, 7).next();
+  W.put(0, `PENGURUS RT ${st.rt || '…'} / RW ${st.rw || '…'}`, K.kop, 7).next();
+  W.put(0, lingk(), 0, 7).next().skip();
+  W.put(0, 'LAPORAN SUMBANGAN', K.title, 7).next();
+  W.put(0, p.nama, K.sub, 7).next();
+  W.put(0, `${p.jenis || ''} · ${p.sifat === 'rumah' ? 'per rumah ' + rp(p.nominal) : 'sukarela'} · ${tgl(p.mulai)}${p.selesai ? ' s.d. ' + tgl(p.selesai) : ''} · ${p.status === 'Selesai' ? 'Selesai' : 'Aktif'}`, K.note, 7).next();
+  sec('I. RINGKASAN');
+  const r = (l, v, s = K.rp) => W.put(0, l, K.text, 5).put(5, v, s, 2).next();
+  r('Total terkumpul', h.terkumpul); if (h.target) r(`Target${h.targetAuto ? ' (otomatis)' : ''}`, h.target);
+  r('Jumlah penyumbang', h.masuk.length, K.num); r('Rumah ikut menyumbang', `${h.rumah.size} dari ${h.totalRumah}`, K.text);
+  r('Total disalurkan', h.disalurkan, K.negRp);
+  W.put(0, 'Sisa dana', K.akhirText, 5).put(5, h.sisa, K.akhirRp, 2).next();
+  sec('II. DAFTAR PENYUMBANG');
+  W.put(0, 'No', K.headC).put(1, 'Tanggal', K.head).put(2, 'Nama', K.head).put(3, 'Rumah', K.head).put(4, 'Metode', K.head).put(5, 'Jumlah', K.headR).put(6, 'Catatan', K.head).next();
+  if (!h.masuk.length) W.put(0, 'Belum ada sumbangan', K.center, 7).next();
+  h.masuk.slice().reverse().forEach((d, i) => W.put(0, i + 1, K.center).put(1, tgl(d.tanggal), K.text).put(2, (d.nama || '') + (d.anonim ? ' (anonim)' : ''), K.text).put(3, d.blok || 'luar', K.text).put(4, d.metode || 'Tunai', K.text).put(5, Number(d.jumlah) || 0, K.num).put(6, d.catatan || '', K.text).next());
+  W.put(0, '', K.totText).put(1, '', K.totText).put(2, 'Jumlah', K.totText).put(3, '', K.totText).put(4, '', K.totText).put(5, h.terkumpul, K.totNum).put(6, '', K.totText).next();
+  sec('III. PENYALURAN DANA');
+  W.put(0, 'No', K.headC).put(1, 'Tanggal', K.head).put(2, 'Uraian', K.head).put(3, 'Metode', K.head).put(4, 'Penerima', K.head).put(5, 'Jumlah', K.headR).put(6, 'No. nota', K.head).next();
+  if (!h.salur.length) W.put(0, 'Belum ada penyaluran', K.center, 7).next();
+  h.salur.slice().reverse().forEach((x, i) => W.put(0, i + 1, K.center).put(1, tgl(x.tanggal), K.text).put(2, x.uraian || '', K.text).put(3, x.metode || '', K.text).put(4, x.penerima || '', K.text).put(5, Number(x.jumlah) || 0, K.num).put(6, x.noNota || '', K.text).next());
+  W.put(0, '', K.totText).put(1, '', K.totText).put(2, 'Jumlah', K.totText).put(3, '', K.totText).put(4, '', K.totText).put(5, h.disalurkan, K.totNum).put(6, '', K.totText).next();
+  W.skip();
+  W.put(0, 'Dibuat oleh,', K.sign, 3).put(4, `${st.kota || lingk()}, ${tglSurat(todayISO())}`, K.sign, 3).next();
+  W.put(0, 'Bendahara', K.sign, 3).put(4, `Mengetahui, Ketua RT ${st.rt || ''}`.trim(), K.sign, 3).next();
+  W.skip(3);
+  W.put(0, namaBendahara() || '(..............................)', K.signB, 3).put(4, namaKetua() || '(..............................)', K.signB, 3).next();
+  return W.build('Sumbangan');
+}
+function eksporSumbangan(id) {
+  const p = sbProg(id); if (!p) return;
+  try { unduh(fname(`Sumbangan ${p.nama} - ${lingk()}.xlsx`), xlsxSumbangan(p)); } catch (e) { toast('File Excel gagal dibuat. Coba lagi.', 'bad'); }
+}
+/* --- tampilan warga --- */
+let sbPubMuat = false;
+async function muatSbPub() {
+  if (sbPubMuat || !SB) return; sbPubMuat = true;
+  try { const {data, error} = await SB.rpc('sumbangan_saya'); S.sbPub = !error && data ? data : {program: [], saya: [], gagal: true}; }
+  catch (e) { S.sbPub = {program: [], saya: [], gagal: true}; }
+  sbPubMuat = false; render();
+}
+function vSumbanganWarga() {
+  const head = `<div class="sec-head"><div><h2>Sumbangan warga</h2><p>Program penggalangan dana di lingkungan kita, lengkap dengan perkembangan dan penyalurannya.</p></div></div>`;
+  if (!S.sbPub) { muatSbPub(); return head + '<div class="empty">Memuat program sumbangan…</div>'; }
+  const P = S.sbPub.program || [], w = wargaSaya();
+  const saya = w ? S.donasi.filter(d => d.wargaId === w.id) : (S.sbPub.saya || []);
+  const CH = {Diterima: 'ok', Menunggu: 'warn', Ditolak: 'bad'};
+  const kartu = p => {
+    const terk = Number(p.terkumpul) || 0, target = Number(p.target) || Number(p.targetOtomatis) || 0, pct = target ? Math.min(100, Math.round(terk / target * 100)) : null;
+    const milik = saya.filter(d => d.programId === p.id), buka = p.status === 'Aktif', diterima = milik.filter(d => d.status === 'Diterima');
+    const don = p.penyumbang || [];
+    return `<article class="sb-card" style="cursor:default">
+      <div class="meta"><span class="chip ${buka ? 'ok' : 'mute'}">${buka ? 'Sedang berjalan' : 'Selesai'}</span><span class="chip mute plain">${esc(p.jenis || '')}</span></div>
+      <h4>${esc(p.nama)}</h4>
+      ${p.deskripsi ? `<p style="margin:0;font-size:.88rem;white-space:pre-line">${esc(p.deskripsi)}</p>` : ''}
+      <div class="sb-amt"><b>${esc(rp(terk))}</b><span>${p.donatur} penyumbang${target ? ` dari target ${esc(rp(target))}` : ''}</span></div>
+      ${target ? `<div class="meter"><i style="width:${pct}%"></i></div>` : ''}
+      <div class="sb-st">${p.sifat === 'rumah' && Number(p.nominal) ? `<span>Saran ${esc(rp(p.nominal))} per rumah</span>` : '<span>Sukarela</span>'}${Number(p.disalurkan) ? `<span>Sudah disalurkan ${esc(rp(p.disalurkan))}</span>` : ''}<span>${esc(sbBatas(p))}</span></div>
+      ${milik.length ? `<div style="display:grid;gap:4px">${milik.map(d => `<div style="font-size:.86rem"><span class="chip ${CH[d.status] || 'mute'}">${d.status === 'Diterima' ? 'Sumbangan Anda diterima' : d.status === 'Menunggu' ? 'Menunggu verifikasi bendahara' : 'Konfirmasi ditolak'}</span> ${esc(rp(d.jumlah))} · ${esc(tgl(d.tanggal))}${d.status === 'Ditolak' && (d.verif && d.verif.catatan || d.alasan) ? `<div class="muted" style="font-size:.8rem;margin-top:2px">${esc((d.verif && d.verif.catatan) || d.alasan)}</div>` : ''}</div>`).join('')}</div>` : ''}
+      ${buka && p.konfirmasiWarga ? `<button type="button" class="btn ${diterima.length ? '' : 'pri'} sm go" data-act="sbw-konf" data-id="${esc(p.id)}">${diterima.length ? 'Kirim sumbangan lagi' : 'Saya sudah menyumbang'}</button>` : ''}
+      ${don.length ? `<details><summary style="cursor:pointer;font-size:.86rem;font-weight:600">Daftar penyumbang (${don.length})</summary><div class="sb-don">${don.map(d => `<div><span>${esc(d.nama)}${d.blok ? ' · ' + esc(d.blok) : ''}</span>${d.jumlah != null ? `<span class="num">${esc(rp(d.jumlah))}</span>` : ''}</div>`).join('')}</div></details>` : ''}
+    </article>`;
+  };
+  return head + (S.sbPub.gagal ? '<div class="notice">Data sumbangan belum bisa dimuat. <button class="btn sm" data-act="sbw-muat">Coba lagi</button></div>' : '')
+    + (P.length ? `<div class="sb-grid">${P.map(kartu).join('')}</div>` : '<div class="empty">Belum ada program sumbangan saat ini.</div>')
+    + (S.set.infoBayar && P.some(p => p.status === 'Aktif') ? `<div class="panel"><h3>Cara menyumbang</h3><p style="margin:0;white-space:pre-wrap">${esc(S.set.infoBayar)}</p><p class="muted" style="margin:8px 0 0;font-size:.84rem">Setelah transfer atau menyerahkan tunai, tekan "Saya sudah menyumbang" agar bendahara bisa memverifikasi.</p></div>` : '');
+}
+function openSbKonfirmasi(pid) {
+  const p = ((S.sbPub && S.sbPub.program) || []).find(x => x.id === pid), w = wargaSaya();
+  if (!p || !w) return;
+  openDlg({title: 'Konfirmasi sumbangan', submitLabel: 'Kirim ke Bendahara',
+    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(p.nama)}</b><div class="muted" style="font-size:.84rem">${esc(w.blok)} · ${esc(w.nama)}</div></div>
+      <div class="grid2">
+        <div class="fld"><label for="sbk_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="sbk_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(p.sifat === 'rumah' && Number(p.nominal) ? p.nominal : '')}"></div>
+        <div class="fld"><label for="sbk_t">Tanggal <span class="req">*</span></label><input type="date" id="sbk_t" name="tanggal" required value="${todayISO()}" max="${todayISO()}"></div>
+      </div>
+      <div class="fld"><label for="sbk_m">Cara menyumbang</label><select id="sbk_m" name="metode">${METODE.map(m => `<option>${esc(m)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="sbk_c">Keterangan</label><input type="text" id="sbk_c" name="catatan" maxlength="200" placeholder="mis. transfer dari rekening a.n. Budi, atau tunai ke Bu Tata"></div>
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="anonim"> <span>Sembunyikan nama saya di daftar penyumbang</span></label>
+      <p class="muted" style="margin:0;font-size:.84rem">Sumbangan dihitung setelah diverifikasi bendahara.</p>`,
+    onSubmit: async d => {
+      const jumlah = Math.round(Number(d.jumlah) || 0);
+      if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'sbk_j'); return false; }
+      const ok = await put('donasi', p.id + '_' + w.id + '_' + uid().slice(-5), {programId: p.id, wargaId: w.id, nama: w.nama, blok: w.blok, jumlah, tanggal: d.tanggal || todayISO(), metode: d.metode, catatan: String(d.catatan || '').trim(), anonim: !!d.anonim, status: 'Menunggu', sumber: 'warga'});
+      if (ok) { toast('Terima kasih! Konfirmasi terkirim ke bendahara.'); S.sbPub = null; }
+      return ok;
+    }});
+}
+
 /* ---------- Pengajuan dana (permintaan pengeluaran) ---------- */
 const bolehAjukan = () => !!S.sesi && !isWarga() && !!roleSaya();
 const PJ_CHIP = {Menunggu: 'warn', Dicairkan: 'ok', Ditolak: 'bad', Dibatalkan: 'mute'};
@@ -2914,9 +3405,9 @@ function vPengeluaran() {
     <td><div style="font-weight:600">${esc(x.uraian)}</div>${x.catatan ? `<div class="muted" style="font-size:.78rem">${esc(x.catatan)}</div>` : ''}</td>
     <td><span class="chip mute plain">${esc(x.kategori || 'Lainnya')}</span></td><td>${esc(x.penerima || '—')}</td><td class="mono">${esc(x.noNota || '—')}</td>
     <td class="r num amt-out">${esc(rp(x.jumlah))}</td>
-    <td class="r"><button class="btn sm" data-act="pg-edit" data-id="${esc(x.id)}">${bisa('pengeluaran') ? 'Ubah' : 'Lihat'}</button></td></tr>`).join('');
+    <td class="r">${x.src === 'sb' ? `<button class="btn ghost sm" data-act="sb-buka" data-id="${esc(x.programId)}">Lihat sumbangan</button>` : `<button class="btn sm" data-act="pg-edit" data-id="${esc(x.id)}">${bisa('pengeluaran') ? 'Ubah' : 'Lihat'}</button>`}</td></tr>`).join('');
   const rowsM = list.map(x => `<div class="row"><div class="grow"><div class="t">${esc(x.uraian)}</div><div class="s">${esc(tgl(x.tanggal))} · ${esc(x.kategori || 'Lainnya')}${x.penerima ? ' · ' + esc(x.penerima) : ''}</div></div>
-    <span class="amt-out num">−${esc(nf.format(x.jumlah))}</span><button class="btn ghost sm" data-act="pg-edit" data-id="${esc(x.id)}" aria-label="Buka">›</button></div>`).join('');
+    <span class="amt-out num">−${esc(nf.format(x.jumlah))}</span>${x.src === 'sb' ? `<button class="btn ghost sm" data-act="sb-buka" data-id="${esc(x.programId)}" aria-label="Lihat sumbangan">›</button>` : `<button class="btn ghost sm" data-act="pg-edit" data-id="${esc(x.id)}" aria-label="Buka">›</button>`}</div>`).join('');
   return head + `
   <div class="tiles">
     <div class="tile"><span class="ti r">${ico('pengeluaran')}</span><span class="lbl">Total ${esc(S.pgMode === 'tahun' ? 'tahun ini' : 'bulan ini')}</span><span class="val">${esc(rp(total))}</span><span class="sub">${esc(g.lbl)}</span></div>
@@ -3188,7 +3679,7 @@ function laporanHtml(g, L) {
     ${rincian || '<tr><td colspan="7" class="c">Tidak ada transaksi pada periode ini</td></tr>'}
     <tr class="tot"><td></td><td></td><td>Jumlah</td><td></td><td class="r">${esc(nf.format(L.tMasuk))}</td><td class="r">${esc(nf.format(L.tKeluar))}</td><td class="r">${esc(nf.format(L.akhir))}</td></tr>
   </tbody></table>
-  <p class="note">Pemasukan iuran dijumlahkan per tanggal bayar. Rincian per warga tersedia di menu Iuran.</p>
+  <p class="note">Pemasukan iuran dijumlahkan per tanggal bayar dan sumbangan per program per tanggal. Rincian tersedia di menu Iuran dan Sumbangan.</p>
   <div class="ttd">
     <div>Dibuat oleh,<br>Bendahara<div class="sp"></div><u>${esc(namaBendahara() || '(..............................)')}</u></div>
     <div>${esc(st.kota || lingk())}, ${esc(tglSurat(todayISO()))}<br>Mengetahui, Ketua RT ${esc(st.rt || '')}<div class="sp"></div><u>${esc(namaKetua() || '(..............................)')}</u></div>
@@ -3420,7 +3911,7 @@ function xlsxLaporan(g, L) {
       .put(4, t.jenis === 'masuk' ? Number(t.jumlah) || 0 : '', K.num).put(5, t.jenis !== 'masuk' ? Number(t.jumlah) || 0 : '', K.num).put(6, run, K.num).next();
   });
   W.put(0, '', K.totText).put(1, '', K.totText).put(2, 'Jumlah', K.totText).put(3, '', K.totText).put(4, L.tMasuk, K.totNum).put(5, L.tKeluar, K.totNum).put(6, L.akhir, K.totNum).next();
-  W.put(0, 'Pemasukan iuran dijumlahkan per tanggal bayar. Rincian per warga tersedia di menu Iuran.', K.note, 7).next();
+  W.put(0, 'Pemasukan iuran dijumlahkan per tanggal bayar dan sumbangan per program per tanggal. Rincian tersedia di menu Iuran dan Sumbangan.', K.note, 7).next();
   // tanda tangan
   W.skip();
   W.put(0, 'Dibuat oleh,', K.sign, 3).put(4, `${st.kota || lingk()}, ${tglSurat(todayISO())}`, K.sign, 3).next();
@@ -4172,6 +4663,24 @@ document.addEventListener('click', async e => {
   else if (a === 'papan-buka') bukaPapan();
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
+  else if (a === 'sb-new') openSbProgram(null, b.dataset.j);
+  else if (a === 'sb-buka') { if (!tabBoleh('sumbangan')) return; if (dlg.open) dlg.close(); const pindah = S.tab !== 'sumbangan' || S.sbSel !== b.dataset.id; S.tab = 'sumbangan'; S.sbSel = b.dataset.id; if (pindah) { S.sbTab = 'penyumbang'; S.sbQ = ''; } render(); window.scrollTo(0, 0); }
+  else if (a === 'sb-kembali') { S.sbSel = null; render(); window.scrollTo(0, 0); }
+  else if (a === 'sbf') { S.sbFilter = b.dataset.k; render(); }
+  else if (a === 'sbt') { S.sbTab = b.dataset.k; render(); if (S.sbTab === 'keliling') sbMzBar(); }
+  else if (a === 'sb-ubah') openSbProgram(b.dataset.id);
+  else if (a === 'sb-catat') openSbDonasi(S.sbSel, null, b.dataset.w || '');
+  else if (a === 'sb-don') openSbDonasi(S.sbSel, b.dataset.id);
+  else if (a === 'sb-salur') openSbSalur(S.sbSel, b.dataset.id);
+  else if (a === 'sb-verif') openSbVerif(b.dataset.id);
+  else if (a === 'sb-tolak') openSbTolak(b.dataset.id);
+  else if (a === 'sb-xlsx') eksporSumbangan(b.dataset.id);
+  else if (a === 'sb-tutup') sbTutup(b);
+  else if (a === 'sbm-semua') { const p = sbProg(S.sbSel); if (!p) return; const z = sbMzState(p), q = z.q.trim().toLowerCase(), h = sbHitung(p); const L = wargaAktif().filter(w => !h.rumah.has(w.id) && (!q || (w.blok + ' ' + w.nama).toLowerCase().includes(q))); const all = L.every(w => z.sel.has(w.id)); L.forEach(w => all ? z.sel.delete(w.id) : z.sel.add(w.id)); render(); sbMzBar(); }
+  else if (a === 'sbm-reset') { S.sbMz = null; render(); sbMzBar(); }
+  else if (a === 'sbm-simpan') sbMzSimpan();
+  else if (a === 'sbw-konf') openSbKonfirmasi(b.dataset.id);
+  else if (a === 'sbw-muat') { S.sbPub = null; render(); }
   else if (a === 'pj-new') openPengajuan();
   else if (a === 'pj-ubah') openPengajuan(b.dataset.id);
   else if (a === 'pj-catat') openPjCatat(b.dataset.id);
@@ -4268,6 +4777,14 @@ document.addEventListener('click', async e => {
   }
 });
 document.addEventListener('input', e => {
+  const sbm = e.target.dataset && e.target.dataset.sbm;
+  if (sbm && S.sbMz) {
+    const z = S.sbMz, id = e.target.dataset.id;
+    if (sbm === 'jml') { z.jml[id] = e.target.value; if (!z.sel.has(id) && e.target.value !== '') { z.sel.add(id); const r = e.target.closest('[data-row]'); if (r) { r.classList.add('pick'); const c = r.querySelector('[data-sbm=sel]'); if (c) c.checked = true; } } sbMzBar(); }
+    if (sbm === 'q') { z.q = e.target.value; render(); sbMzBar(); const el = $('#sbmQ'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }
+    return;
+  }
+  if (e.target.id === 'qSb') { S.sbQ = e.target.value; render(); const el = $('#qSb'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } return; }
   const mz = e.target.dataset && e.target.dataset.mz;
   if (mz) {
     const z = mzState(), id = e.target.dataset.id;
@@ -4282,6 +4799,14 @@ document.addEventListener('input', e => {
   if (e.target.id === 'qKel') { S.kelQ = e.target.value; render(); }
 });
 document.addEventListener('change', async e => {
+  const sbm = e.target.dataset && e.target.dataset.sbm;
+  if (sbm && sbm !== 'q' && sbm !== 'jml' && S.sbMz) {
+    const z = S.sbMz, id = e.target.dataset.id;
+    if (sbm === 'sel') { e.target.checked ? z.sel.add(id) : z.sel.delete(id); const r = e.target.closest('[data-row]'); if (r) r.classList.toggle('pick', e.target.checked); }
+    if (sbm === 'tgl') z.tgl = e.target.value;
+    if (sbm === 'metode') z.metode = e.target.value;
+    sbMzBar(); return;
+  }
   const mz = e.target.dataset && e.target.dataset.mz;
   if (mz && mz !== 'q' && mz !== 'jml') {
     const z = mzState(), id = e.target.dataset.id;

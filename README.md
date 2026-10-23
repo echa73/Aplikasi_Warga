@@ -47,3 +47,6 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
 
 ## Impor data warga dari Excel
 Menu **Data warga → Impor Excel**. Unduh template (`public/template/Template-Impor-Warga.xlsx`), isi sheet "Data Warga" dan "Anggota Keluarga" mengikuti sheet "Panduan", lalu pilih file. Aplikasi menampilkan pratinjau dan validasi sebelum data disimpan. Data diolah di browser; file tidak diunggah ke server lain.
+
+## Sumbangan
+Menu **Keuangan → Sumbangan** (role dengan izin Sumbangan = kelola, default Bendahara): program sukarela / per rumah (THR keamanan & kebersihan, HUT RI, duka cita, dll.), catat sumbangan, catat keliling per rumah, penyaluran dana, verifikasi konfirmasi dari warga, laporan Excel & WhatsApp. Penerimaan (per program per tanggal) dan penyaluran otomatis masuk Buku kas, Pengeluaran, dan Laporan keuangan kecuali program ditandai "dana terpisah". Warga melihat progres dan bisa mengirim konfirmasi sumbangan.

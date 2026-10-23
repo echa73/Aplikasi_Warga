@@ -236,3 +236,7 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 
 -- Saldo awal (cut-off) disimpan di koleksi 'keuangan' (dokumen saldoAwal): baca = bisa lihat kas/laporan, ubah = kelola kas (Bendahara).
 -- Lihat definisi privat.boleh_baca / privat.boleh_tulis terbaru di project (migrasi saldo_cutoff_keuangan).
+
+-- Pengajuan dana (koleksi 'pengajuan'): semua pengurus aktif bisa melihat & mengajukan; pemohon hanya bisa ubah/batalkan
+-- pengajuannya sendiri selama 'Menunggu'; pencairan/penolakan hanya oleh role dengan izin ubah pengeluaran (Bendahara).
+-- Trigger privat.jaga_dokumen mengisi pemohonId/pemohonNama dari akun yang login. Definisi lengkap: migrasi pengajuan_pengeluaran.

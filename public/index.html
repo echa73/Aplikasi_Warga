@@ -874,7 +874,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengumuman: [], surat: [],
+  warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -900,7 +900,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {keuangan: 'kas', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -949,7 +949,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -1098,7 +1098,8 @@ const loginTerpakai = (hp, kecuali) => { const n = normHp(hp); if (!n) return nu
 function clean(o) { const c = {...o}; delete c.id; return c; }
 async function put(col, id, data) {
   const milikSendiri = isWarga() && wargaSaya() && ((col === 'warga' && id === wargaSaya().id) || ((col === 'darurat' || col === 'titip') && data && data.wargaId === wargaSaya().id));
-  if (!milikSendiri && !bisa(areaOf(col)) && !(col === 'kas' && data && data.jenis !== 'masuk' && bisa('pengeluaran'))) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
+  const ajuanSendiri = col === 'pengajuan' && bolehAjukan() && (!data.status || data.status === 'Menunggu' || data.status === 'Dibatalkan') && (!data.pemohonId || data.pemohonId === (S.me && S.me.id));
+  if (!milikSendiri && !ajuanSendiri && !bisa(areaOf(col)) && !(col === 'kas' && data && data.jenis !== 'masuk' && bisa('pengeluaran'))) { toast('Peran Anda tidak bisa mengubah bagian ini.', 'bad'); return false; }
   if (S.me && S.me.id) data = {...data, oleh: S.me.id};
   if (S.sesi) data = {...data, olehSesi: S.sesi};
   if (!DB) {
@@ -1159,14 +1160,15 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'surat']], ['Keuangan', ['kas', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'surat']], ['Keuangan', ['kas', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  pengajuan: '<path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4h4"/><path d="M12 10v7M9.5 12.2c0-.9.9-1.5 2.5-1.5s2.5.6 2.5 1.5-1 1.3-2.5 1.6-2.5.7-2.5 1.6.9 1.5 2.5 1.5 2.5-.6 2.5-1.5"/>',
   kunci: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3"/>',
   ringkasan: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
   warga: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.5 5.2"/>',
@@ -1209,6 +1211,7 @@ function renderTabs() {
     const g = isWarga() ? null : grupOf(k);
     if (g && g !== grpLast) { gh = `<div class="nav-grp">${g}</div>`; grpLast = g; }
     if (k === 'warga' && S.warga.length) ct = `<span class="ct">${wargaAktif().length}</span>`;
+    if (k === 'pengajuan') { const n = S.pengajuan.filter(x => x.status === 'Menunggu').length; if (n && bisa('pengeluaran')) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
     if (k === 'lapor') { const w = wargaSaya(), n = w ? S.keluhan.filter(x => x.wargaId === w.id && x.status !== 'Selesai').length : 0; if (n) ct = `<span class="ct">${n}</span>`; }
     if (k === 'keluhan' && open) ct = `<span class="ct hot">${open}</span>`;
     if (k === 'admin' && S.minta.length) ct = `<span class="ct hot">${S.minta.length}</span>`;
@@ -1246,7 +1249,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: vRingkasan, warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, aman: vAman})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2554,6 +2557,102 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Pengajuan dana (permintaan pengeluaran) ---------- */
+const bolehAjukan = () => !!S.sesi && !isWarga() && !!roleSaya();
+const PJ_CHIP = {Menunggu: 'warn', Dicairkan: 'ok', Ditolak: 'bad', Dibatalkan: 'mute'};
+function vPengajuan() {
+  const proses = bisa('pengeluaran'), saya = S.me && S.me.id;
+  const all = [...S.pengajuan].sort((a, b) => (b.status === 'Menunggu') - (a.status === 'Menunggu') || String(b.diajukan || '').localeCompare(String(a.diajukan || '')) || String(b.id).localeCompare(String(a.id)));
+  const cnt = {menunggu: all.filter(x => x.status === 'Menunggu').length, saya: all.filter(x => x.pemohonId === saya).length};
+  const list = all.filter(x => S.pjFilter === 'semua' ? true : S.pjFilter === 'saya' ? x.pemohonId === saya : S.pjFilter === 'selesai' ? x.status !== 'Menunggu' : x.status === 'Menunggu');
+  const seg = [['menunggu', `Menunggu ${cnt.menunggu}`], ['selesai', 'Selesai'], ['saya', `Pengajuan saya ${cnt.saya}`], ['semua', `Semua ${all.length}`]]
+    .map(([k, l]) => `<button type="button" data-act="pjf" data-k="${k}" aria-pressed="${S.pjFilter === k}">${l}</button>`).join('');
+  const totMenunggu = all.filter(x => x.status === 'Menunggu').reduce((t, x) => t + (Number(x.jumlah) || 0), 0);
+  const kartu = x => {
+    const milik = x.pemohonId === saya, tunggu = x.status === 'Menunggu', p = x.proses || {};
+    return `<article class="kel ${tunggu ? 'p-Sedang' : x.status === 'Ditolak' ? 'p-Tinggi' : 'p-Rendah'}">
+      <div class="meta"><span class="chip ${PJ_CHIP[x.status] || 'mute'}">${esc(x.status || 'Menunggu')}</span><span class="chip mute plain">${esc(x.kategori || 'Lainnya')}</span><span>Diajukan ${esc(tgl(x.diajukan))} oleh <b>${esc(x.pemohonNama || '—')}</b>${milik ? ' (Anda)' : ''}</span>${x.dibutuhkan ? `<span>· dibutuhkan ${esc(tgl(x.dibutuhkan))}</span>` : ''}</div>
+      <h4 style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>${esc(x.uraian)}</span><span style="white-space:nowrap">${esc(rp(x.jumlah))}</span></h4>
+      ${x.keterangan ? `<p>${esc(x.keterangan)}</p>` : ''}
+      ${x.status === 'Dicairkan' ? `<div class="resp"><b>Dicatat di kas</b>${esc(rp(p.jumlah ?? x.jumlah))} · ${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}${p.oleh ? ' · oleh ' + esc(p.oleh) : ''}${p.catatan ? '<br>' + esc(p.catatan) : ''}</div>` : ''}
+      ${x.status === 'Ditolak' ? `<div class="resp"><b>Ditolak${p.oleh ? ' oleh ' + esc(p.oleh) : ''}</b>${esc(p.catatan || '')}</div>` : ''}
+      ${tunggu && (proses || milik) ? `<div class="meta" style="gap:8px">${proses ? `<button class="btn sm pri" data-act="pj-catat" data-id="${esc(x.id)}">Catat pengeluaran</button><button class="btn sm" data-act="pj-tolak" data-id="${esc(x.id)}">Tolak</button>` : ''}${milik ? `<button class="btn sm ghost" data-act="pj-ubah" data-id="${esc(x.id)}">Ubah</button><button class="btn sm ghost" data-act="pj-batal" data-id="${esc(x.id)}">Batalkan</button>` : ''}</div>` : ''}
+    </article>`;
+  };
+  return `<div class="sec-head"><div><h2>Pengajuan dana</h2><p>${proses ? 'Pengurus mengajukan kebutuhan dana. Bendahara memeriksa, lalu mencatatnya sebagai pengeluaran kas.' : 'Ajukan kebutuhan dana kegiatan atau perbaikan. Bendahara akan memproses dan mencatatnya di kas.'}</p></div>
+    <button class="btn pri" data-act="pj-new">+ Ajukan pengeluaran</button></div>
+  ${proses && cnt.menunggu ? `<div class="notice" style="background:var(--sun-soft);color:#6b4a00">${cnt.menunggu} pengajuan menunggu diproses, total ${esc(rp(totMenunggu))}. Saldo kas saat ini ${esc(rp(saldoKini()))}.</div>` : ''}
+  <div class="toolbar"><div class="seg" role="group" aria-label="Saring pengajuan">${seg}</div></div>
+  ${list.length ? `<div class="kel-list">${list.map(kartu).join('')}</div>` : `<div class="empty">${S.pjFilter === 'menunggu' ? 'Tidak ada pengajuan yang menunggu.' : 'Belum ada pengajuan.'}</div>`}`;
+}
+function openPengajuan(id) {
+  const x = id ? S.pengajuan.find(p => p.id === id) : null;
+  if (x && (x.status !== 'Menunggu' || x.pemohonId !== (S.me && S.me.id))) return;
+  const v = x || {kategori: KAT_KELUAR[0]};
+  openDlg({
+    title: x ? 'Ubah pengajuan' : 'Ajukan pengeluaran', submitLabel: x ? 'Simpan' : 'Kirim ke Bendahara',
+    body: `<div class="fld"><label for="pj_u">Untuk keperluan <span class="req">*</span></label><input type="text" id="pj_u" name="uraian" required maxlength="140" value="${esc(v.uraian)}" placeholder="mis. Beli lampu jalan blok C (4 buah)"></div>
+    <div class="grid2">
+      <div class="fld"><label for="pj_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="pj_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah)}"><span class="hint" id="pjRp">${v.jumlah ? esc(rp(v.jumlah)) : ''}</span></div>
+      <div class="fld"><label for="pj_k">Kategori</label><select id="pj_k" name="kategori">${KAT_KELUAR.map(k => `<option ${v.kategori === k ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
+    </div>
+    <div class="fld"><label for="pj_d">Dibutuhkan tanggal</label><input type="date" id="pj_d" name="dibutuhkan" value="${esc(v.dibutuhkan || '')}"></div>
+    <div class="fld"><label for="pj_ket">Keterangan / rincian</label><textarea id="pj_ket" name="keterangan" rows="3" maxlength="600" placeholder="mis. Lampu LED 20W @ Rp 45.000, dibeli di toko listrik dekat gerbang">${esc(v.keterangan || '')}</textarea></div>`,
+    onSubmit: async d => {
+      const jumlah = Math.round(Number(d.jumlah) || 0);
+      if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'pj_j'); return false; }
+      const row = {...(x || {}), uraian: d.uraian.trim(), jumlah, kategori: d.kategori, dibutuhkan: d.dibutuhkan || '', keterangan: String(d.keterangan || '').trim(),
+        status: 'Menunggu', pemohonId: (x && x.pemohonId) || (S.me && S.me.id) || '', pemohonNama: (x && x.pemohonNama) || namaSesi(), diajukan: (x && x.diajukan) || todayISO()};
+      const ok = await put('pengajuan', x ? x.id : uid(), row);
+      if (ok) toast(x ? 'Pengajuan diperbarui.' : `Pengajuan ${rp(jumlah)} terkirim ke Bendahara.`);
+      return ok;
+    }
+  });
+  const j = $('#pj_j'); if (j) j.addEventListener('input', () => { const el = $('#pjRp'); if (el) el.textContent = j.value ? rp(Number(j.value)) : ''; });
+}
+function openPjCatat(id) {
+  const x = S.pengajuan.find(p => p.id === id); if (!x || x.status !== 'Menunggu') return;
+  openDlg({
+    title: 'Catat pengeluaran dari pengajuan', area: 'pengeluaran', submitLabel: 'Catat di kas',
+    body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(x.uraian)}</b> · ${esc(rp(x.jumlah))}<div class="muted" style="font-size:.84rem">Diajukan ${esc(x.pemohonNama || '')} · ${esc(tgl(x.diajukan))}${x.keterangan ? ' · ' + esc(x.keterangan) : ''}</div></div>
+    <div class="grid2">
+      <div class="fld"><label for="pc_t">Tanggal keluar <span class="req">*</span></label><input type="date" id="pc_t" name="tanggal" required value="${todayISO()}"></div>
+      <div class="fld"><label for="pc_j">Jumlah dikeluarkan (Rp) <span class="req">*</span></label><input type="number" id="pc_j" name="jumlah" min="1" step="500" required value="${esc(x.jumlah)}"><span class="hint">Ubah bila yang dicairkan berbeda.</span></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="pc_k">Kategori</label><select id="pc_k" name="kategori">${KAT_KELUAR.map(k => `<option ${x.kategori === k ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="pc_m">Metode</label><select id="pc_m" name="metode">${METODE.map(m => `<option>${esc(m)}</option>`).join('')}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="fld"><label for="pc_p">Dibayar kepada</label><input type="text" id="pc_p" name="penerima" value="${esc(x.pemohonNama || '')}"></div>
+      <div class="fld"><label for="pc_n">No. nota / kuitansi</label><input type="text" id="pc_n" name="noNota" placeholder="opsional"></div>
+    </div>
+    <div class="fld"><label for="pc_c">Catatan untuk pemohon</label><input type="text" id="pc_c" name="catatan" placeholder="mis. Uang diserahkan tunai, nota menyusul"></div>
+    <p class="muted" style="margin:0;font-size:.84rem">Saldo kas saat ini ${esc(rp(saldoKini()))}.</p>`,
+    onSubmit: async d => {
+      const jumlah = Math.round(Number(d.jumlah) || 0);
+      if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'pc_j'); return false; }
+      const kasId = 'pj-' + x.id;
+      const okKas = await put('kas', kasId, {jenis: 'keluar', tanggal: d.tanggal, kategori: d.kategori, uraian: x.uraian, jumlah, metode: d.metode,
+        penerima: String(d.penerima || '').trim(), noNota: String(d.noNota || '').trim(), catatan: `Pengajuan dari ${x.pemohonNama || '-'}${d.catatan ? ' · ' + String(d.catatan).trim() : ''}`, pengajuanId: x.id, dibuat: todayISO()});
+      if (!okKas) return false;
+      const ok = await put('pengajuan', x.id, {...x, status: 'Dicairkan', kasId, proses: {oleh: namaSesi(), waktu: nowDT(), tanggal: d.tanggal, jumlah, metode: d.metode, catatan: String(d.catatan || '').trim()}});
+      if (ok) { toast(`Pengeluaran ${rp(jumlah)} dicatat di kas.`); S.pgPer = d.tanggal.slice(0, 7); }
+      return ok;
+    }
+  });
+}
+function openPjTolak(id) {
+  const x = S.pengajuan.find(p => p.id === id); if (!x || x.status !== 'Menunggu') return;
+  openDlg({title: 'Tolak pengajuan', area: 'pengeluaran', submitLabel: 'Tolak pengajuan',
+    body: `<p style="margin:0"><b>${esc(x.uraian)}</b> · ${esc(rp(x.jumlah))} dari ${esc(x.pemohonNama || '')}</p>
+      <div class="fld"><label for="pt_c">Alasan <span class="req">*</span></label><textarea id="pt_c" name="catatan" rows="2" required placeholder="mis. Dana kas belum cukup, ajukan lagi bulan depan"></textarea></div>`,
+    onSubmit: async d => {
+      const c = String(d.catatan || '').trim(); if (!c) { pesanDlg('Isi alasan penolakan.', 'pt_c'); return false; }
+      const ok = await put('pengajuan', x.id, {...x, status: 'Ditolak', proses: {oleh: namaSesi(), waktu: nowDT(), catatan: c}});
+      if (ok) toast('Pengajuan ditolak.'); return ok;
+    }});
+}
 function vPengeluaran() {
   const g = pgRentang(), semua = pgDalam(g.awal, g.akhir), prev = pgTotal(pgDalam(g.prevAwal, g.prevAkhir));
   const total = pgTotal(semua), selisih = total - prev, pct = prev ? Math.round(Math.abs(selisih) / prev * 100) : null;
@@ -3829,6 +3928,12 @@ document.addEventListener('click', async e => {
   else if (a === 'lapq') { S.lapQ = Number(b.dataset.k); render(); }
   else if (a === 'lap-dl') unduhLaporan(b);
   else if (a === 'lap-csv') csvLaporan();
+  else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
+  else if (a === 'pj-new') openPengajuan();
+  else if (a === 'pj-ubah') openPengajuan(b.dataset.id);
+  else if (a === 'pj-catat') openPjCatat(b.dataset.id);
+  else if (a === 'pj-tolak') openPjTolak(b.dataset.id);
+  else if (a === 'pj-batal') { const x = S.pengajuan.find(p => p.id === b.dataset.id); if (x && x.status === 'Menunggu') { b.disabled = true; if (await put('pengajuan', x.id, {...x, status: 'Dibatalkan'})) toast('Pengajuan dibatalkan.'); } }
   else if (a === 'saldo-cutoff') openSaldoCutoff();
   else if (a === 'kas-edit') openKas(b.dataset.id);
   else if (a === 'kas-csv') ekspor('kas', S.kasPer);

@@ -874,7 +874,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  warga: [], iuran: [], keluhan: [], kas: [], pengumuman: [], surat: [],
+  warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -900,7 +900,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {keuangan: 'kas', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -949,7 +949,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -1692,10 +1692,7 @@ function vPengaturan() {
     </div>
     <div class="fld"><label for="s_bayar">Info pembayaran untuk warga</label><textarea id="s_bayar" name="infoBayar" rows="3" placeholder="mis. Transfer ke BCA 1234567890 a.n. Bendahara RT 05, atau tunai ke Ibu Sri (B-02)" ${ro}>${esc(S.set.infoBayar || '')}</textarea><span class="hint">Tampil di halaman Rumah saya milik warga</span></div>
     <h3 style="margin-top:6px">Saldo awal kas</h3>
-    <div class="grid2">
-      <div class="fld"><label for="s_saldo">Saldo awal (Rp)</label><input type="number" id="s_saldo" name="saldoAwal" step="1000" value="${esc(S.set.saldoAwal)}" ${ro}></div>
-      <div class="fld"><label for="s_saldotgl">Per tanggal</label><input type="date" id="s_saldotgl" name="saldoTgl" value="${esc(S.set.saldoTgl)}" ${ro}><span class="hint">Transaksi sebelum tanggal ini tidak dihitung</span></div>
-    </div>
+    <p class="muted" style="margin:0">${(c => c.tanggal || c.jumlah ? `${esc(rp(c.jumlah))}${c.tanggal ? ' per ' + esc(tglSurat(c.tanggal)) : ''}. ` : 'Belum diatur. ')(saldoCutoff())}Saldo awal (cut-off) diatur Bendahara di menu <a href="#laporan" data-act="tab" data-k="laporan" style="color:var(--accent);font-weight:600">Laporan keuangan</a>.</p>
     <div><button class="btn pri" type="submit" ${ro}>Simpan pengaturan</button></div>
   </form>
   <div class="panel" style="display:grid;gap:10px;max-width:560px">
@@ -2434,15 +2431,16 @@ function openLainnya() {
 const KAT_KELUAR = ['Kebersihan & sampah', 'Keamanan / satpam', 'Listrik & air fasum', 'Perbaikan fasilitas', 'Kegiatan warga', 'Sosial / duka / sakit', 'Administrasi & ATK', 'Lainnya'];
 const KAT_MASUK = ['Donasi', 'Sewa fasilitas', 'Iuran khusus / kegiatan', 'Bantuan pemerintah', 'Lainnya'];
 const katOpts = (jenis, val) => (jenis === 'masuk' ? KAT_MASUK : KAT_KELUAR).map(k => `<option ${k === val ? 'selected' : ''}>${k}</option>`).join('');
+const saldoCutoff = () => { const d = S.keuangan.find(x => x.id === 'saldoAwal'); return d ? {jumlah: Number(d.jumlah) || 0, tanggal: d.tanggal || '', catatan: d.catatan || '', oleh: d.olehNama || '', diatur: d.diatur || ''} : {jumlah: Number(S.set.saldoAwal) || 0, tanggal: S.set.saldoTgl || '', catatan: '', oleh: '', diatur: ''}; };
 function kasSemua() {
   const byTgl = new Map();
   for (const p of S.iuran) { if (!p.tanggal) continue; const g = byTgl.get(p.tanggal) || {n: 0, j: 0}; g.n++; g.j += Number(p.jumlah) || 0; byTgl.set(p.tanggal, g); }
   const auto = [...byTgl].map(([t, g]) => ({id: 'iur_' + t, jenis: 'masuk', tanggal: t, kategori: 'Iuran warga', uraian: `Iuran warga · ${g.n} pembayaran`, jumlah: g.j, auto: true}));
-  const mulai = S.set.saldoTgl || '';
+  const mulai = saldoCutoff().tanggal;
   return [...auto, ...S.kas.filter(x => x.tanggal)].filter(x => !mulai || x.tanggal >= mulai);
 }
 const nilai = x => (x.jenis === 'masuk' ? 1 : -1) * (Number(x.jumlah) || 0);
-const saldoSebelum = iso => (Number(S.set.saldoAwal) || 0) + kasSemua().filter(x => x.tanggal < iso).reduce((s, x) => s + nilai(x), 0);
+const saldoSebelum = iso => saldoCutoff().jumlah + kasSemua().filter(x => x.tanggal < iso).reduce((s, x) => s + nilai(x), 0);
 const saldoKini = () => saldoSebelum('9999-12-31');
 function rekapKas(per) {
   const list = kasSemua().filter(x => x.tanggal.slice(0, 7) === per).sort((a, b) => a.tanggal.localeCompare(b.tanggal) || (a.auto ? -1 : 1));
@@ -2786,6 +2784,11 @@ const LAP_CSS = `.lap{background:#fff;color:#1d140d;font-family:'Plus Jakarta Sa
 .lap .ttd .sp{height:64px}
 .lap .ttd u{font-weight:700}`;
 function lapRentang() {
+  const g = lapRentang0(), t = saldoCutoff().tanggal;
+  if (t && t > g.awal && t <= g.akhir) g.awal = t;
+  return g;
+}
+function lapRentang0() {
   if (S.lapMode === 'tahun') return {awal: S.lapTh + '-01-01', akhir: S.lapTh + '-12-31', lbl: 'Tahun ' + S.lapTh, kode: String(S.lapTh)};
   if (S.lapMode === 'triwulan') { const m0 = (S.lapQ - 1) * 3 + 1, a = S.lapTh + '-' + pad(m0), b = S.lapTh + '-' + pad(m0 + 2);
     return {awal: a + '-01', akhir: b + '-31', lbl: `Triwulan ${['I', 'II', 'III', 'IV'][S.lapQ - 1]} ${S.lapTh} (${BLN_L[m0 - 1]}–${BLN_L[m0 + 1]})`, kode: S.lapTh + '-Q' + S.lapQ}; }
@@ -2861,8 +2864,13 @@ function vLaporan() {
   else if (S.lapMode === 'triwulan') ctl = `<div class="toolbar"><div class="monthnav"><button class="btn sm" data-act="lapnav" data-n="-1" aria-label="Sebelumnya">‹</button><strong>${S.lapTh}</strong><button class="btn sm" data-act="lapnav" data-n="1" aria-label="Berikutnya">›</button></div>
     <div class="seg" role="group" aria-label="Triwulan">${[1, 2, 3, 4].map(q => `<button type="button" data-act="lapq" data-k="${q}" aria-pressed="${S.lapQ === q}">TW ${['I', 'II', 'III', 'IV'][q - 1]}</button>`).join('')}</div></div>`;
   else ctl = `<div class="toolbar"><input type="date" id="lapDari" value="${esc(S.lapDari || '')}" aria-label="Dari tanggal" style="width:auto"><span class="muted">s.d.</span><input type="date" id="lapSampai" value="${esc(S.lapSampai || '')}" aria-label="Sampai tanggal" style="width:auto"></div>`;
-  const kurang = !S.set.rt || !namaKetua();
+  const kurang = !S.set.rt || !namaKetua(), co = saldoCutoff();
+  const coPanel = `<div class="panel" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px">
+    <div class="grow" style="min-width:200px"><div style="font-weight:700">Saldo awal (cut-off)</div>
+      <div class="muted" style="font-size:.86rem">${co.tanggal || co.jumlah ? `<b style="color:var(--ink)">${esc(rp(co.jumlah))}</b>${co.tanggal ? ' per ' + esc(tglSurat(co.tanggal)) : ''}${co.catatan ? ' · ' + esc(co.catatan) : ''}${co.oleh ? ' · diatur ' + esc(co.oleh) : ''}` : 'Belum diatur. Isi saldo kas saat mulai memakai aplikasi agar laporan sesuai buku kas.'}</div></div>
+    ${bisa('kas') ? `<button class="btn ${co.tanggal || co.jumlah ? '' : 'pri'}" data-act="saldo-cutoff">${co.tanggal || co.jumlah ? 'Ubah saldo awal' : 'Atur saldo awal'}</button>` : ''}</div>`;
   return `<div class="sec-head"><div><h2>Laporan keuangan</h2><p>Laporan kas RT siap dibagikan ke warga atau dicetak untuk rapat.</p></div></div>
+  ${coPanel}
   <div class="toolbar" style="justify-content:space-between"><div class="seg" role="group" aria-label="Jenis periode">${modes}</div>${ctl}</div>
   <div class="tiles">
     <div class="tile"><span class="ti b">${ico('kas')}</span><span class="lbl">Saldo awal</span><span class="val">${esc(rp(L.awal))}</span><span class="sub">per ${esc(tgl(g.awal))}</span></div>
@@ -2877,6 +2885,34 @@ function vLaporan() {
   </div>
   ${kurang ? `<div class="notice">Kop dan tanda tangan laporan memakai nomor RT/RW dan nama Ketua RT dari Pengaturan, yang belum lengkap.${bisa('pengaturan') ? ' <a href="#pengaturan" data-act="tab" data-k="pengaturan" style="color:inherit;font-weight:700">Lengkapi sekarang</a>.' : ''}</div>` : ''}
   <div class="lap-wrap" aria-label="Pratinjau laporan">${laporanHtml(g, L)}</div>`;
+}
+function openSaldoCutoff() {
+  const co = saldoCutoff(), lama = S.keuangan.find(x => x.id === 'saldoAwal');
+  openDlg({
+    title: 'Saldo awal (cut-off)', area: 'kas', submitLabel: 'Simpan saldo awal',
+    body: `<p class="muted" style="margin:0;font-size:.88rem">Isi saldo kas RT yang sebenarnya (uang tunai + rekening) pada tanggal mulai pembukuan di aplikasi. Saldo ini menjadi <b>saldo awal</b> laporan keuangan.</p>
+    <div class="grid2">
+      <div class="fld"><label for="co_t">Tanggal cut-off <span class="req">*</span></label><input type="date" id="co_t" name="tanggal" required value="${esc(co.tanggal || todayISO().slice(0, 8) + '01')}"><span class="hint">Pembukuan dihitung mulai tanggal ini.</span></div>
+      <div class="fld"><label for="co_j">Saldo kas per tanggal itu (Rp) <span class="req">*</span></label><input type="number" id="co_j" name="jumlah" required step="1" inputmode="numeric" value="${esc(co.jumlah || '')}" placeholder="mis. 2500000"><span class="hint" id="coRp">${co.jumlah ? esc(rp(co.jumlah)) : ''}</span></div>
+    </div>
+    <div class="fld"><label for="co_c">Catatan</label><input type="text" id="co_c" name="catatan" maxlength="120" value="${esc(co.catatan)}" placeholder="mis. Saldo buku kas lama per akhir September"></div>
+    <div class="notice" style="font-size:.84rem" id="coInfo"></div>`,
+    onSubmit: async d => {
+      const tanggal = String(d.tanggal || ''), jumlah = Number(d.jumlah);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) { pesanDlg('Isi tanggal cut-off.', 'co_t'); return false; }
+      if (d.jumlah === '' || !isFinite(jumlah)) { pesanDlg('Isi saldo kas (boleh 0 atau minus bila kas defisit).', 'co_j'); return false; }
+      const ok = await put('keuangan', 'saldoAwal', {...(lama || {}), jumlah, tanggal, catatan: String(d.catatan || '').trim(), olehNama: namaSesi(), diatur: todayISO()});
+      if (ok) toast(`Saldo awal ${rp(jumlah)} per ${tglSurat(tanggal)} disimpan.`);
+      return ok;
+    }
+  });
+  const upd = () => {
+    const t = ($('#co_t') || {}).value || '', j = Number(($('#co_j') || {}).value || 0), n = t ? S.kas.filter(x => x.tanggal && x.tanggal < t).length + S.iuran.filter(x => x.tanggal && x.tanggal < t).length : 0;
+    const el = $('#coRp'); if (el) el.textContent = ($('#co_j') || {}).value !== '' ? rp(j) : '';
+    const info = $('#coInfo'); if (info) info.innerHTML = t ? `Transaksi kas dan pembayaran iuran <b>sebelum ${esc(tglSurat(t))}</b> tidak dihitung lagi${n ? ` (${n} catatan)` : ''}, karena sudah termasuk dalam saldo awal ini.` : '';
+  };
+  ['co_t', 'co_j'].forEach(id => { const el = $('#' + id); if (el) el.addEventListener('input', upd); });
+  upd();
 }
 function teksLaporan(g, L) {
   return `*Laporan Keuangan Kas ${lingk()}*\n${g.lbl}\n\nSaldo awal: ${rp(L.awal)}\n\n*Penerimaan: ${rp(L.tMasuk)}*\n${L.masuk.map(([k, v]) => `- ${k}: ${rp(v)}`).join('\n') || '- Tidak ada'}\n\n*Pengeluaran: ${rp(L.tKeluar)}*\n${L.keluar.map(([k, v]) => `- ${k}: ${rp(v)}`).join('\n') || '- Tidak ada'}\n\n*Saldo akhir: ${rp(L.akhir)}*\n\nLaporan lengkap dapat diminta ke bendahara.\n${pengirim()}`;
@@ -3561,7 +3597,7 @@ function ekspor(k, per) {
   else if (k === 'tunggakan') { name = `Tunggakan-${tag}-${todayISO()}`; rows = [['Blok/No','Nama','No HP','Jumlah bulan','Bulan tertunggak','Total (Rp)'],
     ...W.map(w => [w, tunggakanList(w)]).filter(x => x[1].length).map(([w, l]) => [w.blok, w.nama, w.noHp, l.length, l.map(p => perLbl(p)).join(', '), l.length * nominal()])]; }
   else if (k === 'kas') { const all = kasSemua().filter(x => !per || x.tanggal.slice(0, 7) === per).sort((a, b) => a.tanggal.localeCompare(b.tanggal));
-    let run = per ? rekapKas(per).awal : (Number(S.set.saldoAwal) || 0);
+    let run = per ? rekapKas(per).awal : saldoCutoff().jumlah;
     name = per ? `Laporan-kas-${tag}-${per}` : `Buku-kas-${tag}`;
     rows = [['Tanggal','Jenis','Kategori','Uraian','Masuk','Keluar','Saldo'], ['', '', '', 'Saldo awal', '', '', run],
       ...all.map(x => { run += nilai(x); return [x.tanggal, x.jenis === 'masuk' ? 'Pemasukan' : 'Pengeluaran', x.kategori, x.uraian, x.jenis === 'masuk' ? x.jumlah : '', x.jenis !== 'masuk' ? x.jumlah : '', run]; })]; }
@@ -3793,6 +3829,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lapq') { S.lapQ = Number(b.dataset.k); render(); }
   else if (a === 'lap-dl') unduhLaporan(b);
   else if (a === 'lap-csv') csvLaporan();
+  else if (a === 'saldo-cutoff') openSaldoCutoff();
   else if (a === 'kas-edit') openKas(b.dataset.id);
   else if (a === 'kas-csv') ekspor('kas', S.kasPer);
   else if (a === 'info-new') openInfo();
@@ -3926,7 +3963,7 @@ document.addEventListener('submit', async e => {
   const t = k => String(d[k] || '').trim();
   const ok = await putSetting({nama: t('nama') || 'Villani 5', iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
-    saldoAwal: Number(d.saldoAwal) || 0, saldoTgl: t('saldoTgl'), infoBayar: String(d.infoBayar || '').trim()});
+    infoBayar: String(d.infoBayar || '').trim()});
   if (ok) toast('Pengaturan disimpan.');
 });
 

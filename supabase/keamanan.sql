@@ -233,3 +233,6 @@ begin
 end $$;
 revoke all on function privat.sinkron_login_hp() from public, anon, authenticated;
 create or replace trigger trg_sinkron_login_hp after update on public.dokumen for each row execute function privat.sinkron_login_hp();
+
+-- Saldo awal (cut-off) disimpan di koleksi 'keuangan' (dokumen saldoAwal): baca = bisa lihat kas/laporan, ubah = kelola kas (Bendahara).
+-- Lihat definisi privat.boleh_baca / privat.boleh_tulis terbaru di project (migrasi saldo_cutoff_keuangan).

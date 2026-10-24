@@ -6,7 +6,14 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob: https://maps.google.com https://www.google.com; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.br-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+<style>.kunci{max-width:380px;width:100%;min-width:0;box-sizing:border-box;margin:6vh auto 0;text-align:center;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;justify-items:center}.kunci>*{max-width:100%;min-width:0}
+.kunci .ava{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font-weight:800;font-size:1.6rem}
+.kunci h2{margin:0}.kunci .bio{width:100%;padding:16px;font-size:1rem;display:flex;gap:10px;align-items:center;justify-content:center}
+.kunci .bio svg{width:28px;height:28px}
+.kunci form{width:100%;display:grid;gap:8px}.kunci form .btn{justify-content:center}.kunci input.pin{width:100%;box-sizing:border-box;text-align:center;font-size:1.6rem;letter-spacing:.5em;padding:12px}
+.ka-row{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:12px}
+.ka-row .t{font-weight:600}.ka-row .s{font-size:.84rem;color:var(--muted)}
+.br-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .br-hari{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .br-hari .d{border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;background:var(--surface);display:grid;gap:3px;min-height:86px;align-content:start}
 .br-hari .d.ini{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}.br-hari .d b{font-size:.8rem}.br-hari .d .j{font-size:.72rem;line-height:1.25}.br-hari .d .t{font-size:.72rem;color:var(--muted)}
@@ -1199,13 +1206,15 @@ async function muatProfil() {
   for (const p of S.profilList) S.names[p.user_id] = {name: p.nama || ''};
   sbSched();
 }
-const IDLE_MS = 30 * 60 * 1000;
+const IDLE_MS = 30 * 60 * 1000, KUNCI_MS = 5 * 60 * 1000;
 let idleAkhir = Date.now(), idleTmr = null;
 ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, () => { idleAkhir = Date.now(); }, {passive: true}));
 function mulaiIdle() {
   clearInterval(idleTmr);
   idleTmr = setInterval(async () => {
+    if (S.authUser && !S.terkunci && sudahMasuk() && kunciAda() && Date.now() - idleAkhir >= KUNCI_MS) { kunciSekarang(); return; }
     if (!S.authUser || Date.now() - idleAkhir < IDLE_MS) return;
+    if (kunciAda()) return;
     clearInterval(idleTmr);
     try { await SB.auth.signOut(); } catch (e) {}
     resetSesi(); render(); toast('Anda keluar otomatis karena tidak aktif 30 menit.');
@@ -1215,7 +1224,7 @@ function resetSesi() {
   if (SB_CH) { try { SB.removeChannel(SB_CH); } catch (e) {} SB_CH = null; }
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   KOLEKSI_SB.forEach(sinkron); sinkron('pengaturan');
-  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = ''; S.struktur = null;
+  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = ''; S.struktur = null; S.terkunci = false;
   S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
@@ -1244,8 +1253,10 @@ async function masukSesi(user) {
   idleAkhir = Date.now(); mulaiIdle();
   S.sesi = prof.peran === 'pemilik' ? 'pemilik' : prof.peran === 'pengurus' ? (prof.pengurus_id || '') : 'w:' + user.id;
   S.tab = prof.peran === 'warga' ? 'portal' : 'ringkasan';
+  S.terkunci = !!(S.dariPulih && sudahMasuk() && kunciAda()); S.dariPulih = false;
   S.loaded = true; render(); window.scrollTo(0, 0);
-  if (sudahMasuk()) toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.');
+  if (S.terkunci) setTimeout(kunciAutoBio, 300);
+  else if (sudahMasuk()) toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.');
   pushCek = false; pushSub = null; pushSegarkan(); mfaMuat();
 }
 const pesanAuth = e => {
@@ -1402,7 +1413,7 @@ const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function renderTabs() {
   PRIMER = isWarga() ? PRIMER_W : PRIMER_P.filter(tabBoleh).slice(0, 4);
   const open = kelTerbuka().length;
-  if (!sudahMasuk()) { $('#tabs').innerHTML = ''; return; }
+  if (!sudahMasuk() || S.terkunci) { $('#tabs').innerHTML = ''; return; }
   const tabsVis = TABS.filter(([k]) => tabBoleh(k));
   if (isWarga()) tabsVis.sort((a, b) => PRIMER_W.indexOf(a[0]) - PRIMER_W.indexOf(b[0]));
   if (!tabBoleh(S.tab)) S.tab = !tabBoleh('ringkasan') && tabBoleh('keamanan') ? 'keamanan' : tabsVis.length ? tabsVis[0][0] : 'ringkasan';
@@ -1438,7 +1449,7 @@ function renderMode() {
     const p = pengurusSesi(), img = S.sesi === 'pemilik' && S.me && S.me.avatarUrl ? `<img src="${esc(S.me.avatarUrl)}" alt="">` : avatarHtml(p && p.userId, namaSesi());
     who.innerHTML = `${img}<div><div class="nm">${esc(namaSesi())}</div><div class="rl">${esc(isWarga() ? 'Warga · ' + ((wargaSaya() || {}).blok || '') : peranSaya())}</div></div>
       <button class="btn sm ghost tema-btn" data-act="tema-tukar" title="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}" aria-label="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}">${ico(temaGelapAktif() ? 'sun' : 'moon')}</button>
-      <button class="btn sm ghost tema-btn" data-act="ganti-pass" title="Ganti password" aria-label="Ganti password">${ico('kunci')}</button>
+      <button class="btn sm ghost tema-btn" data-act="ganti-pass" title="Keamanan akun" aria-label="Keamanan akun: password, sidik jari, PIN">${ico('kunci')}</button>
       <button class="btn sm" data-act="keluar" title="Keluar">Keluar</button>`;
   } else { who.hidden = true; m.hidden = S.mode === 'online'; }
 }
@@ -1452,9 +1463,10 @@ function render() {
   const main = $('#main');
   if (!S.loaded) { main.innerHTML = '<div class="skel">Memuat data…</div>'; return; }
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
+  if (S.terkunci) { main.innerHTML = vKunci(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -3057,6 +3069,94 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Kunci aplikasi: sidik jari / wajah (WebAuthn perangkat) atau PIN ---------- */
+const kunciKey = () => 'kunci-app:' + ((S.authUser && S.authUser.id) || '');
+function kunciCfg() { try { return JSON.parse(localStorage.getItem(kunciKey()) || '{}') || {}; } catch (e) { return {}; } }
+function kunciSimpan(c) { try { if (!c.bio && !c.pin) localStorage.removeItem(kunciKey()); else localStorage.setItem(kunciKey(), JSON.stringify(c)); } catch (e) {} }
+const kunciAda = () => { const c = kunciCfg(); return !!(c.bio || c.pin); };
+const kb64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const kunb64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+async function bioTersedia() { try { return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { return false; } }
+async function pinHash(pin, salt, iter) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
+  return kb64u(await crypto.subtle.deriveBits({name: 'PBKDF2', hash: 'SHA-256', salt: kunb64u(salt), iterations: iter}, k, 256));
+}
+function kunciSekarang() { if (!kunciAda() || !sudahMasuk()) return; if (dlg.open) dlg.close(); S.terkunci = true; S.kunciPesan = ''; render(); window.scrollTo(0, 0); }
+function kunciBuka() { S.terkunci = false; S.kunciPesan = ''; idleAkhir = Date.now(); try { localStorage.removeItem(kunciKey() + ':gagal'); } catch (e) {} render(); toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.'); }
+function vKunci() {
+  const c = kunciCfg(), n = namaSesi();
+  return `<div class="kunci"><span class="ava" aria-hidden="true">${esc(orgInisial(n))}</span><div><h2>Halo, ${esc(n.split(' ')[0])}</h2><p class="muted" style="margin:4px 0 0">Aplikasi terkunci. ${c.bio ? 'Gunakan sidik jari / wajah' : 'Masukkan PIN'}${c.bio && c.pin ? ' atau PIN' : ''} untuk membuka.</p></div>
+    ${c.bio ? `<button class="btn pri bio" data-act="kunci-bio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 11v3.5M8.5 11a3.5 3.5 0 0 1 7 0v2.5c0 2.2-.6 4.3-1.7 6"/><path d="M5.5 9.5a7 7 0 0 1 13 0M5 13.5c0 2.6.7 5 2 7M19 12.5c0 1.6-.2 3.2-.6 4.7"/><path d="M8 4.5a8.5 8.5 0 0 1 8 0"/></svg>Buka dengan sidik jari / wajah</button>` : ''}
+    ${c.pin ? `<form id="kunciPinForm" autocomplete="off"><label for="kunciPin" class="muted" style="font-size:.86rem">PIN aplikasi</label><input type="password" id="kunciPin" class="pin" inputmode="numeric" pattern="[0-9]*" maxlength="${c.pin.len || 6}" autocomplete="off" ${c.bio ? '' : 'autofocus'} aria-label="PIN aplikasi"><button class="btn" type="submit">Buka</button></form>` : ''}
+    ${S.kunciPesan ? `<p style="color:var(--bad);margin:0" role="alert">${esc(S.kunciPesan)}</p>` : ''}
+    <button class="btn ghost sm" data-act="kunci-pw">Masuk dengan No. HP &amp; password</button></div>`;
+}
+async function kunciAutoBio() { if (S.terkunci && kunciCfg().bio && !/iPhone|iPad|iPod/.test(navigator.userAgent)) await bukaBio(true); else { const p = $('#kunciPin'); if (p) p.focus(); } }
+async function bukaBio(diam) {
+  const c = kunciCfg(); if (!c.bio) return;
+  try {
+    const cr = await navigator.credentials.get({publicKey: {challenge: crypto.getRandomValues(new Uint8Array(32)), rpId: location.hostname, timeout: 60000, userVerification: 'required', allowCredentials: [{type: 'public-key', id: kunb64u(c.bio), transports: ['internal', 'hybrid']}]}});
+    const ad = cr && cr.response && new Uint8Array(cr.response.authenticatorData);
+    if (!cr || kb64u(cr.rawId) !== c.bio || !ad || !(ad[32] & 0x04)) throw new Error('Verifikasi gagal');
+    kunciBuka();
+  } catch (e) { if (!diam) { S.kunciPesan = /NotAllowed|abort/i.test(String(e && e.name)) ? 'Verifikasi dibatalkan. Coba lagi' + (c.pin ? ' atau pakai PIN.' : '.') : 'Sidik jari / wajah tidak bisa dipakai di perangkat ini.' + (c.pin ? ' Pakai PIN.' : ''); render(); } }
+}
+async function cekPin(pin) {
+  const c = kunciCfg(); if (!c.pin) return;
+  let gagal = 0; try { gagal = Number(localStorage.getItem(kunciKey() + ':gagal')) || 0; } catch (e) {}
+  if (await pinHash(pin, c.pin.s, c.pin.i) === c.pin.h) { kunciBuka(); return; }
+  gagal++; try { localStorage.setItem(kunciKey() + ':gagal', String(gagal)); } catch (e) {}
+  if (gagal >= 5) { kunciSimpan({}); try { localStorage.removeItem(kunciKey() + ':gagal'); } catch (e) {} try { await SB.auth.signOut(); } catch (e) {} resetSesi(); render(); muatInfoPublik(); toast('PIN salah 5 kali. Demi keamanan Anda dikeluarkan, silakan masuk dengan password.', 'bad'); return; }
+  S.kunciPesan = `PIN salah. Sisa ${5 - gagal} percobaan.`; render(); const p = $('#kunciPin'); if (p) p.focus();
+}
+async function openKeamananAkun() {
+  if (S.terkunci) { toast('Buka kunci aplikasi terlebih dahulu.', 'bad'); return; }
+  const c = kunciCfg(), bio = await bioTersedia();
+  openDlg({title: 'Keamanan akun',
+    body: `<div class="ka-row"><div><div class="t">Password</div><div class="s">Dipakai saat masuk dengan No. HP.</div></div><button type="button" class="btn sm" data-act="ka-pass">Ganti password</button></div>
+      <div class="ka-row"><div><div class="t">Sidik jari / wajah</div><div class="s">${bio ? (c.bio ? 'Aktif di perangkat ini.' : 'Buka aplikasi memakai sensor sidik jari, Face ID, atau kunci layar HP.') : 'Perangkat / browser ini tidak mendukung.'}</div></div>${bio ? (c.bio ? '<button type="button" class="btn sm ghost" data-act="ka-bio-off">Matikan</button>' : '<button type="button" class="btn sm pri" data-act="ka-bio-on">Aktifkan</button>') : ''}</div>
+      <div class="ka-row"><div><div class="t">PIN aplikasi</div><div class="s">${c.pin ? `Aktif (${c.pin.len || 6} angka).` : '4–6 angka untuk membuka aplikasi, cadangan bila sidik jari gagal.'}</div></div><div style="display:flex;gap:6px">${c.pin ? '<button type="button" class="btn sm ghost" data-act="ka-pin-off">Hapus</button>' : ''}<button type="button" class="btn sm${c.pin ? '' : ' pri'}" data-act="ka-pin">${c.pin ? 'Ubah' : 'Atur PIN'}</button></div></div>
+      ${c.bio || c.pin ? '<button type="button" class="btn" data-act="ka-kunci">🔒 Kunci aplikasi sekarang</button>' : ''}
+      <p class="muted" style="margin:0;font-size:.82rem">Bila sidik jari atau PIN aktif, aplikasi tetap masuk di perangkat ini tetapi <b>terkunci otomatis</b> saat dibuka ulang atau setelah 5 menit tidak dipakai, tanpa perlu mengetik password lagi. Pengaturan ini hanya berlaku di perangkat ini. PIN salah 5 kali akan mengeluarkan akun.</p>`});
+}
+async function aktifkanBio() {
+  if (!await bioTersedia()) { toast('Perangkat ini tidak mendukung sidik jari / wajah.', 'bad'); return; }
+  try {
+    const cr = await navigator.credentials.create({publicKey: {challenge: crypto.getRandomValues(new Uint8Array(32)), rp: {name: 'Warga Kasuari', id: location.hostname},
+      user: {id: crypto.getRandomValues(new Uint8Array(16)), name: hpDariEmail(S.authUser && S.authUser.email) || (S.authUser && S.authUser.email) || 'pengguna', displayName: namaSesi()},
+      pubKeyCredParams: [{type: 'public-key', alg: -7}, {type: 'public-key', alg: -257}], timeout: 60000, attestation: 'none',
+      authenticatorSelection: {authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged'}}});
+    if (!cr) throw new Error('Batal');
+    kunciSimpan({...kunciCfg(), bio: kb64u(cr.rawId), bioDibuat: todayISO()});
+    toast('Sidik jari / wajah aktif. Aplikasi akan terkunci saat dibuka ulang.'); openKeamananAkun();
+  } catch (e) { toast(/NotAllowed|abort/i.test(String(e && e.name)) ? 'Pendaftaran sidik jari dibatalkan.' : 'Gagal mengaktifkan: ' + ((e && e.message) || e), 'bad'); openKeamananAkun(); }
+}
+function openAturPin() {
+  if (S.terkunci) return;
+  openDlg({title: 'Atur PIN aplikasi', submitLabel: 'Simpan PIN',
+    body: `<div class="fld"><label for="ap_1">PIN baru (4–6 angka)</label><input type="password" id="ap_1" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></div>
+      <div class="fld"><label for="ap_2">Ulangi PIN</label><input type="password" id="ap_2" name="pin2" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></div>
+      <p class="muted" style="margin:0;font-size:.82rem">Hindari PIN mudah ditebak seperti 123456, 000000, atau tanggal lahir.</p>`,
+    onSubmit: async d => {
+      const p = String(d.pin || '');
+      if (!/^\d{4,6}$/.test(p)) { pesanDlg('PIN harus 4–6 angka.', 'ap_1'); return false; }
+      if (/^(\d)\1+$/.test(p) || '0123456789'.includes(p) || '9876543210'.includes(p)) { pesanDlg('PIN terlalu mudah ditebak. Pilih kombinasi lain.', 'ap_1'); return false; }
+      if (p !== d.pin2) { pesanDlg('Kedua PIN tidak sama.', 'ap_2'); return false; }
+      const salt = kb64u(crypto.getRandomValues(new Uint8Array(16))), iter = 150000;
+      kunciSimpan({...kunciCfg(), pin: {h: await pinHash(p, salt, iter), s: salt, i: iter, len: p.length}});
+      toast('PIN aplikasi disimpan.'); setTimeout(openKeamananAkun, 50); return true;
+    }});
+}
+function kunciTawaran() {
+  if (S.terkunci || !sudahMasuk() || !['ringkasan', 'portal'].includes(S.tab) || kunciAda()) return '';
+  try { if (localStorage.getItem(kunciKey() + ':tawar')) return ''; } catch (e) { return ''; }
+  return `<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>👆 Buka aplikasi lebih cepat dengan <b>sidik jari, wajah, atau PIN</b>, tanpa mengetik password.</span><span style="display:flex;gap:6px"><button class="btn sm pri" data-act="kunci-tawar">Atur sekarang</button><button class="btn sm ghost" data-act="kunci-tawar-x">Nanti</button></span></div>`;
+}
+function dlgTutupTawar() { try { localStorage.setItem(kunciKey() + ':tawar', '1'); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.authUser && !S.terkunci && sudahMasuk() && kunciAda() && Date.now() - idleAkhir >= KUNCI_MS) kunciSekarang(); });
+document.addEventListener('submit', e => { if (e.target && e.target.id === 'kunciPinForm') { e.preventDefault(); const v = ($('#kunciPin') || {}).value || ''; if (v) cekPin(v); } });
+document.addEventListener('input', e => { if (e.target && e.target.id === 'kunciPin') { const c = kunciCfg(); if (c.pin && e.target.value.length === (c.pin.len || 6)) cekPin(e.target.value); } });
+
 /* ---------- Kebersihan lingkungan ---------- */
 const JENIS_SAMPAH = [['Sampah rumah tangga (campur)', '#7a6a58'], ['Sampah organik', '#2f8f4e'], ['Sampah anorganik / daur ulang', '#2f6f9f'], ['Sampah besar / puing / ranting', '#b7791f'], ['Sampah B3 (baterai, lampu, obat)', '#b42318']];
 const JENIS_KG_BERSIH = ['Kerja bakti', 'Fogging / PSN demam berdarah', 'Pembersihan saluran / got', 'Pemangkasan pohon & taman', 'Angkut sampah besar / puing', 'Penyemprotan disinfektan', 'Bank sampah / pilah sampah', 'Lainnya'];
@@ -6637,7 +6737,17 @@ document.addEventListener('click', async e => {
   else if (a === 'lupa-hp') { S.lupaInfoHp = true; render(); }
   else if (a === 'lupa-hp-tutup') { S.lupaInfoHp = false; render(); }
   else if (a === 'lupa-pass') { S.lupaInfoHp = false; S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
-  else if (a === 'ganti-pass') openGantiPass();
+  else if (a === 'ganti-pass') openKeamananAkun();
+  else if (a === 'ka-pass') { dlg.close(); setTimeout(openGantiPass, 50); }
+  else if (a === 'ka-bio-on') { if (S.terkunci) return; b.disabled = true; await aktifkanBio(); }
+  else if (a === 'ka-bio-off') { if (S.terkunci) return; kunciSimpan({...kunciCfg(), bio: null}); toast('Sidik jari / wajah dimatikan.'); openKeamananAkun(); }
+  else if (a === 'ka-pin') { if (S.terkunci) return; dlg.close(); setTimeout(openAturPin, 50); }
+  else if (a === 'ka-pin-off') { if (S.terkunci) return; kunciSimpan({...kunciCfg(), pin: null}); toast('PIN aplikasi dihapus.'); openKeamananAkun(); }
+  else if (a === 'ka-kunci') { dlg.close(); kunciSekarang(); }
+  else if (a === 'kunci-bio') { b.disabled = true; await bukaBio(); b.disabled = false; }
+  else if (a === 'kunci-pw') { try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); muatInfoPublik(); }
+  else if (a === 'kunci-tawar') { dlgTutupTawar(); openKeamananAkun(); }
+  else if (a === 'kunci-tawar-x') { dlgTutupTawar(); render(); }
   else if (a === 'pwa-pasang') pwaPasang();
   else if (a === 'pwa-tutup') { try { localStorage.setItem(pwaTutupKey, String(Date.now() + 7 * 864e5)); } catch (err) {} const el = document.getElementById('pwaBar'); if (el) el.remove(); }
   else if (a === 'lupa-tutup') { S.lupa = false; S.lupaTerkirim = ''; S.lupaInfo = ''; render(); }
@@ -6920,7 +7030,7 @@ async function init() {
   if (dariReset && sesi) { S.pulih = true; S.loaded = true; render(); return; }
   if (dariReset && !sesi) { S.lupa = true; S.lupaTerkirim = ''; S.lupaInfo = 'Tautan reset tidak valid lagi. Minta lagi di bawah, lalu buka email paling baru atau ketik kodenya.'; S.loaded = true; render(); return; }
   if (S.pulih) return;
-  if (sesi && sesi.user) await masukSesi(sesi.user); else { S.loaded = true; render(); muatInfoPublik(); }
+  if (sesi && sesi.user) { S.dariPulih = true; await masukSesi(sesi.user); } else { S.loaded = true; render(); muatInfoPublik(); }
 }
 init();
 </script>

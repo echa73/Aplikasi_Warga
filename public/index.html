@@ -2089,6 +2089,7 @@ function vPengaturan() {
   <form class="panel" id="setForm" style="display:grid;gap:12px;max-width:560px">
     <h3>Lingkungan & iuran</h3>
     <div class="fld"><label for="s_nama">Nama lingkungan</label><input type="text" id="s_nama" name="nama" value="${esc(S.set.nama)}" ${ro}><span class="hint">Tampil di judul, mis. "Villani 5" atau "RT 05 / RW 12"</span></div>
+    <div class="fld"><label for="s_namaL">Nama lengkap lingkungan</label><input type="text" id="s_namaL" name="namaLengkap" value="${esc(S.set.namaLengkap || '')}" maxlength="100" placeholder="mis. Vila Nusa Indah 5 Kluster Kasuari" ${ro}><span class="hint">Dipakai di judul Struktur Kepengurusan. Kosongkan untuk memakai nama lingkungan di atas.</span></div>
     <div class="fld"><label for="s_iur">Iuran bulanan per KK (Rp)</label><input type="number" id="s_iur" name="iuranBulanan" min="0" step="1000" value="${esc(S.set.iuranBulanan)}" ${ro}><span class="hint">Nominal bawaan saat mencatat pembayaran baru. Pembayaran lama tidak berubah.</span></div>
     <h3 style="margin-top:6px">Kop surat</h3>
     <div class="grid2">
@@ -3400,6 +3401,8 @@ function strukturLevel(D) {
   L.forEach(x => x.isi.forEach(p => { const j = String(p.jabatan || '').trim(); if (x.l >= 1 && x.l <= 4 && anak.has(j) && !sudah.has(j)) { p.anak = anak.get(j); sudah.add(j); } }));
   return L;
 }
+const strukturNama = D => D.namaLengkap || (S.set && S.set.namaLengkap) || D.lingkungan || lingk();
+const strukturRtRw = D => `RT ${D.rt || '…'} / RW ${D.rw || '…'}`;
 function periodeTeks(D) { return D.periodeMulai ? `Periode ${tglSurat(D.periodeMulai)}${D.periodeSelesai ? ' – ' + tglSurat(D.periodeSelesai) : ''}` : ''; }
 function vStruktur() {
   const D = S.struktur; muatStruktur();
@@ -3415,13 +3418,13 @@ function vStruktur() {
   const kids = p => p.anak && p.anak.length ? `<div class="org-kids" aria-label="Petugas di bawah ${esc(p.jabatan || p.nama)}">${p.anak.map(k => `<div class="org-node l5 kid">${av(k)}<b>${esc(k.nama)}</b><span class="j">${esc(k.jabatan || '')}</span></div>`).join('')}</div>` : '';
   const tot = (D.pengurus || []).length;
   return head + `<div class="panel">
-    <div class="org-kop"><b>STRUKTUR KEPENGURUSAN RT ${esc(D.rt || '…')} / RW ${esc(D.rw || '…')}</b><span>${esc(D.lingkungan || lingk())}${D.kelurahan ? ' · Kel. ' + esc(D.kelurahan) : ''}</span>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
+    <div class="org-kop"><b>STRUKTUR KEPENGURUSAN</b><b style="font-size:1rem">${esc(strukturNama(D))} ${esc(strukturRtRw(D))}</b>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
     <div class="org">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}">${x.isi.map(p => `<div class="org-col">${node(p, x.l)}${kids(p)}</div>`).join('')}</div>`).join('')}</div></div>
   <div class="toolbar"><a class="btn wa" href="${esc(waShare(teksStruktur(D, L)))}" target="_blank" rel="noopener">Bagikan ke WhatsApp</a><button class="btn" data-act="org-pdf">Unduh PDF</button></div>
   <p class="muted" style="font-size:.8rem">${tot} pengurus aktif. Susunan diambil otomatis dari jabatan di menu Admin → Pengurus${(D.petugas || []).length ? ' dan data Pekerja (petugas tampil di bawah pengurus atasannya)' : ''}.${D.kontak ? '' : ' Nomor WhatsApp pengurus disembunyikan.'}</p>`;
 }
 function teksStruktur(D, L) {
-  return `*STRUKTUR KEPENGURUSAN RT ${D.rt || ''} / RW ${D.rw || ''}*\n${D.lingkungan || lingk()}${periodeTeks(D) ? '\n' + periodeTeks(D) : ''}\n\n`
+  return `*STRUKTUR KEPENGURUSAN*\n*${strukturNama(D)} ${strukturRtRw(D)}*${periodeTeks(D) ? '\n' + periodeTeks(D) : ''}\n\n`
     + L.map(x => `*${x.lbl}*\n${x.isi.map(p => `- ${p.jabatan ? p.jabatan + ': ' : ''}${p.nama}${D.kontak && p.hp && x.l > 0 && x.l < 5 ? ' (' + p.hp + ')' : ''}${(p.anak || []).map(k => `\n    • ${k.jabatan ? k.jabatan + ': ' : ''}${k.nama}`).join('')}`).join('\n')}`).join('\n\n') + `\n\n${pengirim()}`;
 }
 async function pdfStruktur() {
@@ -3431,10 +3434,11 @@ async function pdfStruktur() {
   P.image(M, 11, 15.5, 18);
   const tx = P.img ? M + 20 : M;
   P.text(tx, 18, `PENGURUS RT ${D.rt || '...'} / RW ${D.rw || '...'}`, {size: 13, bold: true});
-  P.text(tx, 23.5, [D.lingkungan || lingk(), D.kelurahan && 'Kel. ' + D.kelurahan].filter(Boolean).join(' · '), {size: 9.5, color: [74, 59, 48]});
+  P.text(tx, 23.5, [strukturNama(D), D.kelurahan && 'Kel. ' + D.kelurahan].filter(Boolean).join(' · '), {size: 9.5, color: [74, 59, 48]});
   P.line(M, 32, M + CW, 32, 1.4); P.line(M, 33.2, M + CW, 33.2, .5);
-  P.text(105, 43, 'STRUKTUR KEPENGURUSAN', {size: 15, bold: true, align: 'center'});
-  if (periodeTeks(D)) P.text(105, 49, periodeTeks(D), {size: 10, align: 'center', color: [74, 59, 48]});
+  P.text(105, 42, 'STRUKTUR KEPENGURUSAN', {size: 15, bold: true, align: 'center'});
+  P.text(105, 48, `${strukturNama(D)} ${strukturRtRw(D)}`, {size: 11, bold: true, align: 'center'});
+  if (periodeTeks(D)) P.text(105, 53, periodeTeks(D), {size: 9.5, align: 'center', color: [74, 59, 48]});
   const fotoIdx = new Map();
   for (const x of L) for (const p of [...x.isi, ...x.isi.flatMap(q => q.anak || [])]) { const u = fotoAman(p.foto); if (u && !fotoIdx.has(u)) { try { P.foto.push(await fotoJpeg(u)); fotoIdx.set(u, P.foto.length - 1); } catch (e) {} } }
   const rows = L.flatMap(x => { const r = []; for (let i = 0; i < x.isi.length; i += 4) r.push({lbl: i === 0 && (x.l === 0 || x.l >= 4), kid: Math.max(0, ...x.isi.slice(i, i + 4).map(p => (p.anak || []).length))}); return r; });
@@ -3445,7 +3449,7 @@ async function pdfStruktur() {
     pdfWrap(p.nama, w - 4, true, nmSize).slice(0, maxNm).forEach(l => { P.text(bx + w / 2, ty, l, {size: nmSize, bold: true, align: 'center'}); ty += nmSize * .42; });
     pdfWrap(p.jabatan || '', w - 4, false, jbSize).slice(0, 1).forEach(l => { P.text(bx + w / 2, ty, l, {size: jbSize, align: 'center', color: [90, 80, 70]}); });
   };
-  let y = 56, prevBottom = null;
+  let y = 59, prevBottom = null;
   for (const x of L) {
     for (let i = 0; i < x.isi.length; i += PER) {
       const row = x.isi.slice(i, i + PER), n = row.length, wTot = n * BW + (n - 1) * GAP, x0 = 105 - wTot / 2;
@@ -6873,7 +6877,7 @@ document.addEventListener('submit', async e => {
   e.preventDefault();
   const d = Object.fromEntries(new FormData(e.target));
   const t = k => String(d[k] || '').trim();
-  const ok = await putSetting({nama: t('nama') || 'Villani 5', iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
+  const ok = await putSetting({nama: t('nama') || 'Villani 5', namaLengkap: t('namaLengkap'), iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
     infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik,
     lokasi: (() => { const lat = Number(d.lat), lng = Number(d.lng), L0 = lokasiRT(); const okK = isFinite(lat) && isFinite(lng) && lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141;

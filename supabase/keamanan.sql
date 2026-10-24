@@ -376,3 +376,4 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- mana pun, mis. pengurus yang sudah dihapus), fungsi memakai ulang akun tsb dengan password baru, bukan menolak.
 -- Akun yang masih dipakai tetap ditolak 'Email sudah dipakai akun lain'. Tetap khusus Pemilik.
 -- Diuji (rollback): No. HP Otin (akun lama yatim) -> dipakai ulang; email Ketua -> DITOLAK; bendahara -> DITOLAK.
+-- (2026-10-24) pengaturan.namaLengkap ("Vila Nusa Indah 5 Kluster Kasuari") ditambahkan; struktur_organisasi() mengirim 'namaLengkap'.

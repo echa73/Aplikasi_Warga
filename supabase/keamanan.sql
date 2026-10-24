@@ -393,3 +393,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Klien mengirim captchaToken pada signInWithPassword / resetPasswordForEmail / verifyOtp.
 -- Aktifkan penegakan di Supabase Dashboard -> Authentication -> Bot and Abuse Protection (provider Turnstile + secret key)
 -- SETELAH site key terpasang di Pengaturan, agar Pemilik tidak terkunci.
+
+-- ===== Pengumuman "Rapat pengurus" (2026-10-24) =====
+-- privat.boleh_rapat(): pemilik, atau pengurus yang bukan role satpam dan bukan akun dari data pekerja.
+-- boleh_baca 'pengumuman': kategori 'Rapat pengurus' hanya bila boleh_rapat(). Policy warga mengecualikan kategori tsb.
+-- info_publik (papan login, anon) mengecualikan kategori tsb.
+-- Diuji (rollback): ketua & bendahara melihat; satpam & warga tidak; papan publik tidak menampilkan.

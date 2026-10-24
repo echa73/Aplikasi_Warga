@@ -5190,10 +5190,12 @@ function openSos() {
 }
 
 /* ---------- pengumuman ---------- */
-const KAT_INFO = ['Informasi', 'Kegiatan', 'Kerja bakti', 'Rapat warga', 'Keagamaan', 'Berita duka', 'Penting'];
+const KAT_INFO = ['Informasi', 'Kegiatan', 'Kerja bakti', 'Rapat warga', 'Rapat pengurus', 'Keagamaan', 'Berita duka', 'Penting'];
+const KAT_RAHASIA = 'Rapat pengurus';
+const infoRahasia = a => a && a.kategori === KAT_RAHASIA;
 const jamLbl = j => j ? ' pukul ' + j.replace(':', '.') : '';
 function teksInfo(a) {
-  return `*${a.judul}*\n\n${a.isi || ''}${a.tanggalAcara ? `\n\nWaktu: ${tglPanjang(a.tanggalAcara)}${jamLbl(a.jam)}` : ''}${a.tempat ? `\nTempat: ${a.tempat}` : ''}\n\n${pengirim()}`;
+  return `${infoRahasia(a) ? '🔒 *KHUSUS PENGURUS*\n' : ''}*${a.judul}*\n\n${a.isi || ''}${a.tanggalAcara ? `\n\nWaktu: ${tglPanjang(a.tanggalAcara)}${jamLbl(a.jam)}` : ''}${a.tempat ? `\nTempat: ${a.tempat}` : ''}\n\n${pengirim()}`;
 }
 const urutInfo = list => [...list].sort((a, b) => (b.sematkan ? 1 : 0) - (a.sematkan ? 1 : 0) || String(b.dibuat).localeCompare(String(a.dibuat)));
 function kartuInfo(a, ringkas) {
@@ -5201,13 +5203,13 @@ function kartuInfo(a, ringkas) {
   const chip = a.kategori === 'Penting' ? 'bad' : a.kategori === 'Kerja bakti' || a.kategori === 'Kegiatan' ? 'info' : 'mute';
   return `<article class="info${a.sematkan ? ' pin' : ''}">
     <div class="meta" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--muted)">
-      <span class="chip ${chip} plain">${esc(a.kategori)}</span>${a.sematkan ? '<span class="chip ok plain">Disematkan</span>' : ''}
+      <span class="chip ${chip} plain">${esc(a.kategori)}</span>${infoRahasia(a) ? '<span class="chip bad plain" title="Hanya terlihat oleh pengurus dan pemilik">🔒 Khusus pengurus</span>' : ''}${a.sematkan ? '<span class="chip ok plain">Disematkan</span>' : ''}
       ${a.tanggalAcara ? (nanti ? '<span class="chip warn">Akan datang</span>' : '<span class="chip mute">Sudah lewat</span>') : ''}<span>Diumumkan ${esc(tgl(a.dibuat))}</span></div>
     <h4>${esc(a.judul)}</h4>
     ${a.isi && !ringkas ? `<p class="isi">${esc(a.isi)}</p>` : ''}
     ${a.tanggalAcara || a.tempat ? `<div class="when">${a.tanggalAcara ? `<span><b>Waktu:</b> ${esc(tglPanjang(a.tanggalAcara))}${esc(jamLbl(a.jam))}</span>` : ''}${a.tempat ? `<span><b>Tempat:</b> ${esc(a.tempat)}</span>` : ''}</div>` : ''}
     ${ringkas || isWarga() ? '' : `<div class="racts" style="justify-content:flex-start">
-      <a class="btn sm wa" href="${esc(waShare(teksInfo(a)))}" target="_blank" rel="noopener">Bagikan ke WhatsApp</a>
+      <a class="btn sm wa" href="${esc(waShare(teksInfo(a)))}" target="_blank" rel="noopener">${infoRahasia(a) ? 'Kirim ke grup pengurus (WA)' : 'Bagikan ke WhatsApp'}</a>
       <button class="btn sm" data-act="salin" data-teks="${esc(teksInfo(a))}">Salin teks</button>
       ${bisa('info') ? `<button class="btn sm ghost" data-act="info-edit" data-id="${esc(a.id)}">Ubah</button>` : ''}</div>`}
   </article>`;
@@ -5226,11 +5228,12 @@ function vInfo() {
   const t = todayISO();
   let list = urutInfo(S.pengumuman);
   if (S.infoFilter === 'acara') list = list.filter(a => a.tanggalAcara && a.tanggalAcara >= t);
-  const nAcara = S.pengumuman.filter(a => a.tanggalAcara && a.tanggalAcara >= t).length;
-  const seg = [['semua', `Semua ${S.pengumuman.length}`], ['acara', `Acara mendatang ${nAcara}`]]
+  if (S.infoFilter === 'rapat') list = list.filter(infoRahasia);
+  const nAcara = S.pengumuman.filter(a => a.tanggalAcara && a.tanggalAcara >= t).length, nRapat = S.pengumuman.filter(infoRahasia).length;
+  const seg = [['semua', `Semua ${S.pengumuman.length}`], ['acara', `Acara mendatang ${nAcara}`], ...(nRapat ? [['rapat', `🔒 Rapat pengurus ${nRapat}`]] : [])]
     .map(([k, l]) => `<button type="button" data-act="inff" data-k="${k}" aria-pressed="${S.infoFilter === k}">${l}</button>`).join('');
   return head + `<div class="toolbar"><div class="seg" role="group" aria-label="Saring pengumuman">${seg}</div></div>
-    <div class="info-list">${list.length ? list.map(a => kartuInfo(a)).join('') : '<div class="empty">Tidak ada acara mendatang.</div>'}</div>`;
+    <div class="info-list">${list.length ? list.map(a => kartuInfo(a)).join('') : `<div class="empty">${S.infoFilter === 'rapat' ? 'Belum ada pengumuman rapat pengurus.' : 'Tidak ada acara mendatang.'}</div>`}</div>`;
 }
 function openInfo(id) {
   const a = id ? S.pengumuman.find(x => x.id === id) : null;
@@ -5238,7 +5241,8 @@ function openInfo(id) {
   openDlg({
     title: a ? 'Ubah pengumuman' : 'Buat pengumuman', area: 'info',
     body: `<div class="fld"><label for="in_j">Judul <span class="req">*</span></label><input type="text" id="in_j" name="judul" required value="${esc(x.judul)}" placeholder="mis. Kerja bakti hari Minggu"></div>
-    <div class="fld"><label for="in_k">Kategori</label><select id="in_k" name="kategori">${KAT_INFO.map(k => `<option ${x.kategori === k ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
+    <div class="fld"><label for="in_k">Kategori</label><select id="in_k" name="kategori">${KAT_INFO.map(k => `<option ${x.kategori === k ? 'selected' : ''}>${k}</option>`).join('')}</select>
+      <span class="hint" id="inRahasia" ${infoRahasia(x) ? '' : 'hidden'} style="color:var(--bad)">🔒 Hanya terlihat oleh pengurus dan pemilik. Warga dan satpam tidak dapat melihat pengumuman ini, dan tidak tampil di papan info halaman login.</span></div>
     <div class="fld"><label for="in_i">Isi pengumuman</label><textarea id="in_i" name="isi" rows="4">${esc(x.isi)}</textarea></div>
     <div class="grid2">
       <div class="fld"><label for="in_t">Tanggal acara</label><input type="date" id="in_t" name="tanggalAcara" value="${esc(x.tanggalAcara)}"><span class="hint">Kosongkan bila bukan acara</span></div>
@@ -5250,12 +5254,13 @@ function openInfo(id) {
       const row = {...(a || {}), ...d, judul: d.judul.trim(), sematkan: !!d.sematkan, diperbarui: todayISO()};
       if (!a) row.dibuat = todayISO();
       const ok = await put('pengumuman', a ? a.id : uid(), row);
-      if (ok) toast(a ? 'Pengumuman diperbarui.' : 'Pengumuman diterbitkan. Bagikan ke grup WhatsApp dari kartunya.');
+      if (ok) toast(a ? 'Pengumuman diperbarui.' : infoRahasia(row) ? 'Pengumuman rapat pengurus diterbitkan (khusus pengurus).' : 'Pengumuman diterbitkan. Bagikan ke grup WhatsApp dari kartunya.');
       return ok;
     },
     onDelete: a ? async () => { const ok = await del('pengumuman', a.id); if (ok) toast('Pengumuman dihapus.'); return ok; } : null,
     deleteLabel: 'Hapus pengumuman'
   });
+  const ks = $('#in_k'); if (ks) ks.addEventListener('change', () => { const h = $('#inRahasia'); if (h) h.hidden = ks.value !== KAT_RAHASIA; });
 }
 
 /* ---------- surat pengantar ---------- */

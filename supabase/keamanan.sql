@@ -294,3 +294,18 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Trigger privat.push_darurat: SOS baru -> notifikasi ke pemilik & pengurus ber-izin keamanan;
 --      SOS 'Ditangani' -> notifikasi ke warga pelapor. Memanggil edge function kirim-push via pg_net + header x-kunci.
 -- Edge function: supabase/functions/kirim-push (verify_jwt = false, autentikasi sendiri).
+
+-- 2026-10-24: Pengerasan keamanan (migrasi pengerasan_keamanan_2026_10_24 + lapak_batas_foto)
+-- * anon tidak punya hak apa pun atas tabel (hanya RPC info_publik untuk papan info login).
+-- * authenticated: tanpa TRUNCATE/REFERENCES/TRIGGER; log_aktivitas hanya SELECT (RLS: pemilik).
+-- * privat.normal_hp & privat.hp_email: search_path tetap.
+-- * CHECK dokumen_ukuran_maks: data jsonb maks 256 KB per dokumen.
+-- * privat.batas_laju (akun warga): SOS 3/10 menit, keluhan/titip/donasi 10/jam, lapak 15/hari.
+-- * privat.validasi_lapak: judul 1–80, deskripsi ≤1500, harga numerik, maks 5 foto & foto wajib dari folder
+--   storage 'lapak/<uid>/' milik penjual.
+-- * Storage 'lapak': unggah hanya warga ber-izinLapak, maks 60 foto per akun (privat.jumlah_foto_lapak).
+-- * Edge function kirim-push: tes notifikasi dibatasi 1x/30 detik per akun.
+-- Aplikasi: CSP script-src dipersempit ke path supabase-js 2.45.4; header CORP & X-Permitted-Cross-Domain-Policies;
+--   ekspor CSV kebal formula injection (=,+,-,@ diawali apostrof).
+-- Disarankan di dashboard Supabase: Authentication → matikan "Allow new users to sign up";
+--   aktifkan "Leaked password protection" (paket Pro); pertimbangkan MFA untuk akun Pemilik.

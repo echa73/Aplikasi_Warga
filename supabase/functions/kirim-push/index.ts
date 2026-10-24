@@ -19,6 +19,7 @@ const gabung = (...a: Uint8Array[]) => { const o = new Uint8Array(a.reduce((n, x
 
 let rahasia: { publik: string; privat: string; kunci: string } | null = null;
 let vapidKey: CryptoKey | null = null;
+const tesTerakhir = new Map<string, number>();
 
 async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, len: number) {
   const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
@@ -86,6 +87,9 @@ Deno.serve(async (req) => {
     if (!u?.user) return json({ error: "Tidak diizinkan" }, 401);
     jenis = "tes";
     ref = { userId: u.user.id };
+    const akhir = tesTerakhir.get(u.user.id) || 0;
+    if (Date.now() - akhir < 30000) return json({ error: "Tunggu 30 detik sebelum mengirim tes lagi" }, 429);
+    tesTerakhir.set(u.user.id, Date.now());
   }
 
   let payload: Record<string, unknown>;

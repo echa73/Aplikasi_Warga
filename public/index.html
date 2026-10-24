@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F7A4D">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob: https://maps.google.com https://www.google.com; worker-src 'self' blob:; manifest-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob: https://maps.google.com https://www.google.com; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <style>.peta{display:grid;gap:10px}
 .peta-frame{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--sunk);aspect-ratio:16/9;max-height:320px;width:100%}
@@ -1250,6 +1250,8 @@ async function putSetting(data) {
 }
 function fail(e) {
   const c = e && e.code;
+  const pesanServer = String((e && e.message) || '');
+  if (/Terlalu banyak|tidak valid|Belum mendapat izin|tidak diperbolehkan|maksimal|Program sumbangan tidak/i.test(pesanServer)) { toast(pesanServer.replace(/^.*?ERROR:\s*/, ''), 'bad'); return false; }
   if (e && /No HP/i.test(String(e.message))) { toast(String(e.message).replace(/^.*?(No HP)/, 'No. HP').replace('No HP', 'No. HP'), 'bad'); return false; }
   if (c === 'ditolak') toast('Server menolak perubahan ini: role Anda tidak punya izin mengubah data tersebut.', 'bad');
   else if (c === 'quota_exceeded') toast('Penyimpanan penuh. Hapus data lama, lalu coba lagi.', 'bad');
@@ -5263,7 +5265,7 @@ function unduhSurat(id) {
 }
 
 /* ---------- ekspor CSV ---------- */
-function csv(rows) { return rows.map(r => r.map(v => { const t = String(v ?? ''); return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(';')).join('\r\n'); }
+function csv(rows) { return rows.map(r => r.map(v => { let t = String(v ?? ''); if (typeof v !== 'number' && /^[=+\-@\t\r]/.test(t)) t = "'" + t; return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(';')).join('\r\n'); }
 function ekspor(k, per) {
   const tag = lingk().replace(/\s+/g, '-');
   const W = [...S.warga].sort(sortHouse);

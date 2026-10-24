@@ -1061,7 +1061,7 @@ const S = {
   sesi: null, pilih: null, keamanan: {}, pinGagal: 0, pinKunci: 0
 };
 let U = null;
-const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['gaji', 'Pekerja & gaji'], ['keamanan', 'Keamanan (satpam)'], ['kebersihan', 'Kebersihan lingkungan'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['lapak', 'Lapak Warga'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
+const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['gaji', 'Pekerja & gaji'], ['keamanan', 'Keamanan (satpam)'], ['jaga', 'Jadwal jaga satpam'], ['kebersihan', 'Kebersihan lingkungan'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['lapak', 'Lapak Warga'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
 const LVL = {tidak: 0, lihat: 1, kelola: 2};
 const LVL_LBL = {tidak: 'Tidak bisa buka', lihat: 'Lihat saja', kelola: 'Lihat & ubah'};
 const semua = v => Object.fromEntries(MENU_IZIN.map(([k]) => [k, v]));
@@ -1071,7 +1071,7 @@ const DEFAULT_ROLES = [
   {id: 'bendahara', nama: 'Bendahara', ket: 'Iuran dan buku kas', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'lihat', iuran: 'kelola', kas: 'kelola', sumbangan: 'kelola', gaji: 'kelola', keluhan: 'tidak', info: 'lihat', surat: 'tidak', pengaturan: 'tidak'}},
   {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
   {id: 'lihat', nama: 'Lihat saja', ket: 'Hanya melihat, tanpa pengaturan', izin: {...semua('lihat'), pengaturan: 'tidak', portal: 'tidak'}},
-  {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', warga: 'lihat', info: 'lihat'}},
+  {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', jaga: 'lihat', warga: 'lihat', info: 'lihat'}},
   {id: 'koord_keamanan', nama: 'Koordinator Keamanan', ket: 'Mengelola keamanan & satpam, pengumuman; melihat data warga dan keluhan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keamanan: 'kelola', keluhan: 'lihat', info: 'kelola'}},
   {id: 'koord_kebersihan', nama: 'Koordinator Kebersihan', ket: 'Menangani keluhan kebersihan & lingkungan, pengumuman kerja bakti; melihat data warga', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keluhan: 'kelola', kebersihan: 'kelola', info: 'kelola'}},
   {id: 'koord_kerohanian', nama: 'Koordinator Kerohanian', ket: 'Kegiatan keagamaan (pengajian, Ramadhan, qurban, santunan), pengumuman kegiatan; melihat data warga dan program sumbangan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', info: 'kelola', rohani: 'kelola', sumbangan: 'lihat'}}
@@ -1079,7 +1079,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'keamanan', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -1107,7 +1107,7 @@ function izin(area) {
   const v = izinRole(r, area);
   return LVL[v] !== undefined ? v : 'tidak';
 }
-function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan' || m === 'gaji') ? iz.kas : (m === 'rohani' || m === 'lapak') ? iz.info : m === 'kebersihan' ? iz.keluhan : undefined; }
+function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan' || m === 'gaji') ? iz.kas : (m === 'rohani' || m === 'lapak') ? iz.info : m === 'kebersihan' ? iz.keluhan : m === 'jaga' ? iz.keamanan : undefined; }
 const lihat = area => LVL[izin(area)] >= 1;
 function bisa(area) { if (S.readOnly) return false; return izin(area) === 'kelola'; }
 const hanyaLihat = () => !['admin', ...MENU_IZIN.map(m => m[0])].some(bisa);
@@ -5943,11 +5943,11 @@ function kmJaga() {
   const senin = S.kmMinggu, hari = Array.from({length: 7}, (_, i) => { const d = new Date(senin + 'T00:00'); d.setDate(d.getDate() + i); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); });
   const sk = shiftSekarang();
   return `<div class="toolbar" style="justify-content:space-between"><div class="monthnav"><button class="btn sm" data-act="jaga-nav" data-n="-7" aria-label="Minggu sebelumnya">‹</button><strong style="min-width:auto">${esc(tgl(hari[0]))} – ${esc(tgl(hari[6]))}</strong><button class="btn sm" data-act="jaga-nav" data-n="7" aria-label="Minggu berikutnya">›</button></div>
-    ${bisa('keamanan') ? '<button class="btn" data-act="jaga-salin">Salin dari minggu lalu</button>' : ''}</div>
+    ${bisa('jaga') ? '<button class="btn" data-act="jaga-salin">Salin dari minggu lalu</button>' : ''}</div>
   <div class="tbl-wrap"><table class="jaga-tbl"><thead><tr><th>Shift</th>${hari.map(h => `<th class="${h === todayISO() ? 'hari-ini' : ''}">${HARI[new Date(h + 'T00:00').getDay()].slice(0, 3)}<br><span style="font-weight:500">${Number(h.slice(8))}/${Number(h.slice(5, 7))}</span></th>`).join('')}</tr></thead><tbody>
     ${SHIFT.map(([s, jam]) => `<tr><td><b>${s}</b><div class="muted" style="font-size:.76rem">${jam}</div></td>${hari.map(h => { const j = S.jaga.find(x => x.id === h + '_' + s), now = sk.tanggal === h && sk.shift === s;
-      return `<td class="${now ? 'jaga-now' : ''}">${bisa('keamanan') ? `<button type="button" class="jaga-cell" data-act="jaga-edit" data-k="${h}_${s}">${esc(j && j.petugas || '+')}</button>` : esc(j && j.petugas || '—')}</td>`; }).join('')}</tr>`).join('')}
-  </tbody></table></div><p class="muted" style="margin:0;font-size:.8rem">Kotak hijau = shift yang sedang berjalan. Ketuk kotak untuk mengisi nama petugas.</p>`;
+      return `<td class="${now ? 'jaga-now' : ''}">${bisa('jaga') ? `<button type="button" class="jaga-cell" data-act="jaga-edit" data-k="${h}_${s}">${esc(j && j.petugas || '+')}</button>` : esc(j && j.petugas || '—')}</td>`; }).join('')}</tr>`).join('')}
+  </tbody></table></div><p class="muted" style="margin:0;font-size:.8rem">Kotak hijau = shift yang sedang berjalan.${bisa('jaga') ? ' Ketuk kotak untuk mengisi nama petugas.' : ' Jadwal diatur oleh koordinator keamanan / pengurus.'}</p>`;
 }
 let petugasKm = null;
 async function muatPetugasKm(paksa) {
@@ -5962,7 +5962,8 @@ async function openJaga(key) {
   const kini = String(j.petugas || '').split(',').map(x => x.trim()).filter(Boolean);
   const lain = kini.filter(n => !namaPk.some(m => m.toLowerCase() === n.toLowerCase()));
   const dipilih = n => kini.some(k => k.toLowerCase() === n.toLowerCase());
-  openDlg({title: `Jaga ${sh} · ${tglPanjang(tg)}`, area: 'keamanan',
+  if (!bisa('jaga')) return;
+  openDlg({title: `Jaga ${sh} · ${tglPanjang(tg)}`, area: 'jaga',
     body: `<div class="fld"><label>Petugas satpam</label>
       ${list.length ? `<div class="jg-pilih">${list.map((p, i) => `<label class="jg-chip"><input type="checkbox" name="pk_${i}" value="${esc(p.nama)}" ${dipilih(p.nama) ? 'checked' : ''}><span><b>${esc(p.nama)}</b><small>${esc(p.jabatan || '')}</small></span></label>`).join('')}</div>
         <span class="hint">Daftar diambil dari menu Pekerja &amp; gaji (petugas keamanan berstatus aktif). Boleh pilih lebih dari satu.</span>`
@@ -5978,6 +5979,7 @@ async function openJaga(key) {
     }});
 }
 async function salinJaga() {
+  if (!bisa('jaga')) return;
   let n = 0;
   for (let i = 0; i < 7; i++) for (const [s] of SHIFT) {
     const d = new Date(S.kmMinggu + 'T00:00'); d.setDate(d.getDate() + i); const h = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());

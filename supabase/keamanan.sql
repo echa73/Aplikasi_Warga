@@ -365,3 +365,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- 'pengurus' dengan data.dariPekerja = <id pekerja> (role default Satpam) + profil peran 'pengurus' (wajib ganti password).
 -- Hanya Pemilik (boleh_tulis 'pengurus' & RPC admin_* tetap khusus pemilik). struktur_organisasi() mengabaikan
 -- pengurus dengan 'dariPekerja' agar tidak tampil dobel. Status Berhenti / cabut akses menghapus profil (login ditolak).
+
+-- ===== Izin terpisah Jadwal jaga (2026-10-24) =====
+-- Area izin baru 'jaga' (fallback ke 'keamanan'). boleh_tulis 'jaga' kini butuh izin('jaga') = 2;
+-- baca jaga bila izin jaga atau keamanan >= 1. Role satpam diberi jaga = 'lihat'.
+-- Diuji (rollback): satpam jaga DITOLAK tulis, tamu BOLEH, tetap bisa baca jadwal; koord keamanan & ketua BOLEH; bendahara DITOLAK.

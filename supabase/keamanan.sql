@@ -370,3 +370,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Area izin baru 'jaga' (fallback ke 'keamanan'). boleh_tulis 'jaga' kini butuh izin('jaga') = 2;
 -- baca jaga bila izin jaga atau keamanan >= 1. Role satpam diberi jaga = 'lihat'.
 -- Diuji (rollback): satpam jaga DITOLAK tulis, tamu BOLEH, tetap bisa baca jadwal; koord keamanan & ketua BOLEH; bendahara DITOLAK.
+
+-- ===== admin_buat_user: pakai ulang akun yatim (2026-10-24) =====
+-- Bila email/No. HP sudah ada di auth.users tetapi akunnya yatim (tanpa profil dan tidak dirujuk dokumen pengurus/akunWarga
+-- mana pun, mis. pengurus yang sudah dihapus), fungsi memakai ulang akun tsb dengan password baru, bukan menolak.
+-- Akun yang masih dipakai tetap ditolak 'Email sudah dipakai akun lain'. Tetap khusus Pemilik.
+-- Diuji (rollback): No. HP Otin (akun lama yatim) -> dipakai ulang; email Ketua -> DITOLAK; bendahara -> DITOLAK.

@@ -90,3 +90,6 @@ Kode aplikasi kini di `public/app.js` (bukan lagi skrip inline di `index.html`) 
 Pengaturan → Keamanan login → isi **site key** Turnstile (khusus Pemilik). Halaman login lalu memuat verifikasi anti-bot (biasanya tak terlihat, muncul kotak hanya bila mencurigakan) dan mengirim token ke Supabase. Penegakan diaktifkan di dashboard Supabase (Bot and Abuse Protection) dengan **secret key**. Urutan: buat widget → deploy → isi site key → aktifkan di Supabase. Bila bermasalah, matikan dari dashboard Supabase.
 Pengumuman kategori **Rapat pengurus** hanya terlihat oleh pengurus dan pemilik (ditegakkan di server). Warga, satpam, akun pekerja, dan papan info login tidak menerimanya.
 Rumah saya → **Riwayat iuran** kini berupa tabel per tahun (pilihan tahun + Semua tahun) dengan ringkasan bulan lunas & total dibayar, kolom tanggal/metode/jumlah, dan tombol kwitansi; versi HP dibuat ringkas.
+
+### Tampilan Pengurus / Warga
+Pengurus yang tertaut ke rumah (Admin → Pengurus → Rumah / data warga) dan Pemilik yang menautkan rumahnya (Admin → baris Pemilik → Tautkan rumah) mendapat pilihan **Tampilan: Pengurus | Warga** di atas halaman. Default Pengurus; pilihan terakhir diingat per perangkat. Tampilan Warga identik dengan akun warga (Rumah saya, Aman/SOS, Lapor, Info, Lapak — boleh berjualan bila rumahnya diizinkan). Saat tampilan Pengurus, tidak bisa berjualan.

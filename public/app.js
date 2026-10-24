@@ -202,7 +202,7 @@ function resetSesi() {
   if (SB_CH) { try { SB.removeChannel(SB_CH); } catch (e) {} SB_CH = null; }
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   KOLEKSI_SB.forEach(sinkron); sinkron('pengaturan');
-  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = ''; S.struktur = null; S.terkunci = false;
+  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = ''; S.struktur = null; S.terkunci = false; S.modeWarga = false; S.sesiAsli = null;
   S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
@@ -231,6 +231,8 @@ async function masukSesi(user) {
   idleAkhir = Date.now(); mulaiIdle();
   S.sesi = prof.peran === 'pemilik' ? 'pemilik' : prof.peran === 'pengurus' ? (prof.pengurus_id || '') : 'w:' + user.id;
   S.tab = prof.peran === 'warga' ? 'portal' : 'ringkasan';
+  S.sesiAsli = S.sesi; S.modeWarga = false;
+  if (bisaModeWarga() && modeTersimpan()) { S.modeWarga = true; S.sesi = 'w:' + user.id; S.tab = 'portal'; }
   S.terkunci = !!(S.dariPulih && sudahMasuk() && kunciAda()); S.dariPulih = false;
   S.loaded = true; render(); window.scrollTo(0, 0);
   if (S.terkunci) setTimeout(kunciAutoBio, 300);
@@ -426,7 +428,7 @@ function renderMode() {
   if (sudahMasuk()) {
     who.hidden = false; m.hidden = S.mode === 'online';
     const p = pengurusSesi(), img = S.sesi === 'pemilik' && S.me && S.me.avatarUrl ? `<img src="${esc(S.me.avatarUrl)}" alt="">` : avatarHtml(p && p.userId, namaSesi());
-    who.innerHTML = `${img}<div><div class="nm">${esc(namaSesi())}</div><div class="rl">${esc(isWarga() ? 'Warga · ' + ((wargaSaya() || {}).blok || '') : peranSaya())}</div></div>
+    who.innerHTML = `${img}<div><div class="nm">${esc(namaSesi())}</div><div class="rl">${esc(isWarga() ? 'Warga · ' + ((wargaSaya() || {}).blok || '') + (S.modeWarga ? ' (tampilan warga)' : '') : peranSaya())}</div></div>
       <button class="btn sm ghost tema-btn" data-act="tema-tukar" title="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}" aria-label="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}">${ico(temaGelapAktif() ? 'sun' : 'moon')}</button>
       <button class="btn sm ghost tema-btn" data-act="ganti-pass" title="Keamanan akun" aria-label="Keamanan akun: password, sidik jari, PIN">${ico('kunci')}</button>
       <button class="btn sm" data-act="keluar" title="Keluar">Keluar</button>`;
@@ -445,7 +447,7 @@ function render() {
   if (S.terkunci) { main.innerHTML = vKunci(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -1352,7 +1354,7 @@ async function prosesLogin() {
 }
 
 /* --- Akun warga & portal warga --- */
-const akunSesi = () => S.sesi && S.sesi.startsWith('w:') && S.profil && S.profil.peran === 'warga' && S.profil.warga_id ? {id: S.profil.user_id, wargaId: S.profil.warga_id} : null;
+const akunSesi = () => S.sesi && S.sesi.startsWith('w:') && S.profil && (S.profil.peran === 'warga' || S.modeWarga) && S.profil.warga_id ? {id: S.profil.user_id, wargaId: S.profil.warga_id} : null;
 const isWarga = () => !!akunSesi();
 const wargaSaya = () => { const a = akunSesi(); if (a) return wById(a.wargaId); const p = pengurusSesi(); return p && p.wargaId ? wById(p.wargaId) : null; };
 const ROLE_WARGA = {id: 'warga', nama: 'Warga', izin: {...semua('tidak'), info: 'lihat', portal: 'lihat'}};
@@ -1586,7 +1588,7 @@ function vAdmin() {
   if (S.admTab === 'log') return head + vAdminLog();
   if (S.admTab === 'permintaan') return head + vAdminMinta();
   const list = [...S.pengurus].sort((a, b) => (a.aktif === false) - (b.aktif === false) || JABATAN.indexOf(a.jabatan) - JABATAN.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
-  const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div><div class="s">${hpDariEmail(S.authUser && S.authUser.email) ? `Login No. HP: <span class="mono">${esc(hpDariEmail(S.authUser.email))}</span>` : '<span style="color:var(--warn)">Masih login dengan email. Atur No. HP login Anda.</span>'}</div></div><span class="chip ok plain">Pemilik</span><button class="btn sm" data-act="pemilik-hp">${hpDariEmail(S.authUser && S.authUser.email) ? 'Ubah No. HP' : 'Atur No. HP login'}</button></div>` : '';
+  const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div><div class="s">${hpDariEmail(S.authUser && S.authUser.email) ? `Login No. HP: <span class="mono">${esc(hpDariEmail(S.authUser.email))}</span>` : '<span style="color:var(--warn)">Masih login dengan email. Atur No. HP login Anda.</span>'}</div></div><span class="chip ok plain">Pemilik</span><button class="btn sm" data-act="pemilik-rumah">${S.profil && S.profil.warga_id && wById(S.profil.warga_id) ? 'Rumah ' + esc(wById(S.profil.warga_id).blok) : 'Tautkan rumah'}</button><button class="btn sm" data-act="pemilik-hp">${hpDariEmail(S.authUser && S.authUser.email) ? 'Ubah No. HP' : 'Atur No. HP login'}</button></div>` : '';
   const rows = list.map(p => {
     const r = roleById(p.peranId), akun = p.userId ? nama(p.userId) : '';
     return `<div class="row" style="flex-wrap:wrap">${fotoAman(p.foto) ? `<img class="av" src="${esc(p.foto)}" alt="">` : avatarHtml(p.userId, p.nama)}
@@ -2111,6 +2113,42 @@ function tsAmbil(msg) {
   return TS.token;
 }
 function tsReset() { if (TS.key && window.turnstile && TS.id !== null) { TS.token = ''; try { window.turnstile.reset(TS.id); } catch (e) {} } }
+
+/* ---------- Tampilan pengurus / warga (untuk pengurus & pemilik yang juga warga) ---------- */
+const bisaModeWarga = () => !!(S.profil && S.profil.peran !== 'warga' && S.profil.warga_id && wById(S.profil.warga_id) && S.sesiAsli);
+const modeKey = () => 'mode-warga:' + ((S.authUser && S.authUser.id) || '');
+function modeTersimpan() { try { return localStorage.getItem(modeKey()) === '1'; } catch (e) { return false; } }
+function gantiMode(keWarga) {
+  if (!S.authUser || !S.sesiAsli) return;
+  if (keWarga && !bisaModeWarga()) { toast('Akun ini belum tertaut ke rumah di Data warga.', 'bad'); return; }
+  if (dlg.open) dlg.close();
+  S.modeWarga = !!keWarga; S.sesi = keWarga ? 'w:' + S.authUser.id : S.sesiAsli; S.tab = keWarga ? 'portal' : 'ringkasan';
+  try { localStorage.setItem(modeKey(), keWarga ? '1' : '0'); localStorage.setItem(modeKey() + ':kenal', '1'); } catch (e) {}
+  render(); window.scrollTo(0, 0);
+  toast(keWarga ? `Tampilan warga · ${(wargaSaya() || {}).blok || ''}` : 'Tampilan pengurus');
+}
+function modeBar() {
+  if (S.terkunci || !sudahMasuk() || !bisaModeWarga()) return '';
+  let kenal = true; try { kenal = localStorage.getItem(modeKey() + ':kenal') === '1'; } catch (e) {}
+  const w = wById(S.profil.warga_id) || {};
+  return `<div class="mode-bar" role="group" aria-label="Pilih tampilan">
+    <span class="mode-lbl">Tampilan</span>
+    <div class="seg"><button type="button" data-act="mode-ke" data-k="pengurus" aria-pressed="${!S.modeWarga}">🛡️ ${S.sesiAsli === 'pemilik' ? 'Pemilik' : 'Pengurus'}</button><button type="button" data-act="mode-ke" data-k="warga" aria-pressed="${!!S.modeWarga}">🏠 Warga ${esc(w.blok || '')}</button></div>
+    ${kenal ? '' : `<span class="mode-info">Anda juga tercatat sebagai warga rumah <b>${esc(w.blok || '')}</b>. Pilih “Warga” untuk melihat iuran rumah Anda, lapor keluhan, SOS, titip rumah, dan berjualan di Lapak (bila diizinkan). <button type="button" class="linkbtn" data-act="mode-kenal">Mengerti</button></span>`}
+  </div>`;
+}
+function openPemilikRumah() {
+  if (!bisaKelola() || !S.profil) return;
+  const kini = S.profil.warga_id || '';
+  openDlg({title: 'Rumah Pemilik', area: 'admin', submitLabel: 'Simpan',
+    body: `<p style="margin:0">Tautkan akun Pemilik ke rumah Anda di Data warga agar bisa memakai <b>tampilan warga</b> (iuran rumah, lapor keluhan, SOS, titip rumah, Lapak).</p>
+      <div class="fld"><label for="pr_w">Rumah / data warga</label><select id="pr_w" name="wargaId"><option value="">— tidak ditautkan —</option>${S.warga.filter(w => w.status !== 'Pindah').sort(sortHouse).map(w => `<option value="${esc(w.id)}" ${w.id === kini ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('')}</select></div>`,
+    onSubmit: async d => {
+      try { await simpanProfil({...S.profil, warga_id: d.wargaId || null}); } catch (e) { pesanDlg('Gagal menyimpan: ' + pesanAuth(e)); return false; }
+      S.profil = {...S.profil, warga_id: d.wargaId || null};
+      toast(d.wargaId ? 'Rumah Pemilik ditautkan. Tombol “Tampilan Warga” muncul di atas.' : 'Tautan rumah dilepas.'); return true;
+    }});
+}
 
 /* ---------- Kunci aplikasi: sidik jari / wajah (WebAuthn perangkat) atau PIN ---------- */
 const kunciKey = () => 'kunci-app:' + ((S.authUser && S.authUser.id) || '');
@@ -5789,6 +5827,9 @@ document.addEventListener('click', async e => {
   else if (a === 'lupa-hp-tutup') { S.lupaInfoHp = false; render(); }
   else if (a === 'lupa-pass') { S.lupaInfoHp = false; S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
   else if (a === 'ganti-pass') openKeamananAkun();
+  else if (a === 'mode-ke') gantiMode(b.dataset.k === 'warga');
+  else if (a === 'mode-kenal') { try { localStorage.setItem(modeKey() + ':kenal', '1'); } catch (err) {} render(); }
+  else if (a === 'pemilik-rumah') openPemilikRumah();
   else if (a === 'ka-pass') { dlg.close(); setTimeout(openGantiPass, 50); }
   else if (a === 'ka-bio-on') { if (S.terkunci) return; b.disabled = true; await aktifkanBio(); }
   else if (a === 'ka-bio-off') { if (S.terkunci) return; kunciSimpan({...kunciCfg(), bio: null}); toast('Sidik jari / wajah dimatikan.'); openKeamananAkun(); }

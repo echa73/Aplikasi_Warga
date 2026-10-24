@@ -399,3 +399,12 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- boleh_baca 'pengumuman': kategori 'Rapat pengurus' hanya bila boleh_rapat(). Policy warga mengecualikan kategori tsb.
 -- info_publik (papan login, anon) mengecualikan kategori tsb.
 -- Diuji (rollback): ketua & bendahara melihat; satpam & warga tidak; papan publik tidak menampilkan.
+
+-- ===== Tampilan pengurus / warga (2026-10-24) =====
+-- privat.sebagai_warga(): akun aktif yang tertaut ke rumah (profil.warga_id). Policy warga (baca rumah sendiri, tambah keluhan/
+-- SOS/titip/donasi untuk rumah sendiri, ubah rumah sendiri, lapak milik sendiri) kini berlaku untuk pengurus & pemilik yang punya rumah.
+-- jaga_dokumen & batas_laju menerapkan aturan jalur warga bila aksi tsb tidak diizinkan role-nya (keluhan dipaksa 'Baru',
+-- field rumah dikunci, konfirmasi sumbangan diverifikasi, batas laju). Lapak: boleh jualan bila rumahnya diberi izin
+-- (larangan jualan saat tampilan Pengurus diterapkan di aplikasi). push 'ditangani' ke semua akun yang tertaut ke rumah tsb.
+-- Diuji (rollback): bendahara-tertaut-rumah: keluhan dipaksa Baru, rumah lain DITOLAK, SOS BOLEH, lapak tanpa izin DITOLAK,
+-- dengan izin BOLEH, blok rumah tidak bisa diubah; satpam tanpa rumah DITOLAK.

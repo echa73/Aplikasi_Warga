@@ -6,7 +6,25 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob: https://maps.google.com https://www.google.com; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.gj-rows{display:grid;gap:6px}
+<style>.org{display:grid;gap:0;padding:8px 0 4px;overflow-x:auto}
+.org-lvl{display:flex;justify-content:center;gap:16px;position:relative;padding-top:26px}
+.org-lvl.top{padding-top:0}
+.org-lvl:not(.top)::before{content:"";position:absolute;top:0;left:50%;height:13px;border-left:2px solid var(--line)}
+.org-node{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;width:170px;text-align:center;display:grid;gap:4px;justify-items:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.org-lvl.multi .org-node::before{content:"";position:absolute;top:-13px;left:-9px;right:-9px;border-top:2px solid var(--line)}
+.org-lvl.multi .org-node:first-child::before{left:50%}.org-lvl.multi .org-node:last-child::before{right:50%}
+.org-lvl:not(.top) .org-node::after{content:"";position:absolute;top:-13px;left:50%;height:13px;border-left:2px solid var(--line)}
+.org-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:1.05rem;background:var(--accent)}
+.org-node b{font-size:.92rem;line-height:1.25}.org-node .j{font-size:.76rem;color:var(--muted);line-height:1.3}
+.org-node .wa{margin-top:2px}
+.org-node.l0 .org-av{background:#6b5a4c}.org-node.l1{border-color:var(--accent);border-width:2px}.org-node.l1 .org-av{width:56px;height:56px;font-size:1.2rem}
+.org-node.l3 .org-av{background:#2f6f9f}.org-node.l4 .org-av{background:#b7791f}.org-node.l5 .org-av{background:#7a7a7a}
+.org-lbl{text-align:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:18px 0 -8px;position:relative;z-index:1}.org-lbl.first{margin:0 0 10px}.org-lbl span{background:var(--surface);padding:0 10px}
+.org-lbl+.org-lvl:not(.top)::before{display:none}
+.org-kop{text-align:center;display:grid;gap:2px;margin-bottom:14px}.org-kop b{font-size:1.1rem}
+@media(max-width:700px){.org-lvl{flex-direction:column;align-items:stretch;gap:8px;padding-top:12px}.org-lvl::before,.org-node::before,.org-node::after{display:none!important}
+  .org-node{width:auto;grid-template-columns:auto 1fr auto;text-align:left;justify-items:start;align-items:center;column-gap:12px;padding:10px 12px}.org-node .org-av{grid-row:1/3}.org-node b,.org-node .j{grid-column:2}.org-node .wa{grid-row:1/3;grid-column:3;margin:0}.org-lbl{text-align:left;margin:14px 0 -4px}}
+.gj-rows{display:grid;gap:6px}
 .gj-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 32px;gap:6px;align-items:center}
 .gj-row input{min-width:0}
 .gj-quick{display:flex;gap:6px;flex-wrap:wrap}
@@ -1004,7 +1022,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -1169,7 +1187,7 @@ function resetSesi() {
   if (SB_CH) { try { SB.removeChannel(SB_CH); } catch (e) {} SB_CH = null; }
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   KOLEKSI_SB.forEach(sinkron); sinkron('pengaturan');
-  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = '';
+  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = ''; S.struktur = null;
   S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
@@ -1308,14 +1326,15 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur organisasi','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
 let PRIMER = PRIMER_P;
 const ICON = {
+  struktur: '<rect x="9" y="2.5" width="6" height="5" rx="1.2"/><rect x="2.5" y="16.5" width="6" height="5" rx="1.2"/><rect x="15.5" y="16.5" width="6" height="5" rx="1.2"/><path d="M12 7.5v4.5M5.5 16.5V12h13v4.5"/>',
   gaji: '<rect x="2.5" y="5.5" width="19" height="14" rx="2"/><circle cx="9" cy="11" r="2.3"/><path d="M5.5 16.5c.6-1.7 1.9-2.6 3.5-2.6s2.9.9 3.5 2.6M14.5 10h4M14.5 13.5h4"/>',
   pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/>',
   lapak: '<path d="M4 9.5 5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12v8.5h13V12"/><path d="M10 20.5v-5h4v5"/>',
@@ -1406,7 +1425,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2957,6 +2976,104 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Struktur organisasi pengurus ---------- */
+const orgLevel = j => { const t = String(j || '').toLowerCase(); return /^ketua rt$|^ketua$/.test(t) ? 1 : /wakil/.test(t) ? 2 : /sekretaris|bendahara/.test(t) ? 3 : /^satpam$/.test(t) ? 5 : 4; };
+const orgInisial = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+let strukturMuat = false;
+async function muatStruktur(paksa) {
+  if (strukturMuat || !SB) return;
+  if (!paksa && S.struktur && Date.now() - S.struktur._t < 30000) return;
+  strukturMuat = true;
+  try { const {data, error} = await SB.rpc('struktur_organisasi'); S.struktur = !error && data ? {...data, _t: Date.now()} : {gagal: true, _t: Date.now(), pengurus: [], petugas: []}; }
+  catch (e) { S.struktur = {gagal: true, _t: Date.now(), pengurus: [], petugas: []}; }
+  strukturMuat = false; sbSched();
+}
+function strukturLevel(D) {
+  const P = (D.pengurus || []).filter(p => p.nama), urutJ = j => { const i = JABATAN.indexOf(j); return i < 0 ? 99 : i; };
+  const by = l => P.filter(p => orgLevel(p.jabatan) === l).sort((a, b) => urutJ(a.jabatan) - urutJ(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
+  const petugasPg = by(5).map(p => ({nama: p.nama, jabatan: p.jabatan, hp: p.hp}));
+  const nm = new Set(petugasPg.map(p => p.nama.toLowerCase()));
+  const petugas = [...petugasPg, ...(D.petugas || []).filter(p => p.nama && !nm.has(p.nama.toLowerCase()))];
+  return [
+    D.ketuaRw ? {lbl: 'Pelindung', l: 0, isi: [{nama: D.ketuaRw, jabatan: 'Ketua RW' + (D.rw ? ' ' + D.rw : '')}]} : null,
+    {lbl: 'Ketua', l: 1, isi: by(1)}, {lbl: 'Wakil ketua', l: 2, isi: by(2)}, {lbl: 'Sekretaris & bendahara', l: 3, isi: by(3)},
+    {lbl: 'Koordinator & seksi', l: 4, isi: by(4)}, {lbl: 'Petugas lingkungan', l: 5, isi: petugas}
+  ].filter(x => x && x.isi.length);
+}
+function periodeTeks(D) { return D.periodeMulai ? `Periode ${tglSurat(D.periodeMulai)}${D.periodeSelesai ? ' – ' + tglSurat(D.periodeSelesai) : ''}` : ''; }
+function vStruktur() {
+  const D = S.struktur; muatStruktur();
+  const head = `<div class="sec-head"><div><h2>Struktur organisasi</h2><p>Susunan pengurus dan petugas lingkungan ${esc(lingk())}. Hubungi pengurus langsung lewat WhatsApp.</p></div>
+    <div class="toolbar" style="margin:0">${bisa('pengaturan') ? '<button class="btn ghost" data-act="org-atur">Atur periode</button>' : ''}${bisaKelola() ? '<button class="btn" data-act="org-kelola">Kelola pengurus</button>' : ''}</div></div>`;
+  if (!D) return head + '<div class="empty">Memuat struktur organisasi…</div>';
+  if (D.gagal) return head + '<div class="notice">Struktur organisasi belum bisa dimuat. <button class="btn sm" data-act="org-muat">Coba lagi</button></div>';
+  const L = strukturLevel(D);
+  if (!L.length) return head + `<div class="empty">Belum ada data pengurus.${bisaKelola() ? '<button class="btn pri" data-act="org-kelola">Tambah pengurus</button>' : ''}</div>`;
+  const node = (p, l) => { const wa = D.kontak && p.hp && waNomor(p.hp).length >= 10;
+    return `<div class="org-node l${l}"><span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span><b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
+  const tot = (D.pengurus || []).length;
+  return head + `<div class="panel">
+    <div class="org-kop"><b>STRUKTUR ORGANISASI PENGURUS RT ${esc(D.rt || '…')} / RW ${esc(D.rw || '…')}</b><span>${esc(D.lingkungan || lingk())}${D.kelurahan ? ' · Kel. ' + esc(D.kelurahan) : ''}</span>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
+    <div class="org">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}">${x.isi.map(p => node(p, x.l)).join('')}</div>`).join('')}</div></div>
+  <div class="toolbar"><a class="btn wa" href="${esc(waShare(teksStruktur(D, L)))}" target="_blank" rel="noopener">Bagikan ke WhatsApp</a><button class="btn" data-act="org-pdf">Unduh PDF</button></div>
+  <p class="muted" style="font-size:.8rem">${tot} pengurus aktif. Susunan diambil otomatis dari jabatan di menu Admin → Pengurus${(D.petugas || []).length ? ' dan data Pekerja' : ''}.${D.kontak ? '' : ' Nomor WhatsApp pengurus disembunyikan.'}</p>`;
+}
+function teksStruktur(D, L) {
+  return `*STRUKTUR ORGANISASI PENGURUS RT ${D.rt || ''} / RW ${D.rw || ''}*\n${D.lingkungan || lingk()}${periodeTeks(D) ? '\n' + periodeTeks(D) : ''}\n\n`
+    + L.map(x => `*${x.lbl}*\n${x.isi.map(p => `- ${p.jabatan ? p.jabatan + ': ' : ''}${p.nama}${D.kontak && p.hp && x.l > 0 && x.l < 5 ? ' (' + p.hp + ')' : ''}`).join('\n')}`).join('\n\n') + `\n\n${pengirim()}`;
+}
+async function pdfStruktur() {
+  const D = S.struktur; if (!D || D.gagal) return;
+  const L = strukturLevel(D), P = new MiniPDF(), M = 16, CW = 178;
+  try { P.img = await logoJpeg(); } catch (e) { P.img = null; }
+  P.image(M, 11, 15.5, 18);
+  const tx = P.img ? M + 20 : M;
+  P.text(tx, 18, `PENGURUS RT ${D.rt || '...'} / RW ${D.rw || '...'}`, {size: 13, bold: true});
+  P.text(tx, 23.5, [D.lingkungan || lingk(), D.kelurahan && 'Kel. ' + D.kelurahan].filter(Boolean).join(' · '), {size: 9.5, color: [74, 59, 48]});
+  P.line(M, 32, M + CW, 32, 1.4); P.line(M, 33.2, M + CW, 33.2, .5);
+  P.text(105, 43, 'STRUKTUR ORGANISASI', {size: 15, bold: true, align: 'center'});
+  if (periodeTeks(D)) P.text(105, 49, periodeTeks(D), {size: 10, align: 'center', color: [74, 59, 48]});
+  const BW = 40, BH = 17, GAP = 5, PER = 4, warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
+  let y = 56, prevBottom = null;
+  for (const x of L) {
+    for (let i = 0; i < x.isi.length; i += PER) {
+      const row = x.isi.slice(i, i + PER), n = row.length, wTot = n * BW + (n - 1) * GAP, x0 = 105 - wTot / 2;
+      if (y + BH > 270) { P.addPage(); y = 20; prevBottom = null; }
+      if (i === 0 && (x.l === 0 || x.l >= 4)) { P.text(105, y + 1, x.lbl.toUpperCase(), {size: 8, bold: true, align: 'center', color: [120, 110, 100]}); y += 4; }
+      const top = y + 3;
+      if (prevBottom !== null) {
+        P.line(105, prevBottom, 105, top - 2, .8, [190, 180, 168]);
+        if (n > 1) P.line(x0 + BW / 2, top - 2, x0 + wTot - BW / 2, top - 2, .8, [190, 180, 168]);
+      }
+      row.forEach((p, k) => {
+        const bx = x0 + k * (BW + GAP), c = warna[x.l] || warna[4];
+        if (prevBottom !== null && n > 1) P.line(bx + BW / 2, top - 2, bx + BW / 2, top, .8, [190, 180, 168]);
+        P.rect(bx, top, BW, BH, {fill: [250, 247, 242], stroke: c, lw: x.l === 1 ? 1.2 : .6});
+        P.rect(bx, top, BW, 2.2, {fill: c});
+        const nm = pdfWrap(p.nama, BW - 4, true, 8.6).slice(0, 2), jb = pdfWrap(p.jabatan || '', BW - 4, false, 7.4).slice(0, 2);
+        let ty = top + 7; nm.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 8.6, bold: true, align: 'center'}); ty += 3.6; });
+        jb.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 7.4, align: 'center', color: [90, 80, 70]}); ty += 3.1; });
+      });
+      prevBottom = top + BH; y = top + BH + 7;
+    }
+  }
+  P.text(105, 287, `Dicetak dari aplikasi Warga Kasuari · ${tglSurat(todayISO())}`, {size: 7.5, align: 'center', color: [120, 110, 100]});
+  return P.bytes();
+}
+function openStrukturAtur() {
+  if (!bisa('pengaturan')) return;
+  openDlg({title: 'Periode kepengurusan', area: 'pengaturan',
+    body: `<div class="grid2"><div class="fld"><label for="so_m">Mulai</label><input type="date" id="so_m" name="periodeMulai" value="${esc(S.set.periodeMulai || '')}"></div>
+      <div class="fld"><label for="so_s">Selesai</label><input type="date" id="so_s" name="periodeSelesai" value="${esc(S.set.periodeSelesai || '')}"></div></div>
+      <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturKontak" ${S.set.strukturKontak === false ? '' : 'checked'}> <span>Tampilkan tombol WhatsApp pengurus ke warga</span></label>
+      <p class="muted" style="margin:0;font-size:.84rem">Nama Ketua RW (pelindung) diambil dari Pengaturan → Kop surat. Jabatan pengurus diatur di Admin → Pengurus.</p>`,
+    onSubmit: async d => {
+      if (d.periodeMulai && d.periodeSelesai && d.periodeSelesai < d.periodeMulai) { pesanDlg('Tanggal selesai tidak boleh sebelum tanggal mulai.', 'so_s'); return false; }
+      const ok = await putSetting({periodeMulai: d.periodeMulai || '', periodeSelesai: d.periodeSelesai || '', strukturKontak: !!d.strukturKontak});
+      if (ok) { toast('Pengaturan struktur disimpan.'); setTimeout(() => muatStruktur(true), 400); } return ok;
+    }});
+}
+
 /* ---------- Pekerja & gaji (payroll) ---------- */
 const JABATAN_PK = ['Satpam', 'Komandan regu satpam', 'Petugas kebersihan', 'Petugas sampah', 'Tukang kebun / taman', 'Penjaga fasum', 'Teknisi / perawatan', 'Lainnya'];
 const PK_PENDAPATAN = ['Uang makan', 'Transport', 'Lembur', 'Tunjangan jabatan', 'THR', 'Bonus', 'Insentif'];
@@ -5848,7 +5965,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
   const a = b.dataset.act;
   if (b.tagName === 'SELECT') return;
-  if (a === 'tab') { e.preventDefault(); if (!tabBoleh(b.dataset.k)) return; if (dlg.open) dlg.close(); S.tab = b.dataset.k; render(); window.scrollTo(0, 0); }
+  if (a === 'tab') { e.preventDefault(); if (!tabBoleh(b.dataset.k)) return; if (dlg.open) dlg.close(); S.tab = b.dataset.k; if (S.tab === 'struktur') muatStruktur(true); render(); window.scrollTo(0, 0); }
   else if (a === 'lainnya') openLainnya();
   else if (a === 'kwitansi') openKwitansi(b.dataset.id);
   else if (a === 'salin') salin(b.dataset.teks || '');
@@ -5894,6 +6011,10 @@ document.addEventListener('click', async e => {
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'org-atur') openStrukturAtur();
+  else if (a === 'org-kelola') { S.tab = 'admin'; S.admTab = 'pengurus'; render(); window.scrollTo(0, 0); }
+  else if (a === 'org-muat') muatStruktur(true);
+  else if (a === 'org-pdf') { try { const by = await pdfStruktur(); if (by) unduh(fname(`Struktur Organisasi ${lingk()}.pdf`), new Blob([by], {type: 'application/pdf'})); } catch (err) { toast('PDF gagal dibuat.', 'bad'); } }
   else if (a === 'gjtab') { S.gjTab = b.dataset.k; render(); }
   else if (a === 'gjper') { const n = Number(b.dataset.n); S.gjPer = n === 0 ? nowPer() : addM(S.gjPer, n); render(); }
   else if (a === 'gjth') { S.gjTh += Number(b.dataset.n); render(); }

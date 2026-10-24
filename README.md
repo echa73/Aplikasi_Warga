@@ -65,3 +65,6 @@ Menu **Admin** (Pemilik): "Aktifkan verifikasi dua langkah" → pindai QR dengan
 
 ## Pekerja & gaji
 Menu **Keuangan → Pekerja & gaji** (default Bendahara): data pekerja (satpam, petugas kebersihan, dll; gaji pokok, tunjangan tetap, rekening, akun login opsional), penggajian bulanan (buat slip draf dari data pekerja, tambah lembur/THR/bonus/kasbon/potongan, bayar satuan atau semua sekaligus), slip gaji PDF, kirim ringkasan slip via WhatsApp, rekap bulanan & tahunan (Excel). Gaji yang dibayar otomatis tercatat di Buku kas sesuai jabatan. Pekerja yang punya akun (mis. satpam) bisa melihat slip gajinya sendiri.
+
+### Struktur organisasi
+Menu **Struktur organisasi** (grup Utama) bisa dilihat semua pengguna, termasuk warga. Bagan disusun otomatis dari jabatan di Admin → Pengurus (Ketua → Wakil → Sekretaris & Bendahara → Koordinator & seksi) ditambah petugas aktif dari menu Pekerja. Ketua RW tampil sebagai pelindung (Pengaturan → Kop surat). Ada tombol WhatsApp per pengurus, bagikan ke WA, dan unduh PDF. Pengguna dengan izin Pengaturan bisa mengatur periode kepengurusan dan menyembunyikan nomor WA pengurus dari warga.

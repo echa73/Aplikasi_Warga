@@ -321,3 +321,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- privat.izin: area 'gaji' fallback ke izin 'kas'. Role bendahara: gaji = kelola.
 -- Baca: izin gaji >= lihat; pekerja yang punya akun (akunId = auth.uid()) hanya melihat data dirinya & slip berstatus 'Dibayar'.
 -- Tulis: izin gaji = kelola. Pembayaran slip membuat dokumen kas 'gaji-<idSlip>' (jenis keluar) agar masuk Buku kas & Laporan.
+
+-- ===== Struktur organisasi (2026-10-24) =====
+-- RPC public.struktur_organisasi(): untuk semua pengguna login (pemilik/pengurus/warga).
+-- Hanya mengirim kolom aman: nama, jabatan, no HP pengurus (bisa dimatikan lewat pengaturan.strukturKontak=false),
+-- serta nama+jabatan pekerja aktif (tanpa gaji/rekening/NIK). Data pengaturan: ketuaRw, rt, rw, periodeMulai, periodeSelesai.
+-- EXECUTE dicabut dari public & anon; hanya authenticated.

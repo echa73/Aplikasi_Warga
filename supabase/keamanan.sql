@@ -315,3 +315,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   peran dianggap NULL (tidak ada akses Pemilik sama sekali: data, fungsi admin, storage).
 -- Pemulihan bila HP authenticator hilang: hapus faktor lewat Supabase Dashboard → Authentication → Users →
 --   pilih akun Pemilik → hapus MFA factor (atau minta pengelola teknis).
+
+-- 2026-10-24: Pekerja & gaji (migrasi gaji_pekerja_akses)
+-- Koleksi 'pekerja' (data satpam/kebersihan, NIK, rekening) dan 'gaji' (slip per bulan).
+-- privat.izin: area 'gaji' fallback ke izin 'kas'. Role bendahara: gaji = kelola.
+-- Baca: izin gaji >= lihat; pekerja yang punya akun (akunId = auth.uid()) hanya melihat data dirinya & slip berstatus 'Dibayar'.
+-- Tulis: izin gaji = kelola. Pembayaran slip membuat dokumen kas 'gaji-<idSlip>' (jenis keluar) agar masuk Buku kas & Laporan.

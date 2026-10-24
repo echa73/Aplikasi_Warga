@@ -62,3 +62,6 @@ Menu **Keamanan → Pos jaga** (satpam/pengurus) dan **Aman** (warga): tombol "A
 
 ## Verifikasi dua langkah Pemilik
 Menu **Admin** (Pemilik): "Aktifkan verifikasi dua langkah" → pindai QR dengan Google/Microsoft Authenticator → masukkan kode. Setelah aktif, login Pemilik meminta kode 6 digit; server menolak semua hak Pemilik sebelum kode diverifikasi (JWT AAL2). Bisa menambah HP cadangan. Bila HP hilang: hapus faktor MFA di Supabase Dashboard → Authentication → Users.
+
+## Pekerja & gaji
+Menu **Keuangan → Pekerja & gaji** (default Bendahara): data pekerja (satpam, petugas kebersihan, dll; gaji pokok, tunjangan tetap, rekening, akun login opsional), penggajian bulanan (buat slip draf dari data pekerja, tambah lembur/THR/bonus/kasbon/potongan, bayar satuan atau semua sekaligus), slip gaji PDF, kirim ringkasan slip via WhatsApp, rekap bulanan & tahunan (Excel). Gaji yang dibayar otomatis tercatat di Buku kas sesuai jabatan. Pekerja yang punya akun (mis. satpam) bisa melihat slip gajinya sendiri.

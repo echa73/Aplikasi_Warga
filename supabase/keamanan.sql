@@ -333,3 +333,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- (privat.peran_saya() = 'pemilik', jadi ikut wajib MFA bila aktif), nama file harus <id>/<acak>.jpg.
 -- struktur_organisasi() kini juga mengirim 'foto', hanya bila URL berawalan storage publik proyek ini.
 -- Diuji (rollback): warga DITOLAK, ketua DITOLAK, pemilik BOLEH, nama file aneh DITOLAK.
+
+-- ===== Pekerja di struktur organisasi (2026-10-24) =====
+-- dokumen pekerja: struktur = 'petugas' | 'pengurus' | 'tidak', atasan (jabatan pengurus), jabatanStruktur.
+-- pengaturan.strukturPetugas=false menyembunyikan semua pekerja mode 'petugas'. RPC struktur_organisasi() memfilter di server
+-- dan tetap hanya mengirim nama/jabatan pekerja (tanpa HP, gaji, rekening, NIK).

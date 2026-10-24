@@ -68,3 +68,4 @@ Menu **Keuangan → Pekerja & gaji** (default Bendahara): data pekerja (satpam, 
 
 ### Struktur organisasi
 Menu **Struktur organisasi** (grup Utama) bisa dilihat semua pengguna, termasuk warga. Bagan disusun otomatis dari jabatan di Admin → Pengurus (Ketua → Wakil → Sekretaris & Bendahara → Koordinator & seksi) ditambah petugas aktif dari menu Pekerja. Ketua RW tampil sebagai pelindung (Pengaturan → Kop surat). Ada tombol WhatsApp per pengurus, bagikan ke WA, dan unduh PDF. Pengguna dengan izin Pengaturan bisa mengatur periode kepengurusan dan menyembunyikan nomor WA pengurus dari warga.
+Foto pengurus diunggah di Admin → Pengurus → ubah data (dipotong persegi & dikecilkan otomatis, disimpan di bucket `pengurus`), lalu tampil di bagan, daftar pengurus, dan PDF struktur organisasi.

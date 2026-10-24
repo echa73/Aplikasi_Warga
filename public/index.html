@@ -15,6 +15,11 @@
 .org-lvl.multi .org-node:first-child::before{left:50%}.org-lvl.multi .org-node:last-child::before{right:50%}
 .org-lvl:not(.top) .org-node::after{content:"";position:absolute;top:-13px;left:50%;height:13px;border-left:2px solid var(--line)}
 .org-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:1.05rem;background:var(--accent)}
+.org-av.foto{object-fit:cover;background:var(--sunk);border:2px solid var(--surface);box-shadow:0 0 0 2px var(--line)}
+.org-node.l1 .org-av.foto{box-shadow:0 0 0 2px var(--accent)}
+.org-node{width:180px}.org-av{width:64px;height:64px}.org-node.l1 .org-av{width:76px;height:76px}
+.pg-foto{display:flex;align-items:center;gap:14px}.pg-av{width:76px;height:76px;border-radius:50%;object-fit:cover;flex:none;display:grid;place-items:center;font-weight:800;font-size:1.3rem;color:#fff;background:var(--accent)}
+.pg-av.load{opacity:.5}.pg-foto-b{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .org-node b{font-size:.92rem;line-height:1.25}.org-node .j{font-size:.76rem;color:var(--muted);line-height:1.3}
 .org-node .wa{margin-top:2px}
 .org-node.l0 .org-av{background:#6b5a4c}.org-node.l1{border-color:var(--accent);border-width:2px}.org-node.l1 .org-av{width:56px;height:56px;font-size:1.2rem}
@@ -22,7 +27,7 @@
 .org-lbl{text-align:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:18px 0 -8px;position:relative;z-index:1}.org-lbl.first{margin:0 0 10px}.org-lbl span{background:var(--surface);padding:0 10px}
 .org-lbl+.org-lvl:not(.top)::before{display:none}
 .org-kop{text-align:center;display:grid;gap:2px;margin-bottom:14px}.org-kop b{font-size:1.1rem}
-@media(max-width:700px){.org-lvl{flex-direction:column;align-items:stretch;gap:8px;padding-top:12px}.org-lvl::before,.org-node::before,.org-node::after{display:none!important}
+@media(max-width:700px){.org-av,.org-node.l1 .org-av{width:52px;height:52px}.org-lvl{flex-direction:column;align-items:stretch;gap:8px;padding-top:12px}.org-lvl::before,.org-node::before,.org-node::after{display:none!important}
   .org-node{width:auto;grid-template-columns:auto 1fr auto;text-align:left;justify-items:start;align-items:center;column-gap:12px;padding:10px 12px}.org-node .org-av{grid-row:1/3}.org-node b,.org-node .j{grid-column:2}.org-node .wa{grid-row:1/3;grid-column:3;margin:0}.org-lbl{text-align:left;margin:14px 0 -4px}}
 .gj-rows{display:grid;gap:6px}
 .gj-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 32px;gap:6px;align-items:center}
@@ -2540,7 +2545,7 @@ function vAdmin() {
   const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div><div class="s">${hpDariEmail(S.authUser && S.authUser.email) ? `Login No. HP: <span class="mono">${esc(hpDariEmail(S.authUser.email))}</span>` : '<span style="color:var(--warn)">Masih login dengan email. Atur No. HP login Anda.</span>'}</div></div><span class="chip ok plain">Pemilik</span><button class="btn sm" data-act="pemilik-hp">${hpDariEmail(S.authUser && S.authUser.email) ? 'Ubah No. HP' : 'Atur No. HP login'}</button></div>` : '';
   const rows = list.map(p => {
     const r = roleById(p.peranId), akun = p.userId ? nama(p.userId) : '';
-    return `<div class="row" style="flex-wrap:wrap">${avatarHtml(p.userId, p.nama)}
+    return `<div class="row" style="flex-wrap:wrap">${fotoAman(p.foto) ? `<img class="av" src="${esc(p.foto)}" alt="">` : avatarHtml(p.userId, p.nama)}
       <div class="grow"><div class="t">${esc(p.nama)}${p.userId && S.me && p.userId === S.me.id ? ' <span class="muted">(Anda)</span>' : ''}</div>
         <div class="s">${esc(p.jabatan || 'Tanpa jabatan')}${p.noHp ? ' · ' + esc(p.noHp) : ''}${p.wargaId && wById(p.wargaId) ? ' · Rumah ' + esc(wById(p.wargaId).blok) : ''}</div>
         ${r && roleCocok(p.jabatan) && roleCocok(p.jabatan).id !== r.id ? `<div class="s" style="color:var(--warn)">⚠ Jabatan ${esc(p.jabatan)}, tetapi role ${esc(r.nama)}</div>` : ''}
@@ -2605,9 +2610,12 @@ function openPengurus(id, prefill) {
   const p = id ? S.pengurus.find(x => x.id === id) : null;
   const x = p || {aktif: true, peranId: '', mulai: todayISO(), ...(prefill || {})};
   if (!x.peranId && x.jabatan) { const r = roleCocok(x.jabatan); if (r) x.peranId = r.id; }
+  const pidAwal = p ? p.id : uid(), ker = pgFotoKerja = {awal: (p && p.foto) || '', url: (p && p.foto) || '', load: false, pid: pidAwal, baru: []};
   openDlg({
     title: p ? 'Ubah data pengurus' : 'Tambah pengurus', area: 'admin',
-    body: `<div class="fld"><label for="pg_nama">Nama lengkap <span class="req">*</span></label><input type="text" id="pg_nama" name="nama" required value="${esc(x.nama)}"></div>
+    body: `<div class="fld"><label>Foto pengurus</label><div class="pg-foto" id="pgFoto"></div><input type="file" id="pg_file" accept="image/*" hidden>
+      <span class="hint">Tampil di Struktur organisasi. Foto wajah, dipotong persegi otomatis.</span></div>
+    <div class="fld"><label for="pg_nama">Nama lengkap <span class="req">*</span></label><input type="text" id="pg_nama" name="nama" required value="${esc(x.nama)}"></div>
     <div class="grid2">
       <div class="fld"><label for="pg_jab">Jabatan</label><input type="text" id="pg_jab" name="jabatan" list="jabList" value="${esc(x.jabatan)}" placeholder="mis. Bendahara"><datalist id="jabList">${JABATAN.map(j => `<option value="${j}">`).join('')}</datalist></div>
       <div class="fld"><label for="f_hp">No. HP / WhatsApp <span class="req">*</span></label><input type="tel" id="f_hp" name="noHp" inputmode="tel" value="${esc(x.noHp)}" placeholder="08…" autocomplete="off" required><span class="hint">Dipakai juga untuk login.</span><span class="hint nik-info" id="hpInfo">${hpInfo(x.noHp)}</span></div>
@@ -2635,10 +2643,11 @@ function openPengurus(id, prefill) {
       if (pw && !(p && p.userId) && pw.length < 8) { pesanDlg('Password awal minimal 8 karakter.', 'pg_pass'); return false; }
       const pinData = {}, pb = String(d.passwordBaru || '');
       if (pb && pb.length < 8) { pesanDlg('Password baru minimal 8 karakter.', 'pg_reset'); return false; }
-      const row = {...(p || {}), nama: d.nama.trim(), jabatan: String(d.jabatan || '').trim(), noHp: String(d.noHp || '').trim(), peranId: d.peranId, wargaId: d.wargaId || '', aktif: d.aktif !== '0', mulai: d.mulai || '', userId: (p && p.userId) || '', email: (p && p.email) || '', diperbarui: todayISO()};
+      if (ker.load) { pesanDlg('Tunggu, foto masih diunggah.'); return false; }
+      const row = {...(p || {}), foto: ker.url || '', nama: d.nama.trim(), jabatan: String(d.jabatan || '').trim(), noHp: String(d.noHp || '').trim(), peranId: d.peranId, wargaId: d.wargaId || '', aktif: d.aktif !== '0', mulai: d.mulai || '', userId: (p && p.userId) || '', email: (p && p.email) || '', diperbarui: todayISO()};
       delete row.pinHash; delete row.pinSalt;
       if (!p) row.dibuat = todayISO();
-      const pid = p ? p.id : uid();
+      const pid = pidAwal;
       if (await seedRoles() === false) return false;
       let akunBaru = false;
       if (email && pw && !row.userId) {
@@ -2646,6 +2655,7 @@ function openPengurus(id, prefill) {
       }
       const ok = await put('pengurus', pid, row);
       if (!ok) return false;
+      pgFotoHapus([ker.awal, ...ker.baru].filter(u => u && u !== row.foto)); pgFotoKerja = null; S.struktur = null;
       if (row.userId) {
         try { await SB.rpc('admin_konfirmasi_user', {target: row.userId}); } catch (e) {}
         try { if (row.aktif) await simpanProfil({user_id: row.userId, nama: row.nama, peran: 'pengurus', pengurus_id: pid, warga_id: row.wargaId || null, ...(akunBaru ? {wajib_ganti: true} : {})}); else await hapusProfil(row.userId); }
@@ -2659,11 +2669,53 @@ function openPengurus(id, prefill) {
     },
     onDelete: p ? async () => {
       try { await hapusProfil(p.userId); } catch (e) { pesanDlg('Gagal mencabut akses login: ' + pesanAuth(e)); return false; }
-      const ok = await del('pengurus', p.id); if (ok) toast(`${p.nama} dihapus dari daftar pengurus.`); return ok;
+      const ok = await del('pengurus', p.id); if (ok) { pgFotoHapus([p.foto, ...ker.baru]); pgFotoKerja = null; S.struktur = null; toast(`${p.nama} dihapus dari daftar pengurus.`); } return ok;
     } : null,
     deleteLabel: 'Hapus pengurus'
   });
+  pgRenderFoto(x.nama);
+  const f = $('#pg_file');
+  f.addEventListener('change', async () => {
+    const file = f.files[0]; f.value = ''; if (!file) return;
+    if (!/^image\//.test(file.type)) { toast('Pilih file gambar.', 'bad'); return; }
+    ker.load = true; ker.prev = URL.createObjectURL(file); pgRenderFoto();
+    try { const u = await pgUnggahFoto(file, ker.pid); ker.baru.push(u); ker.url = u; }
+    catch (e) { toast('Foto gagal diunggah' + (e && e.message ? ': ' + e.message : '') + '.', 'bad'); }
+    ker.load = false; URL.revokeObjectURL(ker.prev); ker.prev = null; if (pgFotoKerja === ker) pgRenderFoto();
+  });
 }
+let pgFotoKerja = null;
+const PG_FOTO_PREFIX = '/object/public/pengurus/';
+function pgRenderFoto(nm) {
+  const box = $('#pgFoto'), k = pgFotoKerja; if (!box || !k) return;
+  const n = nm || ($('#pg_nama') && $('#pg_nama').value) || '?', src = k.prev || k.url;
+  box.innerHTML = `${src ? `<img class="pg-av${k.load ? ' load' : ''}" src="${esc(src)}" alt="Foto pengurus">` : `<span class="pg-av av-i" aria-hidden="true">${esc(orgInisial(n))}</span>`}
+    <div class="pg-foto-b"><label class="btn sm" for="pg_file">${k.url ? 'Ganti foto' : 'Unggah foto'}</label>${k.url && !k.load ? '<button type="button" class="btn sm ghost" data-act="pg-foto-del">Hapus foto</button>' : ''}${k.load ? '<span class="muted" style="font-size:.84rem">Mengunggah…</span>' : ''}</div>`;
+}
+async function kecilkanPersegi(file, ukuran = 480, q = 0.85) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const sisi = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - sisi) / 2, sy = Math.max(0, (img.naturalHeight - sisi) * 0.3);
+    const u = Math.min(ukuran, sisi), c = document.createElement('canvas'); c.width = c.height = u;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, u, u); g.drawImage(img, sx, sy, sisi, sisi, 0, 0, u, u);
+    return await new Promise(res => c.toBlob(res, 'image/jpeg', q));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function pgUnggahFoto(file, pid) {
+  if (!SB) throw new Error('Tidak terhubung');
+  const blob = await kecilkanPersegi(file); if (!blob) throw new Error('Foto tidak bisa dibaca');
+  if (blob.size > 500000) throw new Error('Foto terlalu besar');
+  const path = `${String(pid).toLowerCase().replace(/[^a-z0-9_-]/g, '')}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}.jpg`;
+  const {error} = await SB.storage.from('pengurus').upload(path, blob, {contentType: 'image/jpeg', cacheControl: '31536000', upsert: false});
+  if (error) throw error;
+  return SB.storage.from('pengurus').getPublicUrl(path).data.publicUrl;
+}
+function pgFotoHapus(urls) {
+  const p = (urls || []).map(u => { const i = String(u || '').indexOf(PG_FOTO_PREFIX); return i < 0 ? null : decodeURIComponent(String(u).slice(i + PG_FOTO_PREFIX.length)); }).filter(Boolean);
+  if (p.length && SB) SB.storage.from('pengurus').remove(p).catch(() => {});
+}
+const fotoAman = u => typeof u === 'string' && u.includes(PG_FOTO_PREFIX) && /^https:\/\//.test(u) ? u : (typeof u === 'string' && /^blob:/.test(u) ? u : '');
 function tampilLoginPengurus(p, email, pw) {
   const teks = `Halo ${p.nama},\n\nBerikut akun pengurus aplikasi Warga ${lingk()}:\n\nAlamat: ${location.origin}${location.pathname.replace(/index\.html$/, '')}\nNo. HP: ${email}\nPassword: ${pw}\n\nMasuk dengan No. HP dan password di atas. Saat pertama masuk Anda akan diminta membuat password pribadi. Jangan berikan password ini kepada orang lain.`;
   const bisaWa = p.noHp && waNomor(p.noHp).length >= 10;
@@ -2991,7 +3043,7 @@ async function muatStruktur(paksa) {
 function strukturLevel(D) {
   const P = (D.pengurus || []).filter(p => p.nama), urutJ = j => { const i = JABATAN.indexOf(j); return i < 0 ? 99 : i; };
   const by = l => P.filter(p => orgLevel(p.jabatan) === l).sort((a, b) => urutJ(a.jabatan) - urutJ(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
-  const petugasPg = by(5).map(p => ({nama: p.nama, jabatan: p.jabatan, hp: p.hp}));
+  const petugasPg = by(5).map(p => ({nama: p.nama, jabatan: p.jabatan, hp: p.hp, foto: p.foto}));
   const nm = new Set(petugasPg.map(p => p.nama.toLowerCase()));
   const petugas = [...petugasPg, ...(D.petugas || []).filter(p => p.nama && !nm.has(p.nama.toLowerCase()))];
   return [
@@ -3010,7 +3062,7 @@ function vStruktur() {
   const L = strukturLevel(D);
   if (!L.length) return head + `<div class="empty">Belum ada data pengurus.${bisaKelola() ? '<button class="btn pri" data-act="org-kelola">Tambah pengurus</button>' : ''}</div>`;
   const node = (p, l) => { const wa = D.kontak && p.hp && waNomor(p.hp).length >= 10;
-    return `<div class="org-node l${l}"><span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span><b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
+    return `<div class="org-node l${l}">${fotoAman(p.foto) ? `<img class="org-av foto" src="${esc(p.foto)}" alt="Foto ${esc(p.nama)}" loading="lazy">` : `<span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span>`}<b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
   const tot = (D.pengurus || []).length;
   return head + `<div class="panel">
     <div class="org-kop"><b>STRUKTUR ORGANISASI PENGURUS RT ${esc(D.rt || '…')} / RW ${esc(D.rw || '…')}</b><span>${esc(D.lingkungan || lingk())}${D.kelurahan ? ' · Kel. ' + esc(D.kelurahan) : ''}</span>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
@@ -3033,7 +3085,9 @@ async function pdfStruktur() {
   P.line(M, 32, M + CW, 32, 1.4); P.line(M, 33.2, M + CW, 33.2, .5);
   P.text(105, 43, 'STRUKTUR ORGANISASI', {size: 15, bold: true, align: 'center'});
   if (periodeTeks(D)) P.text(105, 49, periodeTeks(D), {size: 10, align: 'center', color: [74, 59, 48]});
-  const BW = 40, BH = 17, GAP = 5, PER = 4, warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
+  const fotoIdx = new Map();
+  for (const x of L) for (const p of x.isi) { const u = fotoAman(p.foto); if (u && !fotoIdx.has(u)) { try { P.foto.push(await fotoJpeg(u)); fotoIdx.set(u, P.foto.length - 1); } catch (e) {} } }
+  const BW = 40, BH = 29, GAP = 5, PER = 4, warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
   let y = 56, prevBottom = null;
   for (const x of L) {
     for (let i = 0; i < x.isi.length; i += PER) {
@@ -3050,8 +3104,11 @@ async function pdfStruktur() {
         if (prevBottom !== null && n > 1) P.line(bx + BW / 2, top - 2, bx + BW / 2, top, .8, [190, 180, 168]);
         P.rect(bx, top, BW, BH, {fill: [250, 247, 242], stroke: c, lw: x.l === 1 ? 1.2 : .6});
         P.rect(bx, top, BW, 2.2, {fill: c});
+        const cx = bx + BW / 2, cy = top + 9, fi = fotoIdx.get(fotoAman(p.foto));
+        if (fi !== undefined) { P.fotoBulat(fi, cx, cy, 5.2); P.bulat(cx, cy, 5.2, {stroke: c, lw: .8}); }
+        else { P.bulat(cx, cy, 5.2, {fill: c}); P.text(cx, cy + 1.3, orgInisial(p.nama), {size: 8.5, bold: true, align: 'center', color: [255, 255, 255]}); }
         const nm = pdfWrap(p.nama, BW - 4, true, 8.6).slice(0, 2), jb = pdfWrap(p.jabatan || '', BW - 4, false, 7.4).slice(0, 2);
-        let ty = top + 7; nm.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 8.6, bold: true, align: 'center'}); ty += 3.6; });
+        let ty = top + 18.6; nm.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 8.6, bold: true, align: 'center'}); ty += 3.6; });
         jb.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 7.4, align: 'center', color: [90, 80, 70]}); ty += 3.1; });
       });
       prevBottom = top + BH; y = top + BH + 7;
@@ -4808,7 +4865,7 @@ function pdfWrap(str, widthMm, bold, size) {
   return out;
 }
 class MiniPDF {
-  constructor() { this.W = 595.28; this.H = 841.89; this.pages = []; this.img = null; this.addPage(); }
+  constructor() { this.W = 595.28; this.H = 841.89; this.pages = []; this.img = null; this.foto = []; this.addPage(); }
   addPage() { this.cur = []; this.pages.push(this.cur); }
   rgb(c) { return c.map(v => (v / 255).toFixed(3)).join(' '); }
   text(x, y, str, o = {}) {
@@ -4823,13 +4880,27 @@ class MiniPDF {
     if (o.fill) this.cur.push(`q ${this.rgb(o.fill)} rg ${r} f Q`);
     if (o.stroke) this.cur.push(`q ${this.rgb(o.stroke)} RG ${o.lw || .4} w ${r} S Q`);
   }
+  jalurBulat(cx, cy, r) {
+    const X = PT(cx), Y = this.H - PT(cy), R = PT(r), k = R * 0.5523, f = n => n.toFixed(2);
+    return `${f(X + R)} ${f(Y)} m ${f(X + R)} ${f(Y + k)} ${f(X + k)} ${f(Y + R)} ${f(X)} ${f(Y + R)} c ${f(X - k)} ${f(Y + R)} ${f(X - R)} ${f(Y + k)} ${f(X - R)} ${f(Y)} c ${f(X - R)} ${f(Y - k)} ${f(X - k)} ${f(Y - R)} ${f(X)} ${f(Y - R)} c ${f(X + k)} ${f(Y - R)} ${f(X + R)} ${f(Y - k)} ${f(X + R)} ${f(Y)} c`;
+  }
+  bulat(cx, cy, r, o = {}) {
+    const c = this.jalurBulat(cx, cy, r);
+    if (o.fill) this.cur.push(`q ${this.rgb(o.fill)} rg ${c} f Q`);
+    if (o.stroke) this.cur.push(`q ${this.rgb(o.stroke)} RG ${o.lw || .4} w ${c} S Q`);
+  }
+  fotoBulat(i, cx, cy, r) {
+    const X = PT(cx), Y = this.H - PT(cy), R = PT(r), f = n => n.toFixed(2), c = this.jalurBulat(cx, cy, r);
+    this.cur.push(`q ${c} W n ${f(2 * R)} 0 0 ${f(2 * R)} ${f(X - R)} ${f(Y - R)} cm /Ft${i} Do Q`);
+  }
   image(x, y, w, h) { if (this.img) this.cur.push(`q ${PT(w).toFixed(2)} 0 0 ${PT(h).toFixed(2)} ${PT(x).toFixed(2)} ${(this.H - PT(y + h)).toFixed(2)} cm /Im1 Do Q`); }
   bytes() {
     const objs = [];
     const add = s => { objs.push(s); return objs.length; };
     const cat = add(''), pages = add(''), f1 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'), f2 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
     let im = 0; if (this.img) im = add(`<< /Type /XObject /Subtype /Image /Width ${this.img.w} /Height ${this.img.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${this.img.data.length} >>\nstream\n${this.img.data}\nendstream`);
-    const res = `<< /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >>${im ? ` /XObject << /Im1 ${im} 0 R >>` : ''} >>`;
+    const fx = this.foto.map((g, i) => `/Ft${i} ${add(`<< /Type /XObject /Subtype /Image /Width ${g.w} /Height ${g.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${g.data.length} >>\nstream\n${g.data}\nendstream`)} 0 R`).join(' ');
+    const res = `<< /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >>${im || fx ? ` /XObject << ${im ? `/Im1 ${im} 0 R ` : ''}${fx} >>` : ''} >>`;
     const kids = this.pages.map(p => { const c = p.join('\n'); const cs = add(`<< /Length ${c.length} >>\nstream\n${c}\nendstream`); return add(`<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources ${res} /Contents ${cs} 0 R >>`); });
     objs[cat - 1] = `<< /Type /Catalog /Pages ${pages} 0 R >>`;
     objs[pages - 1] = `<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${kids.length} >>`;
@@ -4840,6 +4911,13 @@ class MiniPDF {
     out += `trailer\n<< /Size ${objs.length + 1} /Root ${cat} 0 R >>\nstartxref\n${xref}\n%%EOF`;
     const b = new Uint8Array(out.length); for (let i = 0; i < out.length; i++) b[i] = out.charCodeAt(i) & 255; return b;
   }
+}
+async function fotoJpeg(src, u = 200) {
+  const im = new Image(); im.crossOrigin = 'anonymous'; im.src = src; await im.decode();
+  const c = document.createElement('canvas'); c.width = c.height = u; const x = c.getContext('2d');
+  const s = Math.min(im.naturalWidth, im.naturalHeight); x.fillStyle = '#fff'; x.fillRect(0, 0, u, u);
+  x.drawImage(im, (im.naturalWidth - s) / 2, (im.naturalHeight - s) / 2, s, s, 0, 0, u, u);
+  return {w: u, h: u, data: atob(c.toDataURL('image/jpeg', .88).split(',')[1])};
 }
 async function logoJpeg() {
   const im = new Image(); im.src = LOGO; await im.decode();
@@ -6011,6 +6089,7 @@ document.addEventListener('click', async e => {
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'pg-foto-del') { if (pgFotoKerja && !pgFotoKerja.load) { pgFotoKerja.url = ''; pgRenderFoto(); } }
   else if (a === 'org-atur') openStrukturAtur();
   else if (a === 'org-kelola') { S.tab = 'admin'; S.admTab = 'pengurus'; render(); window.scrollTo(0, 0); }
   else if (a === 'org-muat') muatStruktur(true);

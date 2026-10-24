@@ -327,3 +327,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Hanya mengirim kolom aman: nama, jabatan, no HP pengurus (bisa dimatikan lewat pengaturan.strukturKontak=false),
 -- serta nama+jabatan pekerja aktif (tanpa gaji/rekening/NIK). Data pengaturan: ketuaRw, rt, rw, periodeMulai, periodeSelesai.
 -- EXECUTE dicabut dari public & anon; hanya authenticated.
+
+-- ===== Foto pengurus (2026-10-24) =====
+-- Bucket storage 'pengurus' (public, maks 512 KB, jpeg/webp/png). Unggah/ubah/hapus hanya Pemilik
+-- (privat.peran_saya() = 'pemilik', jadi ikut wajib MFA bila aktif), nama file harus <id>/<acak>.jpg.
+-- struktur_organisasi() kini juga mengirim 'foto', hanya bila URL berawalan storage publik proyek ini.
+-- Diuji (rollback): warga DITOLAK, ketua DITOLAK, pemilik BOLEH, nama file aneh DITOLAK.

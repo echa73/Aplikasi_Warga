@@ -1865,7 +1865,7 @@ function vIuran() {
     <div class="tile"><span class="lbl">KK lunas</span><span class="val">${r.lunas} / ${r.total}</span><span class="sub">${pct}% sudah membayar</span></div>
     <div class="tile"><span class="lbl">Kekurangan</span><span class="val">${esc(rp(Math.max(0, r.target - r.terkumpul)))}</span><span class="sub">${r.total - r.lunas} KK belum bayar</span></div>
   </div>
-  <div class="toolbar"><div class="seg" role="group" aria-label="Saring status">${seg}</div></div>
+  <div class="toolbar"><div class="seg" role="group" aria-label="Saring status">${seg}</div><span style="flex:1"></span><button class="btn" data-act="iur-pdf" ${list.length ? '' : 'disabled'} title="Cetak daftar iuran ${esc(perLbl(S.per, true))} sesuai saringan">Cetak PDF</button></div>
   ${list.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th>Rumah</th><th>Kepala keluarga</th><th>Status</th><th>Pembayaran</th><th>Total tunggakan</th><th></th></tr></thead><tbody>${rowsT}</tbody></table></div>
   <div class="list-mobile">${rowsM}</div>` : `<div class="empty">${r.total ? 'Tidak ada KK pada saringan ini.' : 'Belum ada KK yang wajib iuran pada bulan ini.'}</div>`}`;
 }
@@ -5023,6 +5023,49 @@ function pdfTabel(P, st, cfg) {
   for (const r of cfg.rows) draw(r.cells || r, r.style || {});
   st.y += 6;
 }
+async function pdfIuranBulan(per, saring) {
+  const P = new MiniPDF(), st = S.set, M = 16, CW = 178, r = rekapBulan(per);
+  let list = [...r.list].sort(sortHouse);
+  if (saring === 'belum') list = list.filter(w => !r.pm.has(w.id));
+  if (saring === 'lunas') list = list.filter(w => r.pm.has(w.id));
+  try { P.img = await logoJpeg(); } catch (e) { P.img = null; }
+  P.image(M, 11, 15.5, 18);
+  const tx = P.img ? M + 20 : M;
+  P.text(tx, 18, `PENGURUS RT ${st.rt || '...'} / RW ${st.rw || '...'}`, {size: 13, bold: true});
+  const wil = [lingk(), st.kelurahan && 'Kel. ' + st.kelurahan, st.kecamatan && 'Kec. ' + st.kecamatan, st.kota].filter(Boolean).join(' · ');
+  pdfWrap(wil, CW - 20, false, 9.5).forEach((l, i) => P.text(tx, 23.5 + i * 4.3, l, {size: 9.5, color: [74, 59, 48]}));
+  P.line(M, 32, M + CW, 32, 1.4); P.line(M, 33.2, M + CW, 33.2, .5);
+  P.text(105, 42, 'DAFTAR PEMBAYARAN IURAN WARGA', {size: 14, bold: true, align: 'center'});
+  P.text(105, 48, `Bulan ${perLbl(per, true)}${saring === 'belum' ? ' · Belum bayar' : saring === 'lunas' ? ' · Sudah lunas' : ''}`, {size: 10.5, align: 'center', color: [74, 59, 48]});
+  const s = {y: 54};
+  P.text(M, s.y, `Iuran per KK: ${rp(nominal())} / bulan`, {size: 9, color: [74, 59, 48]});
+  P.text(M + CW, s.y, `Dicetak: ${tglSurat(todayISO())}`, {size: 9, align: 'right', color: [74, 59, 48]}); s.y += 4;
+  let tot = 0;
+  pdfTabel(P, s, {size: 8.8, cols: [{w: 9, align: "center"}, {w: 20}, {w: 48}, {w: 22}, {w: 25}, {w: 22, align: "right"}, {w: 14, align: "center"}, {w: 18}],
+    head: ['No', 'Blok', 'Nama kepala keluarga', 'Tgl bayar', 'Metode', 'Jumlah', 'Status', 'Paraf'],
+    rows: [...list.map((w, i) => { const p = r.pm.get(w.id); if (p) tot += Number(p.jumlah) || 0;
+      return {cells: [String(i + 1), w.blok || '', w.nama || '', p ? tgl(p.tanggal) : '', p ? p.metode || '' : '', p ? nf.format(p.jumlah) : '', p ? 'Lunas' : 'Belum', ''], style: p ? {} : {color: [160, 50, 30]}}; }),
+      {cells: ['', '', `Jumlah (${list.length} KK)`, '', '', nf.format(tot), '', ''], style: {bold: true, fill: [250, 246, 239]}}]});
+  if (s.y + 34 > 280) { P.addPage(); s.y = 20; }
+  P.text(M, s.y, 'Rekapitulasi', {size: 10.5, bold: true}); s.y += 3;
+  pdfTabel(P, s, {size: 9.2, cols: [{w: 70}, {w: 40, align: 'right'}], rows: [
+    ['KK wajib iuran', `${r.total} KK`], ['Sudah lunas', `${r.lunas} KK (${r.total ? Math.round(r.lunas / r.total * 100) : 0}%)`], ['Belum bayar', `${r.total - r.lunas} KK`],
+    ['Target iuran', rp(r.target)], {cells: ['Terkumpul', rp(r.terkumpul)], style: {bold: true, fill: [231, 242, 232]}}, ['Kekurangan', rp(Math.max(0, r.target - r.terkumpul))]]});
+  // tanda tangan
+  if (s.y + 46 > 282) { P.addPage(); s.y = 24; }
+  const y0 = s.y + 2, xa = M + 38, xb = M + CW - 42, mm = n => n * 25.4 / 72;
+  P.text(xa, y0 + 5, 'Dibuat oleh,', {size: 10, align: 'center'}); P.text(xa, y0 + 10, 'Bendahara', {size: 10, align: 'center'});
+  P.text(xb, y0, `${st.kota || lingk()}, ${tglSurat(todayISO())}`, {size: 10, align: 'center'});
+  P.text(xb, y0 + 5, 'Mengetahui,', {size: 10, align: 'center'}); P.text(xb, y0 + 10, `Ketua RT ${st.rt || ''}`.trim(), {size: 10, align: 'center'});
+  const nb = namaBendahara() || '(..............................)', nk = namaKetua() || '(..............................)';
+  P.text(xa, y0 + 36, nb, {size: 10, bold: true, align: 'center'}); P.line(xa - mm(pdfW(nb, true, 10)) / 2, y0 + 37, xa + mm(pdfW(nb, true, 10)) / 2, y0 + 37, .6);
+  P.text(xb, y0 + 36, nk, {size: 10, bold: true, align: 'center'}); P.line(xb - mm(pdfW(nk, true, 10)) / 2, y0 + 37, xb + mm(pdfW(nk, true, 10)) / 2, y0 + 37, .6);
+  const n = P.pages.length;
+  P.pages.forEach((pg, i) => { P.cur = pg; P.line(M, 286, M + CW, 286, .3, [205, 191, 174]);
+    P.text(M, 290.5, `Daftar Iuran Warga · ${lingk()} · ${perLbl(per, true)}`, {size: 7.5, color: [122, 100, 84]});
+    P.text(M + CW, 290.5, `Halaman ${i + 1} dari ${n}`, {size: 7.5, color: [122, 100, 84], align: 'right'}); });
+  return P.bytes();
+}
 async function buatPdfLaporan(g, L) {
   const P = new MiniPDF(), st = S.set, M = 16, CW = 178, R = v => rp(v), N = v => v ? nf.format(v) : '';
   try { P.img = await logoJpeg(); } catch (e) { P.img = null; }
@@ -6166,6 +6209,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
   else if (a === 'pk-foto-del') { if (pkFotoKerja && !pkFotoKerja.load) { pkFotoKerja.url = ''; renderFoto(pkFotoKerja); } }
   else if (a === 'pg-foto-del') { if (pgFotoKerja && !pgFotoKerja.load) { pgFotoKerja.url = ''; pgRenderFoto(); } }
+  else if (a === 'iur-pdf') { b.disabled = true; try { const sf = S.iurFilter || 'semua'; unduh(fname(`Iuran Warga ${perLbl(S.per, true)}${sf !== 'semua' ? ' - ' + (sf === 'belum' ? 'Belum bayar' : 'Lunas') : ''}.pdf`), new Blob([await pdfIuranBulan(S.per, sf)], {type: 'application/pdf'})); } catch (err) { toast('PDF gagal dibuat.', 'bad'); } b.disabled = false; }
   else if (a === 'org-atur') openStrukturAtur();
   else if (a === 'org-kelola') { S.tab = 'admin'; S.admTab = 'pengurus'; render(); window.scrollTo(0, 0); }
   else if (a === 'org-muat') muatStruktur(true);

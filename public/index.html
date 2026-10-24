@@ -3046,12 +3046,17 @@ function strukturLevel(D) {
   const by = l => P.filter(p => orgLevel(p.jabatan) === l).sort((a, b) => urutJ(a.jabatan) - urutJ(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
   const petugasPg = by(5).map(p => ({nama: p.nama, jabatan: p.jabatan, hp: p.hp, foto: p.foto}));
   const nm = new Set(petugasPg.map(p => p.nama.toLowerCase()));
-  const pkPt = (D.petugas || []).filter(p => p.nama && (p.struktur || 'petugas') === 'petugas' && !nm.has(p.nama.toLowerCase()));
   const adaJab = new Set(P.map(p => String(p.jabatan || '').trim()));
-  const grup = new Map([['', [...petugasPg, ...pkPt.filter(p => !p.atasan || !adaJab.has(p.atasan))]]]);
-  pkPt.filter(p => p.atasan && adaJab.has(p.atasan)).forEach(p => { if (!grup.has(p.atasan)) grup.set(p.atasan, []); grup.get(p.atasan).push(p); });
-  const grupL = [...grup.entries()].filter(([, v]) => v.length).sort((a, b) => (a[0] ? urutJ(a[0]) : 999) - (b[0] ? urutJ(b[0]) : 999))
-    .map(([a, isi]) => ({lbl: a ? 'Petugas · di bawah ' + a : 'Petugas lingkungan', l: 5, isi}));
+  const pkPt = (D.petugas || []).filter(p => p.nama && p.struktur !== 'pengurus' && p.struktur !== 'tidak' && !nm.has(p.nama.toLowerCase()))
+    .map(p => { const kat = PK_PETUGAS.includes(p.struktur) ? p.struktur : pkStrukturDefault(p.jabatan);
+      const auto = !p.struktur ? ([...adaJab].find(j => new RegExp('koordinator ' + kat, 'i').test(j)) || '') : '';
+      return {...p, kat, atasan: p.atasan && adaJab.has(p.atasan) ? p.atasan : auto}; });
+  const grup = new Map();
+  [...petugasPg.map(p => ({...p, kat: 'keamanan', atasan: ''})), ...pkPt].forEach(p => { const k = p.kat + '|' + p.atasan; if (!grup.has(k)) grup.set(k, []); grup.get(k).push(p); });
+  const urutK = k => PK_PETUGAS.indexOf(k);
+  const grupL = [...grup.entries()].map(([k, isi]) => { const [kat, at] = k.split('|'); return {kat, at, isi}; })
+    .sort((a, b) => urutK(a.kat) - urutK(b.kat) || (a.at ? urutJ(a.at) : -1) - (b.at ? urutJ(b.at) : -1))
+    .map(g => ({lbl: PK_GRUP_LBL[g.kat] + (g.at ? ' · di bawah ' + g.at : ''), l: 5, isi: g.isi}));
   return [
     D.ketuaRw ? {lbl: 'Pelindung', l: 0, isi: [{nama: D.ketuaRw, jabatan: 'Ketua RW' + (D.rw ? ' ' + D.rw : '')}]} : null,
     {lbl: 'Ketua', l: 1, isi: by(1)}, {lbl: 'Wakil ketua', l: 2, isi: by(2)}, {lbl: 'Sekretaris & bendahara', l: 3, isi: by(3)},
@@ -3129,7 +3134,7 @@ function openStrukturAtur() {
     body: `<div class="grid2"><div class="fld"><label for="so_m">Mulai</label><input type="date" id="so_m" name="periodeMulai" value="${esc(S.set.periodeMulai || '')}"></div>
       <div class="fld"><label for="so_s">Selesai</label><input type="date" id="so_s" name="periodeSelesai" value="${esc(S.set.periodeSelesai || '')}"></div></div>
       <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturKontak" ${S.set.strukturKontak === false ? '' : 'checked'}> <span>Tampilkan tombol WhatsApp pengurus ke warga</span></label>
-      <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturPetugas" ${S.set.strukturPetugas === false ? '' : 'checked'}> <span>Tampilkan petugas lingkungan (pekerja) di bagan<br><span class="muted" style="font-size:.82rem">Atur per orang di Pekerja &amp; gaji → ubah data pekerja → Struktur organisasi.</span></span></label>
+      <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturPetugas" ${S.set.strukturPetugas === false ? '' : 'checked'}> <span>Tampilkan petugas keamanan, kebersihan &amp; lainnya (pekerja) di bagan<br><span class="muted" style="font-size:.82rem">Atur per orang di Pekerja &amp; gaji → ubah data pekerja → Struktur organisasi.</span></span></label>
       <p class="muted" style="margin:0;font-size:.84rem">Nama Ketua RW (pelindung) diambil dari Pengaturan → Kop surat. Jabatan pengurus diatur di Admin → Pengurus.</p>`,
     onSubmit: async d => {
       if (d.periodeMulai && d.periodeSelesai && d.periodeSelesai < d.periodeMulai) { pesanDlg('Tanggal selesai tidak boleh sebelum tanggal mulai.', 'so_s'); return false; }
@@ -3247,8 +3252,8 @@ function openPekerja(id) {
     <div class="grid2"><div class="fld"><label for="pk_k">Kategori di buku kas</label><select id="pk_k" name="katKas" ${ro}><option value="">Otomatis sesuai jabatan</option>${KAT_KELUAR.map(k => `<option ${k === v.katKas ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
       <div class="fld"><label for="pk_ak">Akun login (opsional)</label><select id="pk_ak" name="akunId" ${ro}><option value="">— tidak ada —</option>${akun.map(p => `<option value="${esc(p.userId)}" ${p.userId === v.akunId ? 'selected' : ''}>${esc(p.nama)} · ${esc(p.jabatan || '')}</option>`).join('')}</select><span class="hint">Pekerja dengan akun (mis. satpam) bisa melihat slip gajinya sendiri.</span></div></div>
     <div class="gj-sec"><h4>Struktur organisasi</h4>
-      <div class="fld"><label for="pk_st">Tampil di struktur organisasi</label><select id="pk_st" name="struktur" ${ro}>${[['petugas', 'Ya, sebagai petugas lingkungan'], ['pengurus', 'Ya, sebagai pengurus (pilih jabatan)'], ['tidak', 'Tidak ditampilkan']].map(([k, l]) => `<option value="${k}" ${k === (v.struktur || 'petugas') ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-      <div class="fld" id="pkAtasanW" ${(v.struktur || 'petugas') === 'petugas' ? '' : 'hidden'}><label for="pk_at">Di bawah pengurus (atasan langsung)</label><select id="pk_at" name="atasan" ${ro}><option value="">— langsung di baris Petugas lingkungan —</option>${pkAtasanOpsi().map(([j, n]) => `<option value="${esc(j)}" ${j === (x ? v.atasan || '' : pkAtasanDefault(v.jabatan)) ? 'selected' : ''}>${esc(j)}${n ? ' – ' + esc(n) : ''}</option>`).join('')}</select><span class="hint">Pekerja tampil dikelompokkan di bawah jabatan pengurus ini.</span></div>
+      <div class="fld"><label for="pk_st">Tampil di struktur organisasi</label><select id="pk_st" name="struktur" ${ro}>${PK_STRUKTUR.map(([k, l]) => `<option value="${k}" ${k === (v.struktur || pkStrukturDefault(v.jabatan)) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="fld" id="pkAtasanW" ${PK_PETUGAS.includes(v.struktur || pkStrukturDefault(v.jabatan)) ? '' : 'hidden'}><label for="pk_at">Di bawah pengurus (atasan langsung)</label><select id="pk_at" name="atasan" ${ro}><option value="">— langsung di baris Petugas lingkungan —</option>${pkAtasanOpsi().map(([j, n]) => `<option value="${esc(j)}" ${j === (x && v.struktur ? v.atasan || '' : pkAtasanDefault(v.struktur || pkStrukturDefault(v.jabatan))) ? 'selected' : ''}>${esc(j)}${n ? ' – ' + esc(n) : ''}</option>`).join('')}</select><span class="hint">Pekerja tampil dikelompokkan di bawah jabatan pengurus ini.</span></div>
       <div class="fld" id="pkJabStW" ${v.struktur === 'pengurus' ? '' : 'hidden'}><label for="pk_js">Jabatan di struktur</label><select id="pk_js" name="jabatanStruktur" ${ro}>${JABATAN.map(j => `<option ${j === (v.jabatanStruktur || 'Seksi Keamanan') ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select><span class="hint">Tampil sejajar dengan pengurus sesuai jabatan ini. Hak akses aplikasi tidak berubah.</span></div>
     </div>
     <div class="fld"><label for="pk_c">Catatan</label><input type="text" id="pk_c" name="catatan" maxlength="200" value="${esc(v.catatan || '')}" ${ro}></div>`,
@@ -3258,7 +3263,7 @@ function openPekerja(id) {
       const nik = String(d.nik || '').replace(/\D/g, ''); if (nik && nik.length !== 16) { pesanDlg('NIK harus 16 digit, atau kosongkan.', 'pk_nik'); return false; }
       const row = {...(x || {}), nama, jabatan: d.jabatan, status: d.status, noHp: String(d.noHp || '').trim(), mulai: d.mulai || '', nik, gajiPokok: gp, alamat: String(d.alamat || '').trim(),
         tunjangan: gjAmbil('#pkTun').filter(t => t.nama), bank: String(d.bank || '').trim(), noRek: String(d.noRek || '').replace(/[^\dA-Za-z-]/g, ''), anRek: String(d.anRek || '').trim(), katKas: d.katKas || '', akunId: d.akunId || '', catatan: String(d.catatan || '').trim(), diperbarui: todayISO(),
-        struktur: ['petugas', 'pengurus', 'tidak'].includes(d.struktur) ? d.struktur : 'petugas', atasan: d.struktur === 'petugas' ? (d.atasan || '') : '', jabatanStruktur: d.struktur === 'pengurus' ? (d.jabatanStruktur || '') : ''};
+        struktur: PK_STRUKTUR.some(o => o[0] === d.struktur) ? d.struktur : pkStrukturDefault(d.jabatan), atasan: PK_PETUGAS.includes(d.struktur) ? (d.atasan || '') : '', jabatanStruktur: d.struktur === 'pengurus' ? (d.jabatanStruktur || '') : ''};
       if (!x) row.dibuat = todayISO();
       S.struktur = null;
       const ok = await put('pekerja', x ? x.id : 'pk_' + uid(), row);
@@ -3266,19 +3271,23 @@ function openPekerja(id) {
     },
     onDelete: x ? async () => { if (S.gaji.some(g => g.pekerjaId === x.id)) { pesanDlg('Pekerja ini sudah punya slip gaji. Ubah statusnya menjadi "Berhenti" agar riwayat gaji tetap tersimpan.'); return false; } const ok = await del('pekerja', x.id); if (ok) toast('Data pekerja dihapus.'); return ok; } : null, deleteLabel: 'Hapus pekerja'});
   const st = $('#pk_st'), pj = $('#pk_j');
-  if (st) st.addEventListener('change', () => { $('#pkAtasanW').hidden = st.value !== 'petugas'; $('#pkJabStW').hidden = st.value !== 'pengurus'; });
-  if (pj && !x) pj.addEventListener('change', () => { const a = $('#pk_at'), d = pkAtasanDefault(pj.value); if (a && [...a.options].some(o => o.value === d)) a.value = d; });
+  const setAtasan = () => { const a = $('#pk_at'), d = pkAtasanDefault(st.value); if (a && [...a.options].some(o => o.value === d)) a.value = d; };
+  if (st) st.addEventListener('change', () => { $('#pkAtasanW').hidden = !PK_PETUGAS.includes(st.value); $('#pkJabStW').hidden = st.value !== 'pengurus'; setAtasan(); });
+  if (pj && st && (!x || !x.struktur)) pj.addEventListener('change', () => { if (PK_PETUGAS.includes(st.value)) { st.value = pkStrukturDefault(pj.value); setAtasan(); } });
 }
+const PK_STRUKTUR = [['keamanan', 'Ya, sebagai petugas keamanan'], ['kebersihan', 'Ya, sebagai petugas kebersihan'], ['petugas', 'Ya, sebagai petugas lingkungan lainnya'], ['pengurus', 'Ya, sebagai pengurus (pilih jabatan)'], ['tidak', 'Tidak ditampilkan']];
+const PK_PETUGAS = ['keamanan', 'kebersihan', 'petugas'];
+const PK_GRUP_LBL = {keamanan: 'Petugas keamanan', kebersihan: 'Petugas kebersihan', petugas: 'Petugas lingkungan'};
+const pkStrukturDefault = jab => { const t = String(jab || '').toLowerCase(); return /satpam|komandan|keamanan|hansip|linmas/.test(t) ? 'keamanan' : /bersih|sampah|kebun|taman/.test(t) ? 'kebersihan' : 'petugas'; };
 function pkAtasanOpsi() {
   const peta = new Map();
   pengurusAktif().filter(p => p.jabatan && orgLevel(p.jabatan) < 5).forEach(p => { const j = p.jabatan.trim(); peta.set(j, peta.has(j) ? peta.get(j) + ', ' + p.nama : p.nama); });
   const urut = j => { const i = JABATAN.indexOf(j); return i < 0 ? 99 : i; };
   return [...peta.entries()].sort((a, b) => urut(a[0]) - urut(b[0]));
 }
-function pkAtasanDefault(jab) {
-  const t = String(jab || '').toLowerCase(), ada = pkAtasanOpsi().map(o => o[0]);
-  const cari = re => ada.find(j => re.test(j.toLowerCase())) || '';
-  return /satpam|komandan|keamanan/.test(t) ? cari(/koordinator keamanan/) || cari(/seksi keamanan/) : /bersih|sampah|kebun|taman/.test(t) ? cari(/koordinator kebersihan/) || cari(/seksi kebersihan/) : '';
+function pkAtasanDefault(kat) {
+  const ada = pkAtasanOpsi().map(o => o[0]), cari = re => ada.find(j => re.test(j.toLowerCase())) || '';
+  return kat === 'keamanan' ? cari(/koordinator keamanan/) || cari(/seksi keamanan/) : kat === 'kebersihan' ? cari(/koordinator kebersihan/) || cari(/seksi kebersihan/) : '';
 }
 async function gjBuatSlip() {
   const per = S.gjPer, ada = gjBulan(per), list = pkAktif().filter(p => !ada.some(g => g.pekerjaId === p.id));

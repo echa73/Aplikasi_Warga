@@ -338,3 +338,5 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- dokumen pekerja: struktur = 'petugas' | 'pengurus' | 'tidak', atasan (jabatan pengurus), jabatanStruktur.
 -- pengaturan.strukturPetugas=false menyembunyikan semua pekerja mode 'petugas'. RPC struktur_organisasi() memfilter di server
 -- dan tetap hanya mengirim nama/jabatan pekerja (tanpa HP, gaji, rekening, NIK).
+-- (2026-10-24) pekerja.struktur kini: 'keamanan' | 'kebersihan' | 'petugas' | 'pengurus' | 'tidak'. RPC mengirim nilai mentah (null bila belum diatur);
+-- klien menentukan kategori & atasan otomatis dari jabatan bila belum diatur.

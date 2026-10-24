@@ -89,3 +89,4 @@ Kode aplikasi kini di `public/app.js` (bukan lagi skrip inline di `index.html`) 
 ### CAPTCHA login (Cloudflare Turnstile)
 Pengaturan → Keamanan login → isi **site key** Turnstile (khusus Pemilik). Halaman login lalu memuat verifikasi anti-bot (biasanya tak terlihat, muncul kotak hanya bila mencurigakan) dan mengirim token ke Supabase. Penegakan diaktifkan di dashboard Supabase (Bot and Abuse Protection) dengan **secret key**. Urutan: buat widget → deploy → isi site key → aktifkan di Supabase. Bila bermasalah, matikan dari dashboard Supabase.
 Pengumuman kategori **Rapat pengurus** hanya terlihat oleh pengurus dan pemilik (ditegakkan di server). Warga, satpam, akun pekerja, dan papan info login tidak menerimanya.
+Rumah saya → **Riwayat iuran** kini berupa tabel per tahun (pilihan tahun + Semua tahun) dengan ringkasan bulan lunas & total dibayar, kolom tanggal/metode/jumlah, dan tombol kwitansi; versi HP dibuat ringkas.

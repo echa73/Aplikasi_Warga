@@ -1458,14 +1458,36 @@ function loginWargaHtml() {
     <p class="muted" style="margin:0;font-size:.82rem">Lupa password atau belum punya akun? Hubungi pengurus RT, password Anda bisa direset dari menu Admin.</p></form>`;
 }
 /* portal views */
+/* riwayat iuran warga: tabel per tahun */
+function riwayatIuran(w, pm) {
+  const cur = nowPer(), awal = mulaiPer(w) || cur;
+  const thSet = new Set(); for (let y = Number(awal.slice(0, 4)); y <= Number(cur.slice(0, 4)); y++) thSet.add(String(y));
+  pm.forEach(p => p.periode && thSet.add(String(p.periode).slice(0, 4)));
+  const thList = [...thSet].sort().reverse();
+  if (!S.rwTh || (S.rwTh !== 'semua' && !thSet.has(S.rwTh))) S.rwTh = cur.slice(0, 4);
+  const pilih = S.rwTh;
+  const bulanTahun = y => { const out = []; for (let m = 1; m <= 12; m++) { const p = y + '-' + pad(m); if ((p >= awal && p <= cur) || pm.some(q => q.periode === p)) out.push(p); } return out; };
+  const per = (pilih === 'semua' ? thList.slice().reverse().flatMap(bulanTahun) : bulanTahun(pilih)).reverse();
+  const rows = per.map(p => ({p, x: pm.find(q => q.periode === p)}));
+  const lunas = rows.filter(r => r.x), belum = rows.filter(r => !r.x && r.p <= cur), total = lunas.reduce((t, r) => t + (Number(r.x.jumlah) || 0), 0);
+  const opsi = `<option value="semua" ${pilih === 'semua' ? 'selected' : ''}>Semua tahun</option>` + thList.map(y => `<option value="${y}" ${y === pilih ? 'selected' : ''}>${y}</option>`).join('');
+  return `<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><h3 style="margin:0">Riwayat iuran</h3>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.88rem"><span class="muted">Tahun</span><select id="rwTh" data-rw="th" aria-label="Pilih tahun riwayat iuran" style="min-width:130px">${opsi}</select></label></div>
+    <div class="tiles" style="margin-bottom:10px"><div class="tile"><span class="lbl">Bulan lunas</span><span class="val">${lunas.length} / ${rows.length}</span><span class="sub">${pilih === 'semua' ? 'seluruh periode' : 'tahun ' + esc(pilih)}</span></div>
+      <div class="tile"><span class="lbl">Total dibayar</span><span class="val">${esc(rp(total))}</span><span class="sub">${belum.length ? belum.length + ' bulan belum dibayar' : 'Tidak ada tunggakan'}</span></div></div>
+    ${rows.length ? `<div class="tbl-wrap"><table class="rw-tbl"><thead><tr><th class="r rw-x">No</th><th>Bulan</th><th>Status</th><th><span class="rw-l">Tanggal bayar</span><span class="rw-s">Tgl</span></th><th class="rw-x">Metode</th><th class="r">Jumlah</th><th></th></tr></thead><tbody>
+      ${rows.map((r, i) => `<tr><td class="r num rw-x">${i + 1}</td><td style="font-weight:600;white-space:nowrap"><span class="rw-l">${esc(perLbl(r.p, true))}</span><span class="rw-s">${esc(perLbl(r.p))}</span></td>
+        <td>${r.x ? '<span class="chip ok">Lunas</span>' : r.p > cur ? '<span class="chip mute">Belum tempo</span>' : '<span class="chip bad">Belum</span>'}</td>
+        <td class="num" style="white-space:nowrap">${r.x ? `<span class="rw-l">${esc(tgl(r.x.tanggal))}</span><span class="rw-s">${esc(String(r.x.tanggal || '').slice(8, 10) + '/' + String(r.x.tanggal || '').slice(5, 7))}</span>` : '—'}</td><td class="rw-x">${r.x ? esc(r.x.metode || '—') : '—'}</td>
+        <td class="r num" style="white-space:nowrap">${r.x ? esc(rp(r.x.jumlah)) : `<span class="muted">${esc(rp(nominal()))}</span>`}</td>
+        <td class="r">${r.x ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(r.x.id)}" aria-label="Kwitansi ${esc(perLbl(r.p, true))}"><span class="rw-l">Kwitansi</span><span class="rw-s">🧾</span></button>` : ''}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td class="rw-x"></td><td colspan="3" style="font-weight:700">Jumlah dibayar</td><td class="rw-x"></td><td class="r num" style="font-weight:700;white-space:nowrap">${esc(rp(total))}</td><td></td></tr></tfoot></table></div>`
+      : '<p class="muted" style="margin:0">Belum ada tagihan pada tahun ini.</p>'}</div>`;
+}
 function vPortal() {
   const w = wargaSaya(); if (!w) return '<div class="empty">Data rumah Anda tidak ditemukan. Hubungi pengurus RT.</div>';
   const cur = nowPer(), pm = S.iuran.filter(p => p.wargaId === w.id), lunasIni = pm.find(p => p.periode === cur);
   const tl = tunggakanList(w);
-  const months = []; for (let i = 0; i < 12; i++) { const p = addM(cur, -i); if (p < mulaiPer(w)) break; months.push(p); }
-  const rowBln = months.map(p => { const x = pm.find(q => q.periode === p); return `<div class="row"><div class="grow"><div class="t">${esc(perLbl(p, true))}</div>
-      <div class="s">${x ? `Dibayar ${esc(tgl(x.tanggal))} · ${esc(rp(x.jumlah))}` : `Belum dibayar · ${esc(rp(nominal()))}`}</div></div>
-      ${x ? `<span class="chip ok">Lunas</span><button class="btn sm" data-act="kwitansi" data-id="${esc(x.id)}">Kwitansi</button>` : '<span class="chip bad">Belum</span>'}</div>`; }).join('');
   const ang = (w.anggota || []);
   return `<div class="sec-head"><div><h2>Rumah saya</h2><p>${esc(w.blok)} · ${esc(lingk())}</p></div></div>
   <div class="tiles">
@@ -1497,7 +1519,7 @@ function vPortal() {
       <td class="r num">${a.lahir ? esc(umur(a.lahir).replace(' tahun', ' th')) : '—'}</td><td><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(i) ? fmtNik(a.nik) : maskNik(a.nik))}</span>${a.nik ? `<button type="button" class="btn sm ghost" data-act="nik-lihat" data-i="${i}" aria-pressed="${S.nikBuka.has(i)}" aria-label="${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'} NIK ${esc(a.nama)}">${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'}</button>` : ''}</span></td></tr>`).join('')}
     </tbody></table></div>
   <p class="muted" style="margin:10px 0 0;font-size:.82rem">${isWarga() ? 'Tambah, ubah atau hapus anggota keluarga lewat tombol Ubah data keluarga.' : bisa('warga') ? `Data ini diambil dari menu Data warga. <a href="#warga" data-act="warga-edit" data-id="${esc(w.id)}" style="color:var(--accent)">Ubah data rumah ini</a>` : 'Data ini diambil dari menu Data warga.'}</p></div>
-  <div class="panel"><h3>Riwayat iuran <small>12 bulan terakhir</small></h3><div class="rows">${rowBln || '<p class="muted" style="margin:0">Belum ada tagihan.</p>'}</div></div>
+  ${riwayatIuran(w, pm)}
   ${panelLokasi({blok: w.blok, judul: 'Alamat & peta rumah'})}
   ${vBersihRingkas()}
   ${vLapakBaru()}`;
@@ -5863,6 +5885,7 @@ document.addEventListener('input', e => {
   if (e.target.id === 'qKel') { S.kelQ = e.target.value; render(); }
 });
 document.addEventListener('change', async e => {
+  if (e.target && e.target.dataset && e.target.dataset.rw === 'th') { S.rwTh = e.target.value; render(); return; }
   const sbm = e.target.dataset && e.target.dataset.sbm;
   if (sbm && sbm !== 'q' && sbm !== 'jml' && S.sbMz) {
     const z = S.sbMz, id = e.target.dataset.id;

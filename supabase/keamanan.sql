@@ -350,3 +350,12 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- RPC public.petugas_keamanan(): untuk izin('keamanan') >= 1, mengembalikan id/nama/jabatan pekerja aktif kategori keamanan
 -- (struktur='keamanan' atau jabatan satpam/komandan/keamanan/hansip/linmas). Tanpa gaji/rekening/NIK/HP.
 -- Diuji (rollback): koord keamanan dapat daftar; bendahara (keamanan=tidak) & warga dapat [].
+
+-- ===== Kebersihan lingkungan (2026-10-24) =====
+-- Koleksi baru 'bersih' (set jadwal sampah, kg_* kegiatan, ck_<tanggal> cek harian).
+-- izin area 'kebersihan' (fallback ke izin 'keluhan'); role koord_kebersihan diberi kebersihan=kelola.
+-- boleh_baca: 'bersih' terbaca semua pengurus; warga juga boleh baca (policy "baca sesuai role" ditambah 'bersih').
+--   keluhan juga terbaca bila izin kebersihan >= 1.
+-- boleh_tulis: 'bersih' butuh izin kebersihan = 2; keluhan boleh diubah pemegang kebersihan=2 hanya untuk kategori 'Kebersihan & sampah'.
+-- RPC public.petugas_kebersihan(): nama/jabatan pekerja kebersihan aktif untuk izin kebersihan >= 1.
+-- Diuji (rollback): koord kebersihan & ketua BOLEH tulis; bendahara & warga DITOLAK tulis, tetap bisa baca.

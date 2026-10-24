@@ -74,3 +74,6 @@ Petugas (pekerja) kini tampil menempel langsung di bawah kotak pengurus atasanny
 Foto pekerja diunggah di Pekerja & gaji → ubah data pekerja, tampil di daftar pekerja, bagan, dan PDF struktur organisasi.
 Menu Iuran → tombol **Cetak PDF**: daftar pembayaran iuran per bulan (sesuai saringan Semua/Belum/Lunas) berisi blok, nama KK, tanggal bayar, metode, jumlah, status, kolom paraf, rekapitulasi, dan tanda tangan Bendahara & Ketua RT.
 Jadwal jaga (Keamanan → Jadwal jaga): nama petugas dipilih dari daftar satpam aktif di menu Pekerja & gaji (bisa lebih dari satu), plus kolom petugas pengganti bila perlu.
+
+### Kebersihan lingkungan
+Menu **Kebersihan** (grup Lingkungan): beranda (angkut sampah berikutnya, kegiatan, cek harian, laporan terbuka, aturan & tips), jadwal angkut sampah per jenis (organik/anorganik/besar/B3) dengan pengangkut & TPS + bagikan WA, kegiatan (kerja bakti, fogging/PSN, bersih saluran, pangkas pohon, dll.) dengan absensi warga per rumah & pengumuman otomatis, cek harian petugas per area (petugas dari data Pekerja), dan laporan warga kategori Kebersihan & sampah dengan tanggapan. Warga melihat beranda/jadwal/kegiatan, ringkasan di Rumah saya, dan tombol lapor masalah kebersihan. Hak akses lewat role "Kebersihan lingkungan" (bawaan mengikuti izin Keluhan).

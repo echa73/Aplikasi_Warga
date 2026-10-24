@@ -241,6 +241,7 @@ const pesanAuth = e => {
   const m = String((e && e.message) || e || '');
   if (/invalid login credentials/i.test(m)) return 'Email/username atau password salah.';
   if (/already registered|already been registered|exists|sudah dipakai/i.test(m)) return 'Email atau username ini sudah dipakai akun lain.';
+  if (/captcha/i.test(m)) return 'Verifikasi anti-bot gagal atau kedaluwarsa. Tunggu kotak verifikasi selesai lalu coba lagi.';
   if (/Tidak diizinkan/i.test(m)) return 'Hanya Pemilik yang bisa melakukan ini.';
   if (/password should be at least|weak|minimal 8/i.test(m)) return 'Password terlalu pendek (minimal 8 karakter).';
   if (/invalid.*email|email.*invalid/i.test(m)) return 'Format email tidak valid.';
@@ -440,7 +441,7 @@ function render() {
   renderMode(); renderTabs();
   const main = $('#main');
   if (!S.loaded) { main.innerHTML = '<div class="skel">Memuat data…</div>'; return; }
-  if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
+  if (!sudahMasuk()) { main.innerHTML = vLogin(); tsPasang(); return; }
   if (S.terkunci) { main.innerHTML = vKunci(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
@@ -1085,6 +1086,8 @@ function vPengaturan() {
     </div>
     <div class="fld"><label for="s_bayar">Info pembayaran untuk warga</label><textarea id="s_bayar" name="infoBayar" rows="3" placeholder="mis. Transfer ke BCA 1234567890 a.n. Bendahara RT 05, atau tunai ke Ibu Sri (B-02)" ${ro}>${esc(S.set.infoBayar || '')}</textarea><span class="hint">Tampil di halaman Rumah saya milik warga</span></div>
     <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="papanPublik" ${S.set.papanPublik === false ? '' : 'checked'} ${ro}> <span>Tampilkan papan info di halaman login (pengumuman terbaru & status keluhan, tanpa nama pelapor atau nomor rumah). Bisa dilihat tanpa login.</span></label>
+    <h3 style="margin-top:6px">Keamanan login</h3>
+    <div class="fld"><label for="s_ts">Site key Cloudflare Turnstile (CAPTCHA)</label><input type="text" id="s_ts" name="turnstileKey" value="${esc(S.set.turnstileKey || '')}" maxlength="80" autocomplete="off" placeholder="0x4AAAAAAA…" ${S.sesi === 'pemilik' ? '' : 'disabled'}><span class="hint">Isi site key (bukan secret key) agar halaman login memakai verifikasi anti-bot. Secret key dipasang di dashboard Supabase → Authentication → Bot and Abuse Protection. Hanya Pemilik yang dapat mengubah.</span></div>
     <h3 style="margin-top:6px">Lokasi lingkungan</h3>
     <div class="fld"><label for="s_alamat">Alamat lengkap</label><textarea id="s_alamat" name="alamat" rows="2" ${ro}>${esc(lokasiRT().alamat)}</textarea><span class="hint">Tampil di peta Beranda, Rumah saya, dan untuk dikirim ke tamu/kurir</span></div>
     <div class="grid2">
@@ -1182,13 +1185,13 @@ function vLoginKartu() {
         <div class="fld"><label for="kBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="kBaru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="kBaru" aria-label="Tampilkan password">Lihat</button></div></div>
         <div class="fld"><label for="kUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="kUlang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="kUlang" aria-label="Tampilkan password">Lihat</button></div>
           <span class="hint" id="kPesan" style="color:var(--bad)"></span></div>
-        <button type="submit" class="btn pri">Simpan password baru</button>
+        ${tsSlot()}<button type="submit" class="btn pri">Simpan password baru</button>
         <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
         <p class="muted" style="margin:0;font-size:.82rem">Setiap kali meminta reset, tautan dan kode sebelumnya tidak berlaku lagi. Selalu pakai email yang terakhir masuk.</p></form>`
     : `${S.lupaInfo ? `<div class="notice">${esc(S.lupaInfo)}</div>` : ''}<form id="lupaForm" class="login-pin" style="border-top:0;padding-top:0">
       <div class="fld"><label for="lupaEmail">Email akun</label><input type="email" id="lupaEmail" autocomplete="username" autocapitalize="none" value="${esc(S.lEmailDraft || '')}">
         <span class="hint" id="lupaPesan" style="color:var(--bad)"></span></div>
-      <button type="submit" class="btn pri">Kirim tautan reset</button>
+      ${tsSlot()}<button type="submit" class="btn pri">Kirim tautan reset</button>
       <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
       <p class="muted" style="margin:0;font-size:.82rem">Hanya untuk akun yang masuk dengan email. Akun No. HP minta direset ke Pemilik atau pengurus RT.</p></form>`}</div>`;
   if (S.authUser && wajibGanti() && roleSaya()) return `<div class="login">${brand('Halo ' + esc(namaSesi().split(' ')[0]) + ', demi keamanan buat password baru dulu.')}
@@ -1218,7 +1221,7 @@ function vLoginKartu() {
       <div class="fld"><label for="lPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="lPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem">
         <button type="button" class="btn sm" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password">Lihat</button></div>
         <span class="hint" id="lPesan" style="color:var(--bad)"></span></div>
-      <button type="submit" class="btn pri">Masuk</button>
+      ${tsSlot()}<button type="submit" class="btn pri">Masuk</button>
       <button type="button" class="linkbtn" data-act="lupa-hp">Lupa password?</button></form>
     ${!PWA.standalone && (PWA.prompt || PWA.ios) ? '<button type="button" class="btn ghost" data-act="pwa-pasang" style="width:100%;margin-top:4px">📲 Pasang aplikasi di HP</button>' : ''}</div>`;
 }
@@ -1265,7 +1268,8 @@ async function prosesLupa() {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg('Isi email pengurus yang valid.'); return; }
   if (email.endsWith('@' + WARGA_DOMAIN)) { msg('Akun warga tidak memakai email. Minta pengurus RT mereset password.'); return; }
   const btn = $('#lupaForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Mengirim…'; }
-  const {error} = await SB.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
+  const cap = tsAmbil(msg); if (cap === false) { if (btn) { btn.disabled = false; btn.textContent = 'Kirim tautan reset'; } return; }
+  const {error} = await SB.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname, ...(cap ? {captchaToken: cap} : {})}); tsReset();
   if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Kirim tautan reset'; } msg(pesanAuth(error)); return; }
   S.lupaTerkirim = email; S.lupaInfo = ''; render(); const k = $('#kKode'); if (k) k.focus();
 }
@@ -1311,7 +1315,8 @@ async function prosesKode() {
   if (a.length < 8) { msg('Password minimal 8 karakter.'); return; }
   if (a !== b) { msg('Kedua password tidak sama.'); return; }
   const btn = $('#kodeForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Memeriksa…'; }
-  const v = await SB.auth.verifyOtp({email: S.lupaTerkirim, token: kode, type: 'recovery'});
+  const cap = tsAmbil(msg); if (cap === false) { if (btn) { btn.disabled = false; btn.textContent = 'Simpan password baru'; } return; }
+  const v = await SB.auth.verifyOtp({email: S.lupaTerkirim, token: kode, type: 'recovery', ...(cap ? {options: {captchaToken: cap}} : {})}); tsReset();
   if (v.error) { if (btn) { btn.disabled = false; btn.textContent = 'Simpan password baru'; } msg(/expired|invalid|not found/i.test(v.error.message) ? 'Kode salah atau sudah tidak berlaku. Pakai kode dari email paling baru.' : pesanAuth(v.error)); return; }
   const {data, error} = await SB.auth.updateUser({password: a});
   if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Simpan password baru'; } msg(pesanAuth(error)); return; }
@@ -1338,8 +1343,9 @@ async function prosesLogin() {
   const pakaiEmail = isian.includes('@');
   if (!pakaiEmail && !hpValid(isian)) { msg('No. HP minimal 10 digit, mis. 081234567890.'); return; }
   const email = pakaiEmail ? isian.toLowerCase() : hpEmail(isian);
+  const cap = tsAmbil(msg); if (cap === false) return;
   const btn = $('#loginForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Memeriksa…'; }
-  const {data, error} = await SB.auth.signInWithPassword({email, password: pw});
+  const {data, error} = await SB.auth.signInWithPassword({email, password: pw, ...(cap ? {options: {captchaToken: cap}} : {})}); tsReset();
   if (error) { S.lEmailDraft = isian; render(); msg(/invalid login/i.test(error.message) ? (pakaiEmail ? 'Email atau password salah.' : 'No. HP atau password salah.') : pesanAuth(error)); const p = $('#lPass'); if (p) p.focus(); return; }
   S.lEmailDraft = ''; S.loginError = '';
   await masukSesi(data.user);
@@ -1436,7 +1442,7 @@ async function prosesLoginWarga() {
   const msg = t => { const m = $('#wPesan'); if (m) m.textContent = t; };
   if (!u || !pw) { msg('Isi username dan password.'); return; }
   const btn = $('#loginWargaForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Memeriksa…'; }
-  const {data, error} = await SB.auth.signInWithPassword({email: emailWarga(u), password: pw});
+  const cap = tsAmbil(t => { const m = $('#wPesan'); if (m) m.textContent = t; }); if (cap === false) { if (btn) { btn.disabled = false; btn.textContent = 'Masuk'; } return; } const {data, error} = await SB.auth.signInWithPassword({email: emailWarga(u), password: pw, ...(cap ? {options: {captchaToken: cap}} : {})}); tsReset();
   if (error) { S.wUserDraft = u; render(); msg(/invalid login/i.test(error.message) ? 'Username atau password salah.' : pesanAuth(error)); const p = $('#wPass'); if (p) p.focus(); return; }
   S.wUserDraft = ''; S.loginError = '';
   await masukSesi(data.user);
@@ -1448,7 +1454,7 @@ function loginWargaHtml() {
     <div class="fld"><label for="wPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="wPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem" ${kunci ? 'disabled' : ''}>
       <button type="button" class="btn sm" data-act="lihat-pass" data-for="wPass" aria-label="Tampilkan password">Lihat</button></div>
       <span class="hint" id="wPesan" style="color:var(--bad)">${kunci ? 'Terlalu banyak percobaan. Coba lagi sebentar.' : ''}</span></div>
-    <button type="submit" class="btn pri" ${kunci ? 'disabled' : ''}>Masuk</button>
+    ${tsSlot()}<button type="submit" class="btn pri" ${kunci ? 'disabled' : ''}>Masuk</button>
     <p class="muted" style="margin:0;font-size:.82rem">Lupa password atau belum punya akun? Hubungi pengurus RT, password Anda bisa direset dari menu Admin.</p></form>`;
 }
 /* portal views */
@@ -2048,6 +2054,42 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- CAPTCHA Cloudflare Turnstile di halaman login ---------- */
+const TS = {key: null, muat: null, id: null, el: null, token: '', cfg: false};
+async function tsKonfig() {
+  if (TS.cfg || !SB) return; TS.cfg = true;
+  try { const {data} = await SB.rpc('login_config'); TS.key = (data && data.turnstile) || null; } catch (e) { TS.key = null; }
+  if (TS.key && !sudahMasuk()) render();
+}
+const tsSlot = () => TS.key ? '<div class="ts-box" id="tsBox" aria-label="Verifikasi anti-bot"></div><span class="hint" id="tsInfo" style="text-align:center"></span>' : '';
+function tsSkrip() {
+  if (TS.muat) return TS.muat;
+  TS.muat = new Promise((ok, gagal) => {
+    window.__tsSiap = () => ok();
+    const sc = document.createElement('script'); sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__tsSiap'; sc.async = true; sc.defer = true;
+    sc.onerror = () => { TS.muat = null; gagal(new Error('Turnstile gagal dimuat')); }; document.head.appendChild(sc);
+  });
+  return TS.muat;
+}
+async function tsPasang() {
+  if (!TS.cfg) { tsKonfig(); return; }
+  const box = document.getElementById('tsBox'); if (!TS.key || !box) return;
+  if (TS.el === box && TS.id !== null) return;
+  try { await tsSkrip(); } catch (e) { const i = $('#tsInfo'); if (i) i.textContent = 'Verifikasi anti-bot tidak bisa dimuat. Periksa koneksi lalu muat ulang halaman.'; return; }
+  const b2 = document.getElementById('tsBox'); if (!b2 || !window.turnstile) return;
+  if (TS.id !== null) { try { window.turnstile.remove(TS.id); } catch (e) {} }
+  TS.token = ''; TS.el = b2;
+  TS.id = window.turnstile.render(b2, {sitekey: TS.key, language: 'id', theme: 'auto', appearance: 'interaction-only', action: 'login',
+    callback: t => { TS.token = t; const i = $('#tsInfo'); if (i) i.textContent = ''; },
+    'expired-callback': () => { TS.token = ''; }, 'error-callback': () => { TS.token = ''; const i = $('#tsInfo'); if (i) i.textContent = 'Verifikasi anti-bot gagal. Coba muat ulang halaman.'; }});
+}
+function tsAmbil(msg) {
+  if (!TS.key) return null;
+  if (!TS.token) { (msg || (() => {}))('Tunggu sebentar, verifikasi anti-bot sedang berjalan, lalu tekan lagi.'); tsPasang(); return false; }
+  return TS.token;
+}
+function tsReset() { if (TS.key && window.turnstile && TS.id !== null) { TS.token = ''; try { window.turnstile.reset(TS.id); } catch (e) {} } }
+
 /* ---------- Kunci aplikasi: sidik jari / wajah (WebAuthn perangkat) atau PIN ---------- */
 const kunciKey = () => 'kunci-app:' + ((S.authUser && S.authUser.id) || '');
 function kunciCfg() { try { return JSON.parse(localStorage.getItem(kunciKey()) || '{}') || {}; } catch (e) { return {}; } }
@@ -5857,7 +5899,7 @@ document.addEventListener('submit', async e => {
   const t = k => String(d[k] || '').trim();
   const ok = await putSetting({nama: t('nama') || 'Villani 5', namaLengkap: t('namaLengkap'), iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
-    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik,
+    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik, ...(S.sesi === 'pemilik' ? {turnstileKey: /^[0-9A-Za-z_-]{10,80}$/.test(t('turnstileKey')) ? t('turnstileKey') : ''} : {}),
     lokasi: (() => { const lat = Number(d.lat), lng = Number(d.lng), L0 = lokasiRT(); const okK = isFinite(lat) && isFinite(lng) && lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141;
       const L = {alamat: t('alamat') || L0.alamat, lat: okK ? lat : L0.lat, lng: okK ? lng : L0.lng}; if (L.lat === LOKASI_DEF.lat && L.lng === LOKASI_DEF.lng) L.placeId = LOKASI_DEF.placeId; return L; })()});
   if (ok) toast('Pengaturan disimpan.');

@@ -387,3 +387,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --    (skrip sisipan / atribut onerror diblokir browser walau ada celah XSS).
 -- Temuan tetap (disengaja): fungsi security definer callable authenticated (semua memeriksa peran di dalam), info_publik anon
 -- (papan publik, bisa dimatikan di Pengaturan), leaked password protection (butuh paket Pro).
+
+-- ===== CAPTCHA Cloudflare Turnstile (2026-10-24) =====
+-- RPC public.login_config() (anon): mengembalikan site key Turnstile dari pengaturan.turnstileKey (hanya site key publik).
+-- Klien mengirim captchaToken pada signInWithPassword / resetPasswordForEmail / verifyOtp.
+-- Aktifkan penegakan di Supabase Dashboard -> Authentication -> Bot and Abuse Protection (provider Turnstile + secret key)
+-- SETELAH site key terpasang di Pengaturan, agar Pemilik tidak terkunci.

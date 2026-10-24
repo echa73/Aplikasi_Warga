@@ -85,3 +85,6 @@ Tombol gembok di header membuka **Keamanan akun**: ganti password, aktifkan sidi
 
 ### Catatan teknis (2026-10-24)
 Kode aplikasi kini di `public/app.js` (bukan lagi skrip inline di `index.html`) agar CSP bisa melarang skrip inline. Deploy seperti biasa dengan seluruh isi folder `public/`.
+
+### CAPTCHA login (Cloudflare Turnstile)
+Pengaturan → Keamanan login → isi **site key** Turnstile (khusus Pemilik). Halaman login lalu memuat verifikasi anti-bot (biasanya tak terlihat, muncul kotak hanya bila mencurigakan) dan mengirim token ke Supabase. Penegakan diaktifkan di dashboard Supabase (Bot and Abuse Protection) dengan **secret key**. Urutan: buat widget → deploy → isi site key → aktifkan di Supabase. Bila bermasalah, matikan dari dashboard Supabase.

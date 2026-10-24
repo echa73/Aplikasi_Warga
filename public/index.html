@@ -2616,7 +2616,7 @@ function openPengurus(id, prefill) {
   const p = id ? S.pengurus.find(x => x.id === id) : null;
   const x = p || {aktif: true, peranId: '', mulai: todayISO(), ...(prefill || {})};
   if (!x.peranId && x.jabatan) { const r = roleCocok(x.jabatan); if (r) x.peranId = r.id; }
-  const pidAwal = p ? p.id : uid(), ker = pgFotoKerja = {awal: (p && p.foto) || '', url: (p && p.foto) || '', load: false, pid: pidAwal, baru: []};
+  const pidAwal = p ? p.id : uid(), ker = pgFotoKerja = {awal: (p && p.foto) || '', url: (p && p.foto) || '', load: false, pid: pidAwal, baru: [], box: '#pgFoto', file: 'pg_file', del: 'pg-foto-del', namaSel: '#pg_nama'};
   openDlg({
     title: p ? 'Ubah data pengurus' : 'Tambah pengurus', area: 'admin',
     body: `<div class="fld"><label>Foto pengurus</label><div class="pg-foto" id="pgFoto"></div><input type="file" id="pg_file" accept="image/*" hidden>
@@ -2680,24 +2680,28 @@ function openPengurus(id, prefill) {
     deleteLabel: 'Hapus pengurus'
   });
   pgRenderFoto(x.nama);
-  const f = $('#pg_file');
+  pasangFoto(ker, () => pgFotoKerja);
+}
+let pgFotoKerja = null, pkFotoKerja = null;
+const PG_FOTO_PREFIX = '/object/public/pengurus/';
+function renderFoto(k, nm) {
+  const box = k && $(k.box); if (!box) return;
+  const n = nm || ($(k.namaSel) && $(k.namaSel).value) || '?', src = k.prev || k.url;
+  box.innerHTML = `${src ? `<img class="pg-av${k.load ? ' load' : ''}" src="${esc(src)}" alt="Foto">` : `<span class="pg-av av-i" aria-hidden="true">${esc(orgInisial(n))}</span>`}
+    ${k.ro ? '' : `<div class="pg-foto-b"><label class="btn sm" for="${k.file}">${k.url ? 'Ganti foto' : 'Unggah foto'}</label>${k.url && !k.load ? `<button type="button" class="btn sm ghost" data-act="${k.del}">Hapus foto</button>` : ''}${k.load ? '<span class="muted" style="font-size:.84rem">Mengunggah…</span>' : ''}</div>`}`;
+}
+function pasangFoto(k, aktif) {
+  const f = $('#' + k.file); if (!f) return;
   f.addEventListener('change', async () => {
     const file = f.files[0]; f.value = ''; if (!file) return;
     if (!/^image\//.test(file.type)) { toast('Pilih file gambar.', 'bad'); return; }
-    ker.load = true; ker.prev = URL.createObjectURL(file); pgRenderFoto();
-    try { const u = await pgUnggahFoto(file, ker.pid); ker.baru.push(u); ker.url = u; }
+    k.load = true; k.prev = URL.createObjectURL(file); renderFoto(k);
+    try { const u = await pgUnggahFoto(file, k.pid); k.baru.push(u); k.url = u; }
     catch (e) { toast('Foto gagal diunggah' + (e && e.message ? ': ' + e.message : '') + '.', 'bad'); }
-    ker.load = false; URL.revokeObjectURL(ker.prev); ker.prev = null; if (pgFotoKerja === ker) pgRenderFoto();
+    k.load = false; URL.revokeObjectURL(k.prev); k.prev = null; if (aktif() === k) renderFoto(k);
   });
 }
-let pgFotoKerja = null;
-const PG_FOTO_PREFIX = '/object/public/pengurus/';
-function pgRenderFoto(nm) {
-  const box = $('#pgFoto'), k = pgFotoKerja; if (!box || !k) return;
-  const n = nm || ($('#pg_nama') && $('#pg_nama').value) || '?', src = k.prev || k.url;
-  box.innerHTML = `${src ? `<img class="pg-av${k.load ? ' load' : ''}" src="${esc(src)}" alt="Foto pengurus">` : `<span class="pg-av av-i" aria-hidden="true">${esc(orgInisial(n))}</span>`}
-    <div class="pg-foto-b"><label class="btn sm" for="pg_file">${k.url ? 'Ganti foto' : 'Unggah foto'}</label>${k.url && !k.load ? '<button type="button" class="btn sm ghost" data-act="pg-foto-del">Hapus foto</button>' : ''}${k.load ? '<span class="muted" style="font-size:.84rem">Mengunggah…</span>' : ''}</div>`;
-}
+const pgRenderFoto = nm => renderFoto(pgFotoKerja, nm);
 async function kecilkanPersegi(file, ukuran = 480, q = 0.85) {
   const url = URL.createObjectURL(file);
   try {
@@ -3047,7 +3051,7 @@ async function muatStruktur(paksa) {
   strukturMuat = false; sbSched();
 }
 function strukturLevel(D) {
-  const pkPg = (D.petugas || []).filter(p => p.nama && p.struktur === 'pengurus').map(p => ({nama: p.nama, jabatan: p.jabatanStruktur || p.jabatan}));
+  const pkPg = (D.petugas || []).filter(p => p.nama && p.struktur === 'pengurus').map(p => ({nama: p.nama, jabatan: p.jabatanStruktur || p.jabatan, foto: p.foto}));
   const P = [...(D.pengurus || []).filter(p => p.nama), ...pkPg], urutJ = j => { const i = JABATAN.indexOf(j); return i < 0 ? 99 : i; };
   const by = l => P.filter(p => orgLevel(p.jabatan) === l).sort((a, b) => urutJ(a.jabatan) - urutJ(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
   const atas = [1, 2, 3, 4].flatMap(by), jabAtas = [...new Set(atas.map(p => String(p.jabatan || '').trim()))];
@@ -3219,14 +3223,15 @@ function vGajiBulan(kel) {
     : `<div class="empty">${aktif.length ? `Belum ada slip gaji untuk ${esc(perLbl(per, true))}.` : 'Belum ada data pekerja. Tambahkan dulu di tab Data pekerja.'}${kel && !aktif.length ? '<button class="btn pri" data-act="pk-new">+ Tambah pekerja</button>' : ''}</div>`}
     <p class="muted" style="font-size:.8rem">Gaji yang ditandai dibayar otomatis tercatat sebagai pengeluaran di Buku kas (kategori sesuai jabatan) dan masuk Laporan keuangan.</p>`;
 }
+const pkAv = p => fotoAman(p.foto) ? `<img class="av" src="${esc(p.foto)}" alt="" loading="lazy">` : `<span class="av av-i" aria-hidden="true">${esc(orgInisial(p.nama))}</span>`;
 function vPekerja(kel) {
   const L = [...S.pekerja].sort((a, b) => (a.status === 'Berhenti') - (b.status === 'Berhenti') || JABATAN_PK.indexOf(a.jabatan) - JABATAN_PK.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
   if (!L.length) return `<div class="empty">Belum ada data pekerja.${kel ? '<button class="btn pri" data-act="pk-new">+ Tambah pekerja</button>' : ''}</div>`;
   return `<div class="tbl-wrap hide-m"><table><thead><tr><th>Nama</th><th>Jabatan</th><th>No. HP</th><th>Mulai bekerja</th><th class="r">Gaji pokok</th><th>Rekening</th><th>Status</th><th></th></tr></thead><tbody>${L.map(p => `<tr>
-      <td style="font-weight:600">${esc(p.nama)}${p.akunId ? ' <span class="chip info plain" style="font-size:.7rem">punya akun</span>' : ''}</td><td>${esc(p.jabatan || '')}</td><td class="mono">${esc(p.noHp || '—')}</td><td>${esc(p.mulai ? tgl(p.mulai) : '—')}</td>
+      <td style="font-weight:600"><span style="display:inline-flex;align-items:center;gap:8px">${pkAv(p)}${esc(p.nama)}</span>${p.akunId ? ' <span class="chip info plain" style="font-size:.7rem">punya akun</span>' : ''}</td><td>${esc(p.jabatan || '')}</td><td class="mono">${esc(p.noHp || '—')}</td><td>${esc(p.mulai ? tgl(p.mulai) : '—')}</td>
       <td class="r num">${esc(rp(p.gajiPokok))}</td><td>${p.bank ? esc(p.bank) + ' ' + esc(maskRek(p.noRek)) : 'Tunai'}</td><td><span class="chip ${p.status === 'Berhenti' ? 'mute' : 'ok'}">${esc(p.status || 'Aktif')}</span></td>
       <td class="r"><button class="btn sm" data-act="pk-edit" data-id="${esc(p.id)}">${kel ? 'Ubah' : 'Lihat'}</button></td></tr>`).join('')}</tbody></table></div>
-    <div class="list-mobile">${L.map(p => `<div class="row"><div class="grow"><div class="t">${esc(p.nama)}</div><div class="s">${esc(p.jabatan || '')} · ${esc(rp(p.gajiPokok))}${p.status === 'Berhenti' ? ' · Berhenti' : ''}</div></div><button class="btn ghost sm" data-act="pk-edit" data-id="${esc(p.id)}" aria-label="Buka">›</button></div>`).join('')}</div>`;
+    <div class="list-mobile">${L.map(p => `<div class="row">${pkAv(p)}<div class="grow"><div class="t">${esc(p.nama)}</div><div class="s">${esc(p.jabatan || '')} · ${esc(rp(p.gajiPokok))}${p.status === 'Berhenti' ? ' · Berhenti' : ''}</div></div><button class="btn ghost sm" data-act="pk-edit" data-id="${esc(p.id)}" aria-label="Buka">›</button></div>`).join('')}</div>`;
 }
 function vGajiRekap() {
   const th = S.gjTh, pers = Array.from({length: 12}, (_, i) => th + '-' + pad(i + 1));
@@ -3263,8 +3268,10 @@ function openPekerja(id) {
   const x = id ? pkById(id) : null, ro = dis('gaji');
   const v = x || {jabatan: JABATAN_PK[0], status: 'Aktif', mulai: todayISO(), tunjangan: [{nama: 'Uang makan', jumlah: ''}]};
   const akun = pengurusAktif().filter(p => p.userId);
+  const pkId = x ? x.id : 'pk_' + uid(), ker = pkFotoKerja = {awal: (x && x.foto) || '', url: (x && x.foto) || '', load: false, pid: pkId, baru: [], box: '#pkFoto', file: 'pk_file', del: 'pk-foto-del', namaSel: '#pk_n', ro: !!ro};
   openDlg({title: x ? (bisa('gaji') ? 'Ubah data pekerja' : 'Data pekerja') : 'Tambah pekerja', area: 'gaji', submitLabel: x ? 'Simpan' : 'Tambah pekerja',
-    body: `<div class="fld"><label for="pk_n">Nama lengkap <span class="req">*</span></label><input type="text" id="pk_n" name="nama" required maxlength="80" value="${esc(v.nama || '')}" ${ro}></div>
+    body: `<div class="fld"><label>Foto pekerja</label><div class="pg-foto" id="pkFoto"></div>${ro ? '' : '<input type="file" id="pk_file" accept="image/*" hidden><span class="hint">Tampil di Struktur organisasi. Dipotong persegi &amp; diperkecil otomatis.</span>'}</div>
+    <div class="fld"><label for="pk_n">Nama lengkap <span class="req">*</span></label><input type="text" id="pk_n" name="nama" required maxlength="80" value="${esc(v.nama || '')}" ${ro}></div>
     <div class="grid2"><div class="fld"><label for="pk_j">Jabatan</label><select id="pk_j" name="jabatan" ${ro}>${JABATAN_PK.map(j => `<option ${j === v.jabatan ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select></div>
       <div class="fld"><label for="pk_s">Status</label><select id="pk_s" name="status" ${ro}>${['Aktif', 'Berhenti'].map(k => `<option ${k === (v.status || 'Aktif') ? 'selected' : ''}>${k}</option>`).join('')}</select></div></div>
     <div class="grid2"><div class="fld"><label for="pk_hp">No. HP / WhatsApp</label><input type="tel" id="pk_hp" name="noHp" maxlength="20" value="${esc(v.noHp || '')}" placeholder="08…" ${ro}></div>
@@ -3289,15 +3296,18 @@ function openPekerja(id) {
       const nama = String(d.nama || '').trim(); if (!nama) { pesanDlg('Isi nama pekerja.', 'pk_n'); return false; }
       const gp = Math.round(Number(d.gajiPokok) || 0); if (gp <= 0) { pesanDlg('Isi gaji pokok.', 'pk_g'); return false; }
       const nik = String(d.nik || '').replace(/\D/g, ''); if (nik && nik.length !== 16) { pesanDlg('NIK harus 16 digit, atau kosongkan.', 'pk_nik'); return false; }
-      const row = {...(x || {}), nama, jabatan: d.jabatan, status: d.status, noHp: String(d.noHp || '').trim(), mulai: d.mulai || '', nik, gajiPokok: gp, alamat: String(d.alamat || '').trim(),
+      if (ker.load) { pesanDlg('Tunggu, foto masih diunggah.'); return false; }
+      const row = {...(x || {}), foto: ker.url || '', nama, jabatan: d.jabatan, status: d.status, noHp: String(d.noHp || '').trim(), mulai: d.mulai || '', nik, gajiPokok: gp, alamat: String(d.alamat || '').trim(),
         tunjangan: gjAmbil('#pkTun').filter(t => t.nama), bank: String(d.bank || '').trim(), noRek: String(d.noRek || '').replace(/[^\dA-Za-z-]/g, ''), anRek: String(d.anRek || '').trim(), katKas: d.katKas || '', akunId: d.akunId || '', catatan: String(d.catatan || '').trim(), diperbarui: todayISO(),
         struktur: PK_STRUKTUR.some(o => o[0] === d.struktur) ? d.struktur : pkStrukturDefault(d.jabatan), atasan: PK_PETUGAS.includes(d.struktur) ? (d.atasan || '') : '', jabatanStruktur: d.struktur === 'pengurus' ? (d.jabatanStruktur || '') : ''};
       if (!x) row.dibuat = todayISO();
       S.struktur = null;
-      const ok = await put('pekerja', x ? x.id : 'pk_' + uid(), row);
+      const ok = await put('pekerja', pkId, row);
+      if (ok) { pgFotoHapus([ker.awal, ...ker.baru].filter(u => u && u !== row.foto)); pkFotoKerja = null; }
       if (ok) toast(x ? 'Data pekerja diperbarui.' : `${nama} ditambahkan.`); return ok;
     },
-    onDelete: x ? async () => { if (S.gaji.some(g => g.pekerjaId === x.id)) { pesanDlg('Pekerja ini sudah punya slip gaji. Ubah statusnya menjadi "Berhenti" agar riwayat gaji tetap tersimpan.'); return false; } const ok = await del('pekerja', x.id); if (ok) toast('Data pekerja dihapus.'); return ok; } : null, deleteLabel: 'Hapus pekerja'});
+    onDelete: x ? async () => { if (S.gaji.some(g => g.pekerjaId === x.id)) { pesanDlg('Pekerja ini sudah punya slip gaji. Ubah statusnya menjadi "Berhenti" agar riwayat gaji tetap tersimpan.'); return false; } const ok = await del('pekerja', x.id); if (ok) { pgFotoHapus([x.foto, ...ker.baru]); pkFotoKerja = null; S.struktur = null; toast('Data pekerja dihapus.'); } return ok; } : null, deleteLabel: 'Hapus pekerja'});
+  renderFoto(ker, v.nama); if (!ro) pasangFoto(ker, () => pkFotoKerja);
   const st = $('#pk_st'), pj = $('#pk_j');
   const setAtasan = () => { const a = $('#pk_at'), d = pkAtasanDefault(st.value); if (a && [...a.options].some(o => o.value === d)) a.value = d; };
   if (st) st.addEventListener('change', () => { $('#pkAtasanW').hidden = !PK_PETUGAS.includes(st.value); $('#pkJabStW').hidden = st.value !== 'pengurus'; setAtasan(); });
@@ -6154,6 +6164,7 @@ document.addEventListener('click', async e => {
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'pk-foto-del') { if (pkFotoKerja && !pkFotoKerja.load) { pkFotoKerja.url = ''; renderFoto(pkFotoKerja); } }
   else if (a === 'pg-foto-del') { if (pgFotoKerja && !pgFotoKerja.load) { pgFotoKerja.url = ''; pgRenderFoto(); } }
   else if (a === 'org-atur') openStrukturAtur();
   else if (a === 'org-kelola') { S.tab = 'admin'; S.admTab = 'pengurus'; render(); window.scrollTo(0, 0); }

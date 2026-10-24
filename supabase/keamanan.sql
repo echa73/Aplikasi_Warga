@@ -340,3 +340,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- dan tetap hanya mengirim nama/jabatan pekerja (tanpa HP, gaji, rekening, NIK).
 -- (2026-10-24) pekerja.struktur kini: 'keamanan' | 'kebersihan' | 'petugas' | 'pengurus' | 'tidak'. RPC mengirim nilai mentah (null bila belum diatur);
 -- klien menentukan kategori & atasan otomatis dari jabatan bila belum diatur.
+
+-- ===== Foto pekerja (2026-10-24) =====
+-- Bucket 'pengurus', folder pk_<id>/: unggah/ubah/hapus untuk izin('gaji') >= 2 (bendahara/pemilik), nama wajib pk_<id>/<acak>.jpg.
+-- struktur_organisasi() mengirim 'foto' pekerja hanya bila URL dari storage proyek ini.
+-- Diuji (rollback): bendahara BOLEH di pk_*, DITOLAK di folder pengurus; ketua/satpam/warga DITOLAK.

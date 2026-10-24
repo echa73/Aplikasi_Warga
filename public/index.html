@@ -1365,7 +1365,7 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur organisasi','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
 const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
 const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
@@ -2651,7 +2651,7 @@ function openPengurus(id, prefill) {
   openDlg({
     title: p ? 'Ubah data pengurus' : 'Tambah pengurus', area: 'admin',
     body: `${p && p.dariPekerja ? '<div class="notice" style="margin:0">Akun ini dibuat dari menu <b>Pekerja &amp; gaji</b>. Nama dan No. HP sebaiknya diubah di data pekerjanya agar tetap sinkron.</div>' : ''}<div class="fld"><label>Foto pengurus</label><div class="pg-foto" id="pgFoto"></div><input type="file" id="pg_file" accept="image/*" hidden>
-      <span class="hint">Tampil di Struktur organisasi. Foto wajah, dipotong persegi otomatis.</span></div>
+      <span class="hint">Tampil di Struktur Kepengurusan. Foto wajah, dipotong persegi otomatis.</span></div>
     <div class="fld"><label for="pg_nama">Nama lengkap <span class="req">*</span></label><input type="text" id="pg_nama" name="nama" required value="${esc(x.nama)}"></div>
     <div class="grid2">
       <div class="fld"><label for="pg_jab">Jabatan</label><input type="text" id="pg_jab" name="jabatan" list="jabList" value="${esc(x.jabatan)}" placeholder="mis. Bendahara"><datalist id="jabList">${JABATAN.map(j => `<option value="${j}">`).join('')}</datalist></div>
@@ -3361,7 +3361,7 @@ function vBersihRingkas() {
     <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" data-act="br-lapor">Lapor masalah kebersihan</button></div></div>`;
 }
 
-/* ---------- Struktur organisasi pengurus ---------- */
+/* ---------- Struktur Kepengurusan pengurus ---------- */
 const orgLevel = j => { const t = String(j || '').toLowerCase(); return /^ketua rt$|^ketua$/.test(t) ? 1 : /wakil/.test(t) ? 2 : /sekretaris|bendahara/.test(t) ? 3 : /^satpam$/.test(t) ? 5 : 4; };
 const orgInisial = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
 let strukturMuat = false;
@@ -3403,10 +3403,10 @@ function strukturLevel(D) {
 function periodeTeks(D) { return D.periodeMulai ? `Periode ${tglSurat(D.periodeMulai)}${D.periodeSelesai ? ' – ' + tglSurat(D.periodeSelesai) : ''}` : ''; }
 function vStruktur() {
   const D = S.struktur; muatStruktur();
-  const head = `<div class="sec-head"><div><h2>Struktur organisasi</h2><p>Susunan pengurus dan petugas lingkungan ${esc(lingk())}. Hubungi pengurus langsung lewat WhatsApp.</p></div>
+  const head = `<div class="sec-head"><div><h2>Struktur Kepengurusan</h2><p>Susunan pengurus dan petugas lingkungan ${esc(lingk())}. Hubungi pengurus langsung lewat WhatsApp.</p></div>
     <div class="toolbar" style="margin:0">${bisa('pengaturan') ? '<button class="btn ghost" data-act="org-atur">Atur periode</button>' : ''}${bisaKelola() ? '<button class="btn" data-act="org-kelola">Kelola pengurus</button>' : ''}</div></div>`;
-  if (!D) return head + '<div class="empty">Memuat struktur organisasi…</div>';
-  if (D.gagal) return head + '<div class="notice">Struktur organisasi belum bisa dimuat. <button class="btn sm" data-act="org-muat">Coba lagi</button></div>';
+  if (!D) return head + '<div class="empty">Memuat struktur kepengurusan…</div>';
+  if (D.gagal) return head + '<div class="notice">Struktur kepengurusan belum bisa dimuat. <button class="btn sm" data-act="org-muat">Coba lagi</button></div>';
   const L = strukturLevel(D);
   if (!L.length) return head + `<div class="empty">Belum ada data pengurus.${bisaKelola() ? '<button class="btn pri" data-act="org-kelola">Tambah pengurus</button>' : ''}</div>`;
   const av = p => fotoAman(p.foto) ? `<img class="org-av foto" src="${esc(p.foto)}" alt="Foto ${esc(p.nama)}" loading="lazy">` : `<span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span>`;
@@ -3415,13 +3415,13 @@ function vStruktur() {
   const kids = p => p.anak && p.anak.length ? `<div class="org-kids" aria-label="Petugas di bawah ${esc(p.jabatan || p.nama)}">${p.anak.map(k => `<div class="org-node l5 kid">${av(k)}<b>${esc(k.nama)}</b><span class="j">${esc(k.jabatan || '')}</span></div>`).join('')}</div>` : '';
   const tot = (D.pengurus || []).length;
   return head + `<div class="panel">
-    <div class="org-kop"><b>STRUKTUR ORGANISASI PENGURUS RT ${esc(D.rt || '…')} / RW ${esc(D.rw || '…')}</b><span>${esc(D.lingkungan || lingk())}${D.kelurahan ? ' · Kel. ' + esc(D.kelurahan) : ''}</span>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
+    <div class="org-kop"><b>STRUKTUR KEPENGURUSAN RT ${esc(D.rt || '…')} / RW ${esc(D.rw || '…')}</b><span>${esc(D.lingkungan || lingk())}${D.kelurahan ? ' · Kel. ' + esc(D.kelurahan) : ''}</span>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
     <div class="org">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}">${x.isi.map(p => `<div class="org-col">${node(p, x.l)}${kids(p)}</div>`).join('')}</div>`).join('')}</div></div>
   <div class="toolbar"><a class="btn wa" href="${esc(waShare(teksStruktur(D, L)))}" target="_blank" rel="noopener">Bagikan ke WhatsApp</a><button class="btn" data-act="org-pdf">Unduh PDF</button></div>
   <p class="muted" style="font-size:.8rem">${tot} pengurus aktif. Susunan diambil otomatis dari jabatan di menu Admin → Pengurus${(D.petugas || []).length ? ' dan data Pekerja (petugas tampil di bawah pengurus atasannya)' : ''}.${D.kontak ? '' : ' Nomor WhatsApp pengurus disembunyikan.'}</p>`;
 }
 function teksStruktur(D, L) {
-  return `*STRUKTUR ORGANISASI PENGURUS RT ${D.rt || ''} / RW ${D.rw || ''}*\n${D.lingkungan || lingk()}${periodeTeks(D) ? '\n' + periodeTeks(D) : ''}\n\n`
+  return `*STRUKTUR KEPENGURUSAN RT ${D.rt || ''} / RW ${D.rw || ''}*\n${D.lingkungan || lingk()}${periodeTeks(D) ? '\n' + periodeTeks(D) : ''}\n\n`
     + L.map(x => `*${x.lbl}*\n${x.isi.map(p => `- ${p.jabatan ? p.jabatan + ': ' : ''}${p.nama}${D.kontak && p.hp && x.l > 0 && x.l < 5 ? ' (' + p.hp + ')' : ''}${(p.anak || []).map(k => `\n    • ${k.jabatan ? k.jabatan + ': ' : ''}${k.nama}`).join('')}`).join('\n')}`).join('\n\n') + `\n\n${pengirim()}`;
 }
 async function pdfStruktur() {
@@ -3433,7 +3433,7 @@ async function pdfStruktur() {
   P.text(tx, 18, `PENGURUS RT ${D.rt || '...'} / RW ${D.rw || '...'}`, {size: 13, bold: true});
   P.text(tx, 23.5, [D.lingkungan || lingk(), D.kelurahan && 'Kel. ' + D.kelurahan].filter(Boolean).join(' · '), {size: 9.5, color: [74, 59, 48]});
   P.line(M, 32, M + CW, 32, 1.4); P.line(M, 33.2, M + CW, 33.2, .5);
-  P.text(105, 43, 'STRUKTUR ORGANISASI', {size: 15, bold: true, align: 'center'});
+  P.text(105, 43, 'STRUKTUR KEPENGURUSAN', {size: 15, bold: true, align: 'center'});
   if (periodeTeks(D)) P.text(105, 49, periodeTeks(D), {size: 10, align: 'center', color: [74, 59, 48]});
   const fotoIdx = new Map();
   for (const x of L) for (const p of [...x.isi, ...x.isi.flatMap(q => q.anak || [])]) { const u = fotoAman(p.foto); if (u && !fotoIdx.has(u)) { try { P.foto.push(await fotoJpeg(u)); fotoIdx.set(u, P.foto.length - 1); } catch (e) {} } }
@@ -3489,7 +3489,7 @@ function openStrukturAtur() {
     body: `<div class="grid2"><div class="fld"><label for="so_m">Mulai</label><input type="date" id="so_m" name="periodeMulai" value="${esc(S.set.periodeMulai || '')}"></div>
       <div class="fld"><label for="so_s">Selesai</label><input type="date" id="so_s" name="periodeSelesai" value="${esc(S.set.periodeSelesai || '')}"></div></div>
       <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturKontak" ${S.set.strukturKontak === false ? '' : 'checked'}> <span>Tampilkan tombol WhatsApp pengurus ke warga</span></label>
-      <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturPetugas" ${S.set.strukturPetugas === false ? '' : 'checked'}> <span>Tampilkan petugas keamanan, kebersihan &amp; lainnya (pekerja) di bagan<br><span class="muted" style="font-size:.82rem">Atur per orang di Pekerja &amp; gaji → ubah data pekerja → Struktur organisasi.</span></span></label>
+      <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="strukturPetugas" ${S.set.strukturPetugas === false ? '' : 'checked'}> <span>Tampilkan petugas keamanan, kebersihan &amp; lainnya (pekerja) di bagan<br><span class="muted" style="font-size:.82rem">Atur per orang di Pekerja &amp; gaji → ubah data pekerja → Struktur Kepengurusan.</span></span></label>
       <p class="muted" style="margin:0;font-size:.84rem">Nama Ketua RW (pelindung) diambil dari Pengaturan → Kop surat. Jabatan pengurus diatur di Admin → Pengurus.</p>`,
     onSubmit: async d => {
       if (d.periodeMulai && d.periodeSelesai && d.periodeSelesai < d.periodeMulai) { pesanDlg('Tanggal selesai tidak boleh sebelum tanggal mulai.', 'so_s'); return false; }
@@ -3593,7 +3593,7 @@ function openPekerja(id) {
   const akun = pengurusAktif().filter(p => p.userId);
   const pkId = x ? x.id : 'pk_' + uid(), ker = pkFotoKerja = {awal: (x && x.foto) || '', url: (x && x.foto) || '', load: false, pid: pkId, baru: [], box: '#pkFoto', file: 'pk_file', del: 'pk-foto-del', namaSel: '#pk_n', ro: !!ro};
   openDlg({title: x ? (bisa('gaji') ? 'Ubah data pekerja' : 'Data pekerja') : 'Tambah pekerja', area: 'gaji', submitLabel: x ? 'Simpan' : 'Tambah pekerja',
-    body: `<div class="fld"><label>Foto pekerja</label><div class="pg-foto" id="pkFoto"></div>${ro ? '' : '<input type="file" id="pk_file" accept="image/*" hidden><span class="hint">Tampil di Struktur organisasi. Dipotong persegi &amp; diperkecil otomatis.</span>'}</div>
+    body: `<div class="fld"><label>Foto pekerja</label><div class="pg-foto" id="pkFoto"></div>${ro ? '' : '<input type="file" id="pk_file" accept="image/*" hidden><span class="hint">Tampil di Struktur Kepengurusan. Dipotong persegi &amp; diperkecil otomatis.</span>'}</div>
     <div class="fld"><label for="pk_n">Nama lengkap <span class="req">*</span></label><input type="text" id="pk_n" name="nama" required maxlength="80" value="${esc(v.nama || '')}" ${ro}></div>
     <div class="grid2"><div class="fld"><label for="pk_j">Jabatan</label><select id="pk_j" name="jabatan" ${ro}>${JABATAN_PK.map(j => `<option ${j === v.jabatan ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select></div>
       <div class="fld"><label for="pk_s">Status</label><select id="pk_s" name="status" ${ro}>${['Aktif', 'Berhenti'].map(k => `<option ${k === (v.status || 'Aktif') ? 'selected' : ''}>${k}</option>`).join('')}</select></div></div>
@@ -3609,8 +3609,8 @@ function openPekerja(id) {
       <div class="fld"><label for="pk_an">Atas nama</label><input type="text" id="pk_an" name="anRek" maxlength="60" value="${esc(v.anRek || '')}" ${ro}></div></div>
     <div class="grid2"><div class="fld"><label for="pk_k">Kategori di buku kas</label><select id="pk_k" name="katKas" ${ro}><option value="">Otomatis sesuai jabatan</option>${KAT_KELUAR.map(k => `<option ${k === v.katKas ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
       <div class="fld" ${x && pkPengurus(x) ? 'hidden' : ''}><label for="pk_ak">Tautkan akun yang sudah ada (opsional)</label><select id="pk_ak" name="akunId" ${ro}><option value="">— tidak ada —</option>${akun.map(p => `<option value="${esc(p.userId)}" ${p.userId === v.akunId ? 'selected' : ''}>${esc(p.nama)} · ${esc(p.jabatan || '')}</option>`).join('')}</select><span class="hint">Pekerja dengan akun (mis. satpam) bisa melihat slip gajinya sendiri.</span></div></div>
-    <div class="gj-sec"><h4>Struktur organisasi</h4>
-      <div class="fld"><label for="pk_st">Tampil di struktur organisasi</label><select id="pk_st" name="struktur" ${ro}>${PK_STRUKTUR.map(([k, l]) => `<option value="${k}" ${k === (v.struktur || pkStrukturDefault(v.jabatan)) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="gj-sec"><h4>Struktur Kepengurusan</h4>
+      <div class="fld"><label for="pk_st">Tampil di struktur kepengurusan</label><select id="pk_st" name="struktur" ${ro}>${PK_STRUKTUR.map(([k, l]) => `<option value="${k}" ${k === (v.struktur || pkStrukturDefault(v.jabatan)) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="fld" id="pkAtasanW" ${PK_PETUGAS.includes(v.struktur || pkStrukturDefault(v.jabatan)) ? '' : 'hidden'}><label for="pk_at">Di bawah pengurus (atasan langsung)</label><select id="pk_at" name="atasan" ${ro}><option value="">— langsung di baris Petugas lingkungan —</option>${pkAtasanOpsi().map(([j, n]) => `<option value="${esc(j)}" ${j === (x && v.struktur ? v.atasan || '' : pkAtasanDefault(v.struktur || pkStrukturDefault(v.jabatan))) ? 'selected' : ''}>${esc(j)}${n ? ' – ' + esc(n) : ''}</option>`).join('')}</select><span class="hint">Pekerja tampil dikelompokkan di bawah jabatan pengurus ini.</span></div>
       <div class="fld" id="pkJabStW" ${v.struktur === 'pengurus' ? '' : 'hidden'}><label for="pk_js">Jabatan di struktur</label><select id="pk_js" name="jabatanStruktur" ${ro}>${JABATAN.map(j => `<option ${j === (v.jabatanStruktur || 'Seksi Keamanan') ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select><span class="hint">Tampil sejajar dengan pengurus sesuai jabatan ini. Hak akses aplikasi tidak berubah.</span></div>
     </div>
@@ -3661,7 +3661,7 @@ function pkAkunHtml(x, v) {
     <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" id="pk_akb" name="akunBuat"> <span>Buatkan akun login untuk pekerja ini<br><span class="muted" style="font-size:.82rem">Login memakai No. HP di atas. Cocok untuk satpam agar bisa mencatat tamu, paket, kejadian, dan menerima SOS di pos jaga, serta melihat slip gajinya sendiri.</span></span></label>
     <div id="pkAkunBaru" hidden style="margin-top:8px"><div class="grid2"><div class="fld"><label for="pk_arl">Role / hak akses</label><select id="pk_arl" name="akunPeran">${pkAkunRoleDefault(v) ? '' : '<option value="">— pilih role —</option>'}${roleOpt(pkAkunRoleDefault(v))}</select><span class="hint">Satpam: hanya menu Keamanan, lihat data warga & pengumuman.</span></div>
       <div class="fld"><label for="pk_apw">Password awal</label><div style="display:flex;gap:6px"><input type="text" id="pk_apw" name="akunPw" autocomplete="off" autocapitalize="none" placeholder="Minimal 8 karakter" style="flex:1"><button type="button" class="btn sm" data-act="pk-acak" data-k="pk_apw">Acak</button></div></div></div>
-      <p class="muted" style="margin:0;font-size:.82rem">Pekerja wajib mengganti password saat pertama masuk. Akun ini tidak tampil dobel di Struktur organisasi.</p></div></div>`;
+      <p class="muted" style="margin:0;font-size:.82rem">Pekerja wajib mengganti password saat pertama masuk. Akun ini tidak tampil dobel di Struktur Kepengurusan.</p></div></div>`;
 }
 function pkAkunCek(x, d) {
   if (!bisaKelola()) return true;
@@ -6633,7 +6633,7 @@ document.addEventListener('click', async e => {
   else if (a === 'org-atur') openStrukturAtur();
   else if (a === 'org-kelola') { S.tab = 'admin'; S.admTab = 'pengurus'; render(); window.scrollTo(0, 0); }
   else if (a === 'org-muat') muatStruktur(true);
-  else if (a === 'org-pdf') { try { const by = await pdfStruktur(); if (by) unduh(fname(`Struktur Organisasi ${lingk()}.pdf`), new Blob([by], {type: 'application/pdf'})); } catch (err) { toast('PDF gagal dibuat.', 'bad'); } }
+  else if (a === 'org-pdf') { try { const by = await pdfStruktur(); if (by) unduh(fname(`Struktur Kepengurusan ${lingk()}.pdf`), new Blob([by], {type: 'application/pdf'})); } catch (err) { toast('PDF gagal dibuat.', 'bad'); } }
   else if (a === 'gjtab') { S.gjTab = b.dataset.k; render(); }
   else if (a === 'gjper') { const n = Number(b.dataset.n); S.gjPer = n === 0 ? nowPer() : addM(S.gjPer, n); render(); }
   else if (a === 'gjth') { S.gjTh += Number(b.dataset.n); render(); }

@@ -359,3 +359,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- boleh_tulis: 'bersih' butuh izin kebersihan = 2; keluhan boleh diubah pemegang kebersihan=2 hanya untuk kategori 'Kebersihan & sampah'.
 -- RPC public.petugas_kebersihan(): nama/jabatan pekerja kebersihan aktif untuk izin kebersihan >= 1.
 -- Diuji (rollback): koord kebersihan & ketua BOLEH tulis; bendahara & warga DITOLAK tulis, tetap bisa baca.
+
+-- ===== Akun login dari data pekerja (2026-10-24) =====
+-- Pemilik dapat membuat akun login untuk pekerja (mis. satpam) dari form Pekerja. Secara teknis dibuat sebagai dokumen
+-- 'pengurus' dengan data.dariPekerja = <id pekerja> (role default Satpam) + profil peran 'pengurus' (wajib ganti password).
+-- Hanya Pemilik (boleh_tulis 'pengurus' & RPC admin_* tetap khusus pemilik). struktur_organisasi() mengabaikan
+-- pengurus dengan 'dariPekerja' agar tidak tampil dobel. Status Berhenti / cabut akses menghapus profil (login ditolak).

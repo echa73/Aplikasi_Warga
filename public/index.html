@@ -2571,7 +2571,7 @@ function vAdmin() {
   const rows = list.map(p => {
     const r = roleById(p.peranId), akun = p.userId ? nama(p.userId) : '';
     return `<div class="row" style="flex-wrap:wrap">${fotoAman(p.foto) ? `<img class="av" src="${esc(p.foto)}" alt="">` : avatarHtml(p.userId, p.nama)}
-      <div class="grow"><div class="t">${esc(p.nama)}${p.userId && S.me && p.userId === S.me.id ? ' <span class="muted">(Anda)</span>' : ''}</div>
+      <div class="grow"><div class="t">${esc(p.nama)}${p.userId && S.me && p.userId === S.me.id ? ' <span class="muted">(Anda)</span>' : ''}${p.dariPekerja ? ' <span class="chip mute plain" title="Akun dibuat dari menu Pekerja & gaji">Pekerja</span>' : ''}</div>
         <div class="s">${esc(p.jabatan || 'Tanpa jabatan')}${p.noHp ? ' · ' + esc(p.noHp) : ''}${p.wargaId && wById(p.wargaId) ? ' · Rumah ' + esc(wById(p.wargaId).blok) : ''}</div>
         ${r && roleCocok(p.jabatan) && roleCocok(p.jabatan).id !== r.id ? `<div class="s" style="color:var(--warn)">⚠ Jabatan ${esc(p.jabatan)}, tetapi role ${esc(r.nama)}</div>` : ''}
         <div class="s">${p.userId ? `Login No. HP: <span class="mono">${esc(hpTampil(p.noHp) || '—')}</span>${p.aktif !== false && !punyaProfil(p.userId) ? ' · <span style="color:var(--warn)">akses login belum aktif</span>' : ''}` : '<span style="color:var(--warn)">Belum punya login. Buka Ubah untuk membuatkan password.</span>'}</div></div>
@@ -2638,7 +2638,7 @@ function openPengurus(id, prefill) {
   const pidAwal = p ? p.id : uid(), ker = pgFotoKerja = {awal: (p && p.foto) || '', url: (p && p.foto) || '', load: false, pid: pidAwal, baru: [], box: '#pgFoto', file: 'pg_file', del: 'pg-foto-del', namaSel: '#pg_nama'};
   openDlg({
     title: p ? 'Ubah data pengurus' : 'Tambah pengurus', area: 'admin',
-    body: `<div class="fld"><label>Foto pengurus</label><div class="pg-foto" id="pgFoto"></div><input type="file" id="pg_file" accept="image/*" hidden>
+    body: `${p && p.dariPekerja ? '<div class="notice" style="margin:0">Akun ini dibuat dari menu <b>Pekerja &amp; gaji</b>. Nama dan No. HP sebaiknya diubah di data pekerjanya agar tetap sinkron.</div>' : ''}<div class="fld"><label>Foto pengurus</label><div class="pg-foto" id="pgFoto"></div><input type="file" id="pg_file" accept="image/*" hidden>
       <span class="hint">Tampil di Struktur organisasi. Foto wajah, dipotong persegi otomatis.</span></div>
     <div class="fld"><label for="pg_nama">Nama lengkap <span class="req">*</span></label><input type="text" id="pg_nama" name="nama" required value="${esc(x.nama)}"></div>
     <div class="grid2">
@@ -3508,29 +3508,34 @@ function openPekerja(id) {
         <div class="fld"><label for="pk_r">No. rekening</label><input type="text" id="pk_r" name="noRek" maxlength="30" inputmode="numeric" value="${esc(v.noRek || '')}" autocomplete="off" ${ro}></div></div>
       <div class="fld"><label for="pk_an">Atas nama</label><input type="text" id="pk_an" name="anRek" maxlength="60" value="${esc(v.anRek || '')}" ${ro}></div></div>
     <div class="grid2"><div class="fld"><label for="pk_k">Kategori di buku kas</label><select id="pk_k" name="katKas" ${ro}><option value="">Otomatis sesuai jabatan</option>${KAT_KELUAR.map(k => `<option ${k === v.katKas ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></div>
-      <div class="fld"><label for="pk_ak">Akun login (opsional)</label><select id="pk_ak" name="akunId" ${ro}><option value="">— tidak ada —</option>${akun.map(p => `<option value="${esc(p.userId)}" ${p.userId === v.akunId ? 'selected' : ''}>${esc(p.nama)} · ${esc(p.jabatan || '')}</option>`).join('')}</select><span class="hint">Pekerja dengan akun (mis. satpam) bisa melihat slip gajinya sendiri.</span></div></div>
+      <div class="fld" ${x && pkPengurus(x) ? 'hidden' : ''}><label for="pk_ak">Tautkan akun yang sudah ada (opsional)</label><select id="pk_ak" name="akunId" ${ro}><option value="">— tidak ada —</option>${akun.map(p => `<option value="${esc(p.userId)}" ${p.userId === v.akunId ? 'selected' : ''}>${esc(p.nama)} · ${esc(p.jabatan || '')}</option>`).join('')}</select><span class="hint">Pekerja dengan akun (mis. satpam) bisa melihat slip gajinya sendiri.</span></div></div>
     <div class="gj-sec"><h4>Struktur organisasi</h4>
       <div class="fld"><label for="pk_st">Tampil di struktur organisasi</label><select id="pk_st" name="struktur" ${ro}>${PK_STRUKTUR.map(([k, l]) => `<option value="${k}" ${k === (v.struktur || pkStrukturDefault(v.jabatan)) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="fld" id="pkAtasanW" ${PK_PETUGAS.includes(v.struktur || pkStrukturDefault(v.jabatan)) ? '' : 'hidden'}><label for="pk_at">Di bawah pengurus (atasan langsung)</label><select id="pk_at" name="atasan" ${ro}><option value="">— langsung di baris Petugas lingkungan —</option>${pkAtasanOpsi().map(([j, n]) => `<option value="${esc(j)}" ${j === (x && v.struktur ? v.atasan || '' : pkAtasanDefault(v.struktur || pkStrukturDefault(v.jabatan))) ? 'selected' : ''}>${esc(j)}${n ? ' – ' + esc(n) : ''}</option>`).join('')}</select><span class="hint">Pekerja tampil dikelompokkan di bawah jabatan pengurus ini.</span></div>
       <div class="fld" id="pkJabStW" ${v.struktur === 'pengurus' ? '' : 'hidden'}><label for="pk_js">Jabatan di struktur</label><select id="pk_js" name="jabatanStruktur" ${ro}>${JABATAN.map(j => `<option ${j === (v.jabatanStruktur || 'Seksi Keamanan') ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select><span class="hint">Tampil sejajar dengan pengurus sesuai jabatan ini. Hak akses aplikasi tidak berubah.</span></div>
     </div>
+    ${pkAkunHtml(x, v)}
     <div class="fld"><label for="pk_c">Catatan</label><input type="text" id="pk_c" name="catatan" maxlength="200" value="${esc(v.catatan || '')}" ${ro}></div>`,
     onSubmit: async d => {
       const nama = String(d.nama || '').trim(); if (!nama) { pesanDlg('Isi nama pekerja.', 'pk_n'); return false; }
       const gp = Math.round(Number(d.gajiPokok) || 0); if (gp <= 0) { pesanDlg('Isi gaji pokok.', 'pk_g'); return false; }
       const nik = String(d.nik || '').replace(/\D/g, ''); if (nik && nik.length !== 16) { pesanDlg('NIK harus 16 digit, atau kosongkan.', 'pk_nik'); return false; }
       if (ker.load) { pesanDlg('Tunggu, foto masih diunggah.'); return false; }
+      const akunCek = pkAkunCek(x, d); if (akunCek === false) return false;
       const row = {...(x || {}), foto: ker.url || '', nama, jabatan: d.jabatan, status: d.status, noHp: String(d.noHp || '').trim(), mulai: d.mulai || '', nik, gajiPokok: gp, alamat: String(d.alamat || '').trim(),
         tunjangan: gjAmbil('#pkTun').filter(t => t.nama), bank: String(d.bank || '').trim(), noRek: String(d.noRek || '').replace(/[^\dA-Za-z-]/g, ''), anRek: String(d.anRek || '').trim(), katKas: d.katKas || '', akunId: d.akunId || '', catatan: String(d.catatan || '').trim(), diperbarui: todayISO(),
         struktur: PK_STRUKTUR.some(o => o[0] === d.struktur) ? d.struktur : pkStrukturDefault(d.jabatan), atasan: PK_PETUGAS.includes(d.struktur) ? (d.atasan || '') : '', jabatanStruktur: d.struktur === 'pengurus' ? (d.jabatanStruktur || '') : ''};
       if (!x) row.dibuat = todayISO();
       S.struktur = null;
+      const akunHasil = await pkAkunProses(x, pkId, row, d); if (akunHasil === false) return false;
       const ok = await put('pekerja', pkId, row);
+      if (ok && akunHasil && akunHasil.pw) setTimeout(() => tampilLoginPengurus(akunHasil.pg, hpTampil(akunHasil.pg.noHp), akunHasil.pw), 60);
       if (ok) { pgFotoHapus([ker.awal, ...ker.baru].filter(u => u && u !== row.foto)); pkFotoKerja = null; }
       if (ok) toast(x ? 'Data pekerja diperbarui.' : `${nama} ditambahkan.`); return ok;
     },
-    onDelete: x ? async () => { if (S.gaji.some(g => g.pekerjaId === x.id)) { pesanDlg('Pekerja ini sudah punya slip gaji. Ubah statusnya menjadi "Berhenti" agar riwayat gaji tetap tersimpan.'); return false; } const ok = await del('pekerja', x.id); if (ok) { pgFotoHapus([x.foto, ...ker.baru]); pkFotoKerja = null; S.struktur = null; toast('Data pekerja dihapus.'); } return ok; } : null, deleteLabel: 'Hapus pekerja'});
+    onDelete: x ? async () => { if (S.gaji.some(g => g.pekerjaId === x.id)) { pesanDlg('Pekerja ini sudah punya slip gaji. Ubah statusnya menjadi "Berhenti" agar riwayat gaji tetap tersimpan.'); return false; } const lk = pkPengurus(x); if (lk && bisaKelola()) { try { if (lk.userId) await hapusProfil(lk.userId); await del('pengurus', lk.id); } catch (e) { pesanDlg('Gagal mencabut akun login: ' + pesanAuth(e)); return false; } } const ok = await del('pekerja', x.id); if (ok) { pgFotoHapus([x.foto, ...ker.baru]); pkFotoKerja = null; S.struktur = null; toast('Data pekerja dihapus.'); } return ok; } : null, deleteLabel: 'Hapus pekerja'});
   renderFoto(ker, v.nama); if (!ro) pasangFoto(ker, () => pkFotoKerja);
+  const ab = $('#pk_akb'); if (ab) ab.addEventListener('change', () => { $('#pkAkunBaru').hidden = !ab.checked; if (ab.checked && !$('#pk_apw').value) $('#pk_apw').value = passAcak(); });
   const st = $('#pk_st'), pj = $('#pk_j');
   const setAtasan = () => { const a = $('#pk_at'), d = pkAtasanDefault(st.value); if (a && [...a.options].some(o => o.value === d)) a.value = d; };
   if (st) st.addEventListener('change', () => { $('#pkAtasanW').hidden = !PK_PETUGAS.includes(st.value); $('#pkJabStW').hidden = st.value !== 'pengurus'; setAtasan(); });
@@ -3540,6 +3545,60 @@ const PK_STRUKTUR = [['keamanan', 'Ya, sebagai petugas keamanan'], ['kebersihan'
 const PK_PETUGAS = ['keamanan', 'kebersihan', 'petugas'];
 const PK_GRUP_LBL = {keamanan: 'Petugas keamanan', kebersihan: 'Petugas kebersihan', petugas: 'Petugas lingkungan'};
 const pkStrukturDefault = jab => { const t = String(jab || '').toLowerCase(); return /satpam|komandan|keamanan|hansip|linmas/.test(t) ? 'keamanan' : /bersih|sampah|kebun|taman/.test(t) ? 'kebersihan' : 'petugas'; };
+/* akun login untuk pekerja (satpam dll.) — dibuat sebagai pengurus tersembunyi oleh Pemilik */
+const pkPengurus = x => x ? S.pengurus.find(p => p.dariPekerja === x.id) : null;
+function pkAkunRoleDefault(v) { const k = v.struktur && PK_PETUGAS.includes(v.struktur) ? v.struktur : pkStrukturDefault(v.jabatan); return k === 'keamanan' && roleById('satpam') ? 'satpam' : ''; }
+function pkAkunHtml(x, v) {
+  const lk = pkPengurus(x);
+  if (!bisaKelola()) return lk ? `<div class="gj-sec"><h4>Akun login aplikasi</h4><p class="muted" style="margin:0;font-size:.86rem">${lk.aktif !== false && lk.userId ? `Aktif · login dengan No. HP ${esc(hpTampil(lk.noHp))} · role ${esc((roleById(lk.peranId) || {}).nama || '-')}` : 'Akses login dicabut'}. Akun dikelola oleh Pemilik.</p></div>` : '';
+  const roleOpt = sel => rolesAll().map(r => `<option value="${esc(r.id)}" ${r.id === sel ? 'selected' : ''}>${esc(r.nama)}</option>`).join('');
+  if (lk && lk.userId) return `<div class="gj-sec"><h4>Akun login aplikasi</h4>
+    <p style="margin:0 0 8px;font-size:.88rem">${lk.aktif !== false ? '<span class="chip ok">Aktif</span>' : '<span class="chip bad">Dicabut</span>'} Login dengan <b>No. HP ${esc(hpTampil(lk.noHp))}</b> (ikut No. HP di atas).</p>
+    <div class="grid2"><div class="fld"><label for="pk_arl">Role / hak akses</label><select id="pk_arl" name="akunPeran">${roleOpt(lk.peranId)}</select></div>
+      <div class="fld"><label for="pk_arp">Reset password</label><div style="display:flex;gap:6px"><input type="text" id="pk_arp" name="akunReset" autocomplete="off" autocapitalize="none" placeholder="Kosongkan bila tidak diganti" style="flex:1"><button type="button" class="btn sm" data-act="pk-acak" data-k="pk_arp">Acak</button></div></div></div>
+    <label class="ck" style="font-weight:500"><input type="checkbox" name="${lk.aktif !== false ? 'akunCabut' : 'akunAktif'}"> ${lk.aktif !== false ? 'Cabut akses login (mis. sudah tidak bertugas)' : 'Aktifkan lagi akses login'}</label></div>`;
+  return `<div class="gj-sec"><h4>Akun login aplikasi</h4>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" id="pk_akb" name="akunBuat"> <span>Buatkan akun login untuk pekerja ini<br><span class="muted" style="font-size:.82rem">Login memakai No. HP di atas. Cocok untuk satpam agar bisa mencatat tamu, paket, kejadian, dan menerima SOS di pos jaga, serta melihat slip gajinya sendiri.</span></span></label>
+    <div id="pkAkunBaru" hidden style="margin-top:8px"><div class="grid2"><div class="fld"><label for="pk_arl">Role / hak akses</label><select id="pk_arl" name="akunPeran">${pkAkunRoleDefault(v) ? '' : '<option value="">— pilih role —</option>'}${roleOpt(pkAkunRoleDefault(v))}</select><span class="hint">Satpam: hanya menu Keamanan, lihat data warga & pengumuman.</span></div>
+      <div class="fld"><label for="pk_apw">Password awal</label><div style="display:flex;gap:6px"><input type="text" id="pk_apw" name="akunPw" autocomplete="off" autocapitalize="none" placeholder="Minimal 8 karakter" style="flex:1"><button type="button" class="btn sm" data-act="pk-acak" data-k="pk_apw">Acak</button></div></div></div>
+      <p class="muted" style="margin:0;font-size:.82rem">Pekerja wajib mengganti password saat pertama masuk. Akun ini tidak tampil dobel di Struktur organisasi.</p></div></div>`;
+}
+function pkAkunCek(x, d) {
+  if (!bisaKelola()) return true;
+  const lk = pkPengurus(x), buat = d.akunBuat && !lk;
+  if (buat || (lk && lk.userId)) {
+    const n = String(d.noHp || '').replace(/\D/g, '').length;
+    if (n < 10) { pesanDlg('Isi No. HP minimal 10 digit karena dipakai untuk login.', 'pk_hp'); return false; }
+    const dipakai = loginTerpakai(d.noHp, lk && lk.id); if (dipakai) { pesanDlg(`No. HP ini sudah dipakai login ${dipakai}.`, 'pk_hp'); return false; }
+    if (!roleById(d.akunPeran)) { pesanDlg('Pilih role untuk akun login.', 'pk_arl'); return false; }
+  }
+  if (buat && String(d.akunPw || '').length < 8) { pesanDlg('Password awal minimal 8 karakter.', 'pk_apw'); return false; }
+  if (d.akunReset && String(d.akunReset).length < 8) { pesanDlg('Password baru minimal 8 karakter.', 'pk_arp'); return false; }
+  return true;
+}
+async function pkAkunProses(x, pkId, row, d) {
+  if (!bisaKelola()) return null;
+  const lk = pkPengurus(x), buat = d.akunBuat && !lk;
+  if (!buat && !lk) return null;
+  const aktif = row.status !== 'Berhenti' && (lk ? (lk.aktif !== false ? !d.akunCabut : !!d.akunAktif) : true);
+  const pg = {...(lk || {}), nama: row.nama, jabatan: row.jabatan || 'Petugas', noHp: row.noHp, peranId: d.akunPeran || (lk && lk.peranId) || 'satpam', aktif, dariPekerja: pkId, wargaId: (lk && lk.wargaId) || '', mulai: (lk && lk.mulai) || row.mulai || todayISO(), diperbarui: todayISO()};
+  const pid = lk ? lk.id : 'pgk_' + uid();
+  if (!lk) pg.dibuat = todayISO();
+  if (await seedRoles() === false) return false;
+  let pw = '';
+  try {
+    if (buat) { pw = String(d.akunPw); pg.userId = await buatAkunAuth(hpEmail(row.noHp), pw); pg.email = ''; }
+    if (!await put('pengurus', pid, pg)) return false;
+    if (pg.userId) {
+      if (buat) { try { await SB.rpc('admin_konfirmasi_user', {target: pg.userId}); } catch (e) {} }
+      if (aktif) await simpanProfil({user_id: pg.userId, nama: pg.nama, peran: 'pengurus', pengurus_id: pid, warga_id: null, ...(buat ? {wajib_ganti: true} : {})});
+      else await hapusProfil(pg.userId);
+      if (d.akunReset) { await resetPassword(pg.userId, String(d.akunReset)); pw = String(d.akunReset); }
+      row.akunId = pg.userId;
+    }
+  } catch (e) { pesanDlg((/sudah dipakai|registered/i.test(String(e && e.message)) ? 'No. HP ini sudah dipakai akun login lain.' : 'Akun login gagal diatur: ' + pesanAuth(e)), 'pk_hp'); return false; }
+  return {pg: {...pg, id: pid}, pw};
+}
 function pkAtasanOpsi() {
   const peta = new Map();
   pengurusAktif().filter(p => p.jabatan && orgLevel(p.jabatan) < 5).forEach(p => { const j = p.jabatan.trim(); peta.set(j, peta.has(j) ? peta.get(j) + ', ' + p.nama : p.nama); });
@@ -6582,6 +6641,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lupa-tutup') { S.lupa = false; S.lupaTerkirim = ''; S.lupaInfo = ''; render(); }
   else if (a === 'pulih-batal') { S.pulih = false; try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); }
   else if (a === 'pg-acak2') { const i = $('#pg_reset'); if (i) i.value = passAcak(); }
+  else if (a === 'pk-acak') { const i = $('#' + b.dataset.k); if (i) i.value = passAcak(); }
   else if (a === 'pg-acak') { const i = $('#pg_pass'); if (i) i.value = passAcak(); }
   else if (a === 'lapor-new') openLapor();
   else if (a === 'rumah-ubah') openWargaSaya();

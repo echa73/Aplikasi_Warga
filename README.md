@@ -82,3 +82,6 @@ Jadwal jaga punya hak akses sendiri ("Jadwal jaga satpam" di editor role). Bawaa
 
 ### Kunci aplikasi (sidik jari / wajah / PIN)
 Tombol gembok di header membuka **Keamanan akun**: ganti password, aktifkan sidik jari / Face ID / kunci layar perangkat (WebAuthn platform authenticator), dan PIN aplikasi 4–6 angka (PBKDF2, disimpan hanya di perangkat). Bila aktif, sesi tetap masuk di perangkat itu tetapi aplikasi terkunci saat dibuka ulang atau setelah 5 menit tidak dipakai (menggantikan logout otomatis 30 menit). PIN salah 5 kali = keluar penuh. Selalu ada pilihan "Masuk dengan No. HP & password".
+
+### Catatan teknis (2026-10-24)
+Kode aplikasi kini di `public/app.js` (bukan lagi skrip inline di `index.html`) agar CSP bisa melarang skrip inline. Deploy seperti biasa dengan seluruh isi folder `public/`.

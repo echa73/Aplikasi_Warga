@@ -1,8 +1,8 @@
 /* Warga Kasuari · service worker
    - Halaman & aset aplikasi: ambil dari jaringan dulu (selalu versi terbaru), simpan cadangan untuk dibuka saat offline.
    - Data (Supabase) dan pustaka dari CDN tidak disentuh: selalu langsung ke internet. */
-const VERSI = 'warga-kasuari-v2';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
+const VERSI = 'warga-kasuari-v3';
+const SHELL = ['./', './index.html', './app.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSI).then(c => c.addAll(SHELL)).catch(() => {}));

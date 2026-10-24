@@ -377,3 +377,13 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Akun yang masih dipakai tetap ditolak 'Email sudah dipakai akun lain'. Tetap khusus Pemilik.
 -- Diuji (rollback): No. HP Otin (akun lama yatim) -> dipakai ulang; email Ketua -> DITOLAK; bendahara -> DITOLAK.
 -- (2026-10-24) pengaturan.namaLengkap ("Villa Nusa Indah 5 Kluster Kasuari") ditambahkan; struktur_organisasi() mengirim 'namaLengkap'.
+
+-- ===== Audit keamanan ke-2 (2026-10-24) =====
+-- 1. Trigger privat.cabut_sesi_profil: saat profil dihapus (akses dicabut / pengurus dihapus / pekerja berhenti),
+--    semua refresh token user dicabut -> perangkat lama keluar paling lambat saat access token habis (<= 1 jam).
+-- 2. admin_buat_user: saat memakai ulang akun yatim, refresh token lama dicabut agar perangkat pemilik nomor lama
+--    tidak ikut masuk lagi.
+-- 3. Klien: skrip dipindah ke app.js; CSP script-src tanpa 'unsafe-inline' + script-src-attr 'none' + upgrade-insecure-requests
+--    (skrip sisipan / atribut onerror diblokir browser walau ada celah XSS).
+-- Temuan tetap (disengaja): fungsi security definer callable authenticated (semua memeriksa peran di dalam), info_publik anon
+-- (papan publik, bisa dimatikan di Pengaturan), leaked password protection (butuh paket Pro).

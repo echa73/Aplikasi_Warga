@@ -1158,7 +1158,7 @@ function resetSesi() {
   if (SB_CH) { try { SB.removeChannel(SB_CH); } catch (e) {} SB_CH = null; }
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   KOLEKSI_SB.forEach(sinkron); sinkron('pengaturan');
-  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = [];
+  S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = '';
   S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
@@ -1169,6 +1169,16 @@ async function masukSesi(user) {
   if (error) { S.loaded = true; S.loginError = 'Gagal membaca profil: ' + error.message; render(); return; }
   S.profil = prof || null;
   if (!prof) { S.loaded = true; render(); return; }
+  if (prof.peran === 'pemilik') {
+    try {
+      const {data: a} = await SB.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (a && a.nextLevel === 'aal2' && a.currentLevel !== 'aal2') {
+        const {data: lf} = await SB.auth.mfa.listFactors();
+        const f = ((lf && lf.totp) || []).find(x => x.status === 'verified');
+        if (f) { S.mfaPerlu = {factorId: f.id, user}; S.mfaErr = ''; S.loaded = true; render(); setTimeout(() => { const k = $('#mfaKode'); if (k) k.focus(); }, 50); return; }
+      }
+    } catch (e) {}
+  }
   S.owner = prof.peran === 'pemilik';
   S.me = {id: user.id, name: prof.nama || (user.email || '').split('@')[0], email: user.email};
   S.names[user.id] = {name: S.me.name};
@@ -1179,7 +1189,7 @@ async function masukSesi(user) {
   S.tab = prof.peran === 'warga' ? 'portal' : 'ringkasan';
   S.loaded = true; render(); window.scrollTo(0, 0);
   if (sudahMasuk()) toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.');
-  pushCek = false; pushSub = null; pushSegarkan();
+  pushCek = false; pushSub = null; pushSegarkan(); mfaMuat();
 }
 const pesanAuth = e => {
   const m = String((e && e.message) || e || '');
@@ -1384,7 +1394,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + ({ringkasan: () => vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, rohani: vRohani, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2102,7 +2112,7 @@ function authArt() {
     </svg>
   </aside>`;
 }
-function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? papanBell() : ''}${authArt()}<div class="auth-main">${vLoginKartu()}</div></div>`; }
+function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? papanBell() : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : vLoginKartu()}</div></div>`; }
 function vLoginKartu() {
   const brand = sub => `<div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Selamat datang</h2>
     <p class="muted" style="margin:4px 0 0">${sub}</p></div>`;
@@ -2489,7 +2499,7 @@ function vAdmin() {
     .map(([k, l]) => `<button type="button" data-act="admtab" data-k="${k}" aria-pressed="${S.admTab === k}">${l}</button>`).join('');
   const head = `<div class="sec-head"><div><h2>Admin</h2><p>Atur siapa pengurusnya, apa jabatannya, dan menu apa saja yang boleh mereka buka.</p></div>
     ${S.admTab === 'pengurus' ? '<button class="btn pri" data-act="pgr-new">+ Tambah pengurus</button>' : S.admTab === 'role' ? '<button class="btn pri" data-act="role-new">+ Tambah role</button>' : S.admTab === 'akun' ? '<button class="btn pri" data-act="akun-new">+ Buat akun warga</button>' : ''}</div>
-    <div class="toolbar"><div class="seg" role="group" aria-label="Bagian admin">${segs}</div></div>`;
+    <div class="toolbar"><div class="seg" role="group" aria-label="Bagian admin">${segs}</div></div>` + panelMfa();
   const legacy = '';
   if (S.admTab === 'role') return head + vAdminRole();
   if (S.admTab === 'akun') return head + vAdminAkun();
@@ -2935,6 +2945,93 @@ function pgChart() {
   });
   return s + '</svg>';
 }
+/* ---------- Verifikasi dua langkah (MFA TOTP) untuk Pemilik ---------- */
+async function mfaMuat() {
+  if (!SB || !S.authUser || !S.profil || S.profil.peran !== 'pemilik') { S.mfaInfo = null; return; }
+  try {
+    const {data} = await SB.auth.mfa.listFactors();
+    const v = ((data && data.totp) || []).filter(f => f.status === 'verified');
+    S.mfaInfo = {aktif: v.length > 0, faktor: v};
+  } catch (e) { S.mfaInfo = {aktif: false, faktor: [], gagal: true}; }
+  sbSched();
+}
+function panelMfa() {
+  if (S.sesi !== 'pemilik' || !S.mfaInfo) return '';
+  const I = S.mfaInfo;
+  return `<div class="panel" style="display:grid;gap:8px;${I.aktif ? '' : 'border-color:var(--sun);background:var(--sun-soft)'}">
+    <h3 style="margin:0">Verifikasi dua langkah <small>akun Pemilik</small></h3>
+    ${I.aktif ? `<p style="margin:0;font-size:.9rem"><span class="chip ok">Aktif</span> Setiap login Pemilik meminta kode 6 digit dari aplikasi authenticator di HP Anda.</p>
+      <div class="muted" style="font-size:.82rem">${I.faktor.map(f => `${esc(f.friendly_name || 'Authenticator')} · didaftarkan ${esc(tgl(String(f.created_at || '').slice(0, 10)))}`).join('<br>')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${I.faktor.length < 2 ? '<button type="button" class="btn sm" data-act="mfa-on">+ Tambah HP cadangan</button>' : ''}<button type="button" class="btn sm ghost" data-act="mfa-off" style="color:var(--bad)">Matikan</button></div>`
+    : `<p style="margin:0;font-size:.9rem">Lindungi akun Pemilik: selain password, login juga memerlukan kode dari aplikasi <b>Google Authenticator</b>, <b>Microsoft Authenticator</b>, atau sejenisnya. Password yang bocor saja tidak cukup untuk masuk.</p>
+      <div><button type="button" class="btn sm pri" data-act="mfa-on">🔐 Aktifkan verifikasi dua langkah</button></div>`}</div>`;
+}
+async function openMfaDaftar() {
+  try {
+    const {data: lf} = await SB.auth.mfa.listFactors();
+    for (const f of ((lf && lf.all) || []).filter(f => f.status !== 'verified')) await SB.auth.mfa.unenroll({factorId: f.id});
+  } catch (e) {}
+  const {data, error} = await SB.auth.mfa.enroll({factorType: 'totp', friendlyName: 'HP ' + new Date().toISOString().slice(0, 16).replace('T', ' '), issuer: 'Warga Kasuari'});
+  if (error || !data) { toast('Tidak bisa memulai verifikasi dua langkah: ' + ((error && error.message) || 'coba lagi'), 'bad'); return; }
+  const secret = data.totp.secret;
+  openDlg({title: 'Aktifkan verifikasi dua langkah', submitLabel: 'Verifikasi & aktifkan',
+    body: `<ol style="margin:0;padding-left:18px;display:grid;gap:8px;font-size:.9rem">
+        <li>Pasang aplikasi <b>Google Authenticator</b> atau <b>Microsoft Authenticator</b> di HP (gratis di Play Store / App Store).</li>
+        <li>Di aplikasi tersebut pilih <b>Tambah akun → Pindai kode QR</b>, lalu pindai kode di bawah.</li>
+        <li>Masukkan kode 6 digit yang muncul di aplikasi.</li></ol>
+      <div style="display:grid;place-items:center;gap:6px"><img src="${esc(data.totp.qr_code)}" alt="Kode QR verifikasi dua langkah" style="width:200px;height:200px;background:#fff;border-radius:12px;padding:8px">
+        <span class="muted" style="font-size:.8rem">Tidak bisa memindai? Masukkan kunci ini secara manual:</span>
+        <code style="font-size:.9rem;letter-spacing:.08em;word-break:break-all;text-align:center">${esc(secret)}</code>
+        <button type="button" class="btn sm ghost" data-act="salin" data-teks="${esc(secret)}">Salin kunci</button></div>
+      <div class="fld"><label for="mfa_k">Kode 6 digit <span class="req">*</span></label><input type="text" id="mfa_k" name="kode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required placeholder="123456" style="letter-spacing:.3em;font-size:1.2rem;text-align:center"></div>`,
+    onSubmit: async d => {
+      const kode = String(d.kode || '').replace(/\D/g, '');
+      if (kode.length !== 6) { pesanDlg('Masukkan 6 digit kode dari aplikasi authenticator.', 'mfa_k'); return false; }
+      const {error: e2} = await SB.auth.mfa.challengeAndVerify({factorId: data.id, code: kode});
+      if (e2) { pesanDlg('Kode salah atau sudah kedaluwarsa. Coba kode terbaru dari aplikasi.', 'mfa_k'); return false; }
+      toast('Verifikasi dua langkah aktif. Login berikutnya akan meminta kode dari aplikasi authenticator.');
+      await mfaMuat(); return true;
+    }});
+}
+function openMfaMatikan() {
+  const f = S.mfaInfo && S.mfaInfo.faktor || []; if (!f.length) return;
+  openDlg({title: 'Matikan verifikasi dua langkah?', submitLabel: 'Matikan',
+    body: `<p style="margin:0">Akun Pemilik akan kembali hanya dilindungi password. Masukkan kode dari aplikasi authenticator untuk konfirmasi.</p>
+      <div class="fld"><label for="mfa_o">Kode 6 digit <span class="req">*</span></label><input type="text" id="mfa_o" name="kode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required style="letter-spacing:.3em;font-size:1.2rem;text-align:center"></div>`,
+    onSubmit: async d => {
+      const kode = String(d.kode || '').replace(/\D/g, '');
+      const {error} = await SB.auth.mfa.challengeAndVerify({factorId: f[0].id, code: kode});
+      if (error) { pesanDlg('Kode salah atau sudah kedaluwarsa.', 'mfa_o'); return false; }
+      for (const x of f) { const {error: e2} = await SB.auth.mfa.unenroll({factorId: x.id}); if (e2) { pesanDlg('Gagal mematikan: ' + e2.message); return false; } }
+      toast('Verifikasi dua langkah dimatikan.'); await mfaMuat(); return true;
+    }});
+}
+function vMfaKartu() {
+  return `<div class="login"><div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Verifikasi dua langkah</h2>
+      <p class="muted" style="margin:4px 0 0">Buka aplikasi authenticator di HP Anda, lalu masukkan kode 6 digit untuk akun Warga Kasuari.</p></div>
+    <form id="mfaForm" class="login-pin" style="border-top:0;padding-top:0">
+      <div class="fld"><label for="mfaKode">Kode verifikasi</label><input type="text" id="mfaKode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required autofocus placeholder="123456" style="letter-spacing:.35em;font-size:1.4rem;text-align:center"></div>
+      ${S.mfaErr ? `<div class="notice" role="alert" style="font-size:.86rem">${esc(S.mfaErr)}</div>` : ''}
+      <button type="submit" class="btn pri" style="width:100%">Verifikasi</button>
+      <button type="button" class="btn ghost" data-act="mfa-batal" style="width:100%">Batal & keluar</button>
+      <p class="muted" style="margin:0;font-size:.8rem">HP hilang? Hubungi pengelola teknis aplikasi untuk mengatur ulang verifikasi dua langkah.</p></form></div>`;
+}
+let mfaGagal = 0;
+async function prosesMfa() {
+  const el = $('#mfaKode'), kode = String((el && el.value) || '').replace(/\D/g, ''), M = S.mfaPerlu;
+  if (!M) return;
+  if (kode.length !== 6) { S.mfaErr = 'Masukkan 6 digit kode.'; render(); return; }
+  const b = document.querySelector('#mfaForm button[type=submit]'); if (b) b.disabled = true;
+  const {error} = await SB.auth.mfa.challengeAndVerify({factorId: M.factorId, code: kode});
+  if (error) {
+    mfaGagal++;
+    S.mfaErr = mfaGagal >= 5 ? 'Terlalu banyak kode salah. Tunggu beberapa menit lalu coba lagi.' : 'Kode salah atau sudah kedaluwarsa. Gunakan kode terbaru di aplikasi.';
+    render(); return;
+  }
+  mfaGagal = 0; S.mfaErr = ''; S.mfaPerlu = null;
+  await masukSesi(M.user);
+}
+
 /* ---------- Notifikasi HP (Web Push) ---------- */
 const pushDidukung = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 const iosBelumInstal = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches);
@@ -5519,6 +5616,9 @@ document.addEventListener('click', async e => {
   else if (a === 'impor-warga') openImporWarga();
   else if (a === 'pjf') { S.pjFilter = b.dataset.k; render(); }
   else if (a === 'lp-fav') { e.stopPropagation(); const f = lpFav(), on = !f.has(b.dataset.id); on ? f.add(b.dataset.id) : f.delete(b.dataset.id); lpFavSet(f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); if (S.lpTab === 'favorit') render(); else { const t = document.querySelector('[data-act=lp-tab][data-k=favorit]'); if (t) t.textContent = 'Favorit ' + S.lapak.filter(x => f.has(x.id) && lpTampilUmum(x)).length; } }
+  else if (a === 'mfa-on') openMfaDaftar();
+  else if (a === 'mfa-off') openMfaMatikan();
+  else if (a === 'mfa-batal') { try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); }
   else if (a === 'push-on') pushAktifkan(b);
   else if (a === 'push-off') pushMatikan(b);
   else if (a === 'push-tes') pushTes(b);
@@ -5724,6 +5824,7 @@ document.addEventListener('submit', async e => {
   if (e.target.id === 'pulihForm') { e.preventDefault(); await prosesPulih(); return; }
   if (e.target.id === 'kodeForm') { e.preventDefault(); await prosesKode(); return; }
   if (e.target.id === 'wajibForm') { e.preventDefault(); await prosesWajib(); return; }
+  if (e.target.id === 'mfaForm') { e.preventDefault(); await prosesMfa(); return; }
   if (e.target.id !== 'setForm') return;
   e.preventDefault();
   const d = Object.fromEntries(new FormData(e.target));

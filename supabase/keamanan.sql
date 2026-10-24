@@ -309,3 +309,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   ekspor CSV kebal formula injection (=,+,-,@ diawali apostrof).
 -- Disarankan di dashboard Supabase: Authentication → matikan "Allow new users to sign up";
 --   aktifkan "Leaked password protection" (paket Pro); pertimbangkan MFA untuk akun Pemilik.
+
+-- 2026-10-24: Verifikasi dua langkah (TOTP) untuk Pemilik (migrasi mfa_pemilik)
+-- privat.peran_saya(): bila Pemilik punya faktor MFA berstatus 'verified' tetapi JWT belum 'aal2',
+--   peran dianggap NULL (tidak ada akses Pemilik sama sekali: data, fungsi admin, storage).
+-- Pemulihan bila HP authenticator hilang: hapus faktor lewat Supabase Dashboard → Authentication → Users →
+--   pilih akun Pemilik → hapus MFA factor (atau minta pengelola teknis).

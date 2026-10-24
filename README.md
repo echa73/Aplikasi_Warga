@@ -59,3 +59,6 @@ Menu **Lingkungan → Lapak Warga**: marketplace antar warga. Warga yang sudah d
 
 ## Notifikasi HP (Web Push)
 Menu **Keamanan → Pos jaga** (satpam/pengurus) dan **Aman** (warga): tombol "Aktifkan notifikasi" + "Kirim tes". SOS baru membuat HP satpam & pengurus berbunyi walau aplikasi ditutup; warga pelapor mendapat kabar saat SOS ditangani. iPhone: iOS 16.4+ dan aplikasi harus ditambahkan ke Layar Utama. Server: tabel `push_langganan`, trigger `push_darurat` (pg_net) → edge function `supabase/functions/kirim-push`.
+
+## Verifikasi dua langkah Pemilik
+Menu **Admin** (Pemilik): "Aktifkan verifikasi dua langkah" → pindai QR dengan Google/Microsoft Authenticator → masukkan kode. Setelah aktif, login Pemilik meminta kode 6 digit; server menolak semua hak Pemilik sebelum kode diverifikasi (JWT AAL2). Bisa menambah HP cadangan. Bila HP hilang: hapus faktor MFA di Supabase Dashboard → Authentication → Users.

@@ -6,7 +6,11 @@
 <meta name="theme-color" content="#1F7A4D">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://newvddbfrcyoxxblmmby.supabase.co; connect-src 'self' https://newvddbfrcyoxxblmmby.supabase.co wss://newvddbfrcyoxxblmmby.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'self' blob: https://maps.google.com https://www.google.com; worker-src 'self' blob:; manifest-src 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>.org{display:grid;gap:0;padding:8px 0 4px;overflow-x:auto}
+<style>.jg-pilih{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.jg-chip{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--surface)}
+.jg-chip span{display:grid;line-height:1.25}.jg-chip small{color:var(--muted);font-size:.76rem}
+.jg-chip:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.org{display:grid;gap:0;padding:8px 0 4px;overflow-x:auto}
 .org-lvl{display:flex;justify-content:center;gap:16px;position:relative;padding-top:26px}
 .org-lvl.top{padding-top:0}
 .org-lvl:not(.top)::before{content:"";position:absolute;top:0;left:50%;height:13px;border-left:2px solid var(--line)}
@@ -5667,12 +5671,33 @@ function kmJaga() {
       return `<td class="${now ? 'jaga-now' : ''}">${bisa('keamanan') ? `<button type="button" class="jaga-cell" data-act="jaga-edit" data-k="${h}_${s}">${esc(j && j.petugas || '+')}</button>` : esc(j && j.petugas || '—')}</td>`; }).join('')}</tr>`).join('')}
   </tbody></table></div><p class="muted" style="margin:0;font-size:.8rem">Kotak hijau = shift yang sedang berjalan. Ketuk kotak untuk mengisi nama petugas.</p>`;
 }
-function openJaga(key) {
+let petugasKm = null;
+async function muatPetugasKm(paksa) {
+  if (petugasKm && !paksa && Date.now() - petugasKm.t < 60000) return petugasKm.list;
+  try { const {data, error} = await SB.rpc('petugas_keamanan'); petugasKm = {t: Date.now(), list: !error && Array.isArray(data) ? data.filter(p => p.nama) : []}; }
+  catch (e) { petugasKm = {t: Date.now(), list: []}; }
+  return petugasKm.list;
+}
+async function openJaga(key) {
   const j = S.jaga.find(x => x.id === key) || {}, [tg, sh] = key.split('_');
-  const nama = [...new Set(S.jaga.map(x => x.petugas).filter(Boolean).concat(pengurusAktif().filter(p => /satpam|keamanan/i.test(p.jabatan || '') || p.peranId === 'satpam').map(p => p.nama)))];
+  const list = await muatPetugasKm(), namaPk = list.map(p => p.nama.trim());
+  const kini = String(j.petugas || '').split(',').map(x => x.trim()).filter(Boolean);
+  const lain = kini.filter(n => !namaPk.some(m => m.toLowerCase() === n.toLowerCase()));
+  const dipilih = n => kini.some(k => k.toLowerCase() === n.toLowerCase());
   openDlg({title: `Jaga ${sh} · ${tglPanjang(tg)}`, area: 'keamanan',
-    body: `<div class="fld"><label for="jg_p">Petugas</label><input type="text" id="jg_p" name="petugas" value="${esc(j.petugas)}" list="petugasList" placeholder="mis. Pak Darto, Pak Udin"><datalist id="petugasList">${nama.map(n => `<option value="${esc(n)}">`).join('')}</datalist><span class="hint">Pisahkan dengan koma bila lebih dari satu orang</span></div>`,
-    onSubmit: async d => { const p = String(d.petugas || '').trim(); const ok = p ? await put('jaga', key, {tanggal: tg, shift: sh, petugas: p}) : (j.id ? await del('jaga', key) : true); if (ok) toast('Jadwal jaga disimpan.'); return ok; }});
+    body: `<div class="fld"><label>Petugas satpam</label>
+      ${list.length ? `<div class="jg-pilih">${list.map((p, i) => `<label class="jg-chip"><input type="checkbox" name="pk_${i}" value="${esc(p.nama)}" ${dipilih(p.nama) ? 'checked' : ''}><span><b>${esc(p.nama)}</b><small>${esc(p.jabatan || '')}</small></span></label>`).join('')}</div>
+        <span class="hint">Daftar diambil dari menu Pekerja &amp; gaji (petugas keamanan berstatus aktif). Boleh pilih lebih dari satu.</span>`
+      : `<div class="notice" style="margin:0">Belum ada petugas keamanan aktif di data Pekerja. Minta Bendahara menambahkan satpam di menu <b>Pekerja &amp; gaji</b>, lalu buka lagi jadwal ini.</div>`}</div>
+    <details ${lain.length || !list.length ? 'open' : ''}><summary class="muted" style="cursor:pointer;font-size:.88rem">Petugas pengganti / di luar data pekerja</summary>
+      <div class="fld" style="margin-top:8px"><input type="text" id="jg_l" name="lain" value="${esc(lain.join(', '))}" placeholder="mis. Pak Udin (pengganti)" maxlength="120"><span class="hint">Pisahkan dengan koma bila lebih dari satu.</span></div></details>`,
+    onSubmit: async d => {
+      const pilih = Object.keys(d).filter(k => /^pk_\d+$/.test(k)).map(k => d[k]);
+      const extra = String(d.lain || '').split(',').map(x => x.trim()).filter(Boolean);
+      const semua = [...new Set([...pilih, ...extra])], p = semua.join(', ');
+      const ok = p ? await put('jaga', key, {tanggal: tg, shift: sh, petugas: p}) : (j.id ? await del('jaga', key) : true);
+      if (ok) toast(p ? 'Jadwal jaga disimpan.' : 'Jadwal shift dikosongkan.'); return ok;
+    }});
 }
 async function salinJaga() {
   let n = 0;

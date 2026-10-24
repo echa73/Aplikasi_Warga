@@ -345,3 +345,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Bucket 'pengurus', folder pk_<id>/: unggah/ubah/hapus untuk izin('gaji') >= 2 (bendahara/pemilik), nama wajib pk_<id>/<acak>.jpg.
 -- struktur_organisasi() mengirim 'foto' pekerja hanya bila URL dari storage proyek ini.
 -- Diuji (rollback): bendahara BOLEH di pk_*, DITOLAK di folder pengurus; ketua/satpam/warga DITOLAK.
+
+-- ===== Jadwal jaga dari data pekerja (2026-10-24) =====
+-- RPC public.petugas_keamanan(): untuk izin('keamanan') >= 1, mengembalikan id/nama/jabatan pekerja aktif kategori keamanan
+-- (struktur='keamanan' atau jabatan satpam/komandan/keamanan/hansip/linmas). Tanpa gaji/rekening/NIK/HP.
+-- Diuji (rollback): koord keamanan dapat daftar; bendahara (keamanan=tidak) & warga dapat [].

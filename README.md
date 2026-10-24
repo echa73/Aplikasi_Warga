@@ -73,3 +73,4 @@ Pekerja bisa diatur per orang (Pekerja & gaji → ubah data → Struktur organis
 Petugas (pekerja) kini tampil menempel langsung di bawah kotak pengurus atasannya (mis. Satpam di bawah Seksi/Koordinator Keamanan), termasuk di teks WhatsApp dan PDF. Bila atasan belum dipilih, otomatis dicari Koordinator lalu Seksi sesuai kategori (keamanan/kebersihan).
 Foto pekerja diunggah di Pekerja & gaji → ubah data pekerja, tampil di daftar pekerja, bagan, dan PDF struktur organisasi.
 Menu Iuran → tombol **Cetak PDF**: daftar pembayaran iuran per bulan (sesuai saringan Semua/Belum/Lunas) berisi blok, nama KK, tanggal bayar, metode, jumlah, status, kolom paraf, rekapitulasi, dan tanda tangan Bendahara & Ketua RT.
+Jadwal jaga (Keamanan → Jadwal jaga): nama petugas dipilih dari daftar satpam aktif di menu Pekerja & gaji (bisa lebih dari satu), plus kolom petugas pengganti bila perlu.

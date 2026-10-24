@@ -11,9 +11,15 @@
 .org-lvl.top{padding-top:0}
 .org-lvl:not(.top)::before{content:"";position:absolute;top:0;left:50%;height:13px;border-left:2px solid var(--line)}
 .org-node{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;width:170px;text-align:center;display:grid;gap:4px;justify-items:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.org-lvl.multi .org-node::before{content:"";position:absolute;top:-13px;left:-9px;right:-9px;border-top:2px solid var(--line)}
-.org-lvl.multi .org-node:first-child::before{left:50%}.org-lvl.multi .org-node:last-child::before{right:50%}
-.org-lvl:not(.top) .org-node::after{content:"";position:absolute;top:-13px;left:50%;height:13px;border-left:2px solid var(--line)}
+.org-col{position:relative;display:flex;flex-direction:column;align-items:center}
+.org-lvl{align-items:flex-start}
+.org-lvl.multi .org-col::before{content:"";position:absolute;top:-13px;left:-9px;right:-9px;border-top:2px solid var(--line)}
+.org-lvl.multi .org-col:first-child::before{left:50%}.org-lvl.multi .org-col:last-child::before{right:50%}
+.org-kids{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:16px;position:relative}
+.org-kids::before{content:"";position:absolute;top:0;left:50%;height:16px;border-left:2px dashed var(--line)}
+.org-kids .kid{width:156px;padding:9px 10px 8px;background:var(--sunk);box-shadow:none}.org-kids .kid .org-av{width:44px;height:44px;font-size:.9rem}
+.org-kids .kid+.kid::before{content:"";position:absolute;top:-11px;left:50%;height:10px;border-left:2px dashed var(--line)}
+.org-lvl:not(.top) .org-col::after{content:"";position:absolute;top:-13px;left:50%;height:13px;border-left:2px solid var(--line)}
 .org-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:1.05rem;background:var(--accent)}
 .org-av.foto{object-fit:cover;background:var(--sunk);border:2px solid var(--surface);box-shadow:0 0 0 2px var(--line)}
 .org-node.l1 .org-av.foto{box-shadow:0 0 0 2px var(--accent)}
@@ -27,7 +33,7 @@
 .org-lbl{text-align:center;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:18px 0 -8px;position:relative;z-index:1}.org-lbl.first{margin:0 0 10px}.org-lbl span{background:var(--surface);padding:0 10px}
 .org-lbl+.org-lvl:not(.top)::before{display:none}
 .org-kop{text-align:center;display:grid;gap:2px;margin-bottom:14px}.org-kop b{font-size:1.1rem}
-@media(max-width:700px){.org-av,.org-node.l1 .org-av{width:52px;height:52px}.org-lvl{flex-direction:column;align-items:stretch;gap:8px;padding-top:12px}.org-lvl::before,.org-node::before,.org-node::after{display:none!important}
+@media(max-width:700px){.org-av,.org-node.l1 .org-av{width:52px;height:52px}.org-lvl{flex-direction:column;align-items:stretch;gap:8px;padding-top:12px}.org-lvl::before,.org-col::before,.org-col::after,.org-kids::before,.org-kids .kid::before{display:none!important}.org-col{align-items:stretch}.org-kids{align-items:stretch;gap:6px;padding:8px 0 2px 18px;margin-left:22px;border-left:2px dashed var(--line)}.org-kids .kid{width:auto}.org-kids .kid .org-av{width:40px;height:40px}
   .org-node{width:auto;grid-template-columns:auto 1fr auto;text-align:left;justify-items:start;align-items:center;column-gap:12px;padding:10px 12px}.org-node .org-av{grid-row:1/3}.org-node b,.org-node .j{grid-column:2}.org-node .wa{grid-row:1/3;grid-column:3;margin:0}.org-lbl{text-align:left;margin:14px 0 -4px}}
 .gj-rows{display:grid;gap:6px}
 .gj-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 32px;gap:6px;align-items:center}
@@ -3044,24 +3050,28 @@ function strukturLevel(D) {
   const pkPg = (D.petugas || []).filter(p => p.nama && p.struktur === 'pengurus').map(p => ({nama: p.nama, jabatan: p.jabatanStruktur || p.jabatan}));
   const P = [...(D.pengurus || []).filter(p => p.nama), ...pkPg], urutJ = j => { const i = JABATAN.indexOf(j); return i < 0 ? 99 : i; };
   const by = l => P.filter(p => orgLevel(p.jabatan) === l).sort((a, b) => urutJ(a.jabatan) - urutJ(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
-  const petugasPg = by(5).map(p => ({nama: p.nama, jabatan: p.jabatan, hp: p.hp, foto: p.foto}));
+  const atas = [1, 2, 3, 4].flatMap(by), jabAtas = [...new Set(atas.map(p => String(p.jabatan || '').trim()))];
+  const cariAtasan = kat => kat === 'petugas' ? '' : jabAtas.find(j => new RegExp('^koordinator ' + kat, 'i').test(j)) || jabAtas.find(j => new RegExp('^seksi ' + kat, 'i').test(j)) || jabAtas.find(j => new RegExp(kat, 'i').test(j)) || '';
+  const petugasPg = by(5).map(p => ({nama: p.nama, jabatan: p.jabatan, hp: p.hp, foto: p.foto, kat: 'keamanan', atasan: cariAtasan('keamanan')}));
   const nm = new Set(petugasPg.map(p => p.nama.toLowerCase()));
-  const adaJab = new Set(P.map(p => String(p.jabatan || '').trim()));
   const pkPt = (D.petugas || []).filter(p => p.nama && p.struktur !== 'pengurus' && p.struktur !== 'tidak' && !nm.has(p.nama.toLowerCase()))
     .map(p => { const kat = PK_PETUGAS.includes(p.struktur) ? p.struktur : pkStrukturDefault(p.jabatan);
-      const auto = !p.struktur ? ([...adaJab].find(j => new RegExp('koordinator ' + kat, 'i').test(j)) || '') : '';
-      return {...p, kat, atasan: p.atasan && adaJab.has(p.atasan) ? p.atasan : auto}; });
-  const grup = new Map();
-  [...petugasPg.map(p => ({...p, kat: 'keamanan', atasan: ''})), ...pkPt].forEach(p => { const k = p.kat + '|' + p.atasan; if (!grup.has(k)) grup.set(k, []); grup.get(k).push(p); });
-  const urutK = k => PK_PETUGAS.indexOf(k);
-  const grupL = [...grup.entries()].map(([k, isi]) => { const [kat, at] = k.split('|'); return {kat, at, isi}; })
-    .sort((a, b) => urutK(a.kat) - urutK(b.kat) || (a.at ? urutJ(a.at) : -1) - (b.at ? urutJ(b.at) : -1))
-    .map(g => ({lbl: PK_GRUP_LBL[g.kat] + (g.at ? ' · di bawah ' + g.at : ''), l: 5, isi: g.isi}));
-  return [
+      return {...p, kat, atasan: p.atasan && jabAtas.includes(p.atasan) ? p.atasan : (!p.struktur || !p.atasan ? cariAtasan(kat) : '')}; });
+  const anak = new Map(), lepas = new Map();
+  [...petugasPg, ...pkPt].forEach(p => {
+    if (p.atasan) { if (!anak.has(p.atasan)) anak.set(p.atasan, []); anak.get(p.atasan).push(p); }
+    else { if (!lepas.has(p.kat)) lepas.set(p.kat, []); lepas.get(p.kat).push(p); }
+  });
+  const grupL = PK_PETUGAS.filter(k => lepas.has(k)).map(k => ({lbl: PK_GRUP_LBL[k], l: 5, isi: lepas.get(k)}));
+  const L = [
     D.ketuaRw ? {lbl: 'Pelindung', l: 0, isi: [{nama: D.ketuaRw, jabatan: 'Ketua RW' + (D.rw ? ' ' + D.rw : '')}]} : null,
     {lbl: 'Ketua', l: 1, isi: by(1)}, {lbl: 'Wakil ketua', l: 2, isi: by(2)}, {lbl: 'Sekretaris & bendahara', l: 3, isi: by(3)},
     {lbl: 'Koordinator & seksi', l: 4, isi: by(4)}, ...grupL
   ].filter(x => x && x.isi.length);
+  // petugas menempel pada pengurus pertama yang jabatannya cocok
+  const sudah = new Set();
+  L.forEach(x => x.isi.forEach(p => { const j = String(p.jabatan || '').trim(); if (x.l >= 1 && x.l <= 4 && anak.has(j) && !sudah.has(j)) { p.anak = anak.get(j); sudah.add(j); } }));
+  return L;
 }
 function periodeTeks(D) { return D.periodeMulai ? `Periode ${tglSurat(D.periodeMulai)}${D.periodeSelesai ? ' – ' + tglSurat(D.periodeSelesai) : ''}` : ''; }
 function vStruktur() {
@@ -3072,18 +3082,20 @@ function vStruktur() {
   if (D.gagal) return head + '<div class="notice">Struktur organisasi belum bisa dimuat. <button class="btn sm" data-act="org-muat">Coba lagi</button></div>';
   const L = strukturLevel(D);
   if (!L.length) return head + `<div class="empty">Belum ada data pengurus.${bisaKelola() ? '<button class="btn pri" data-act="org-kelola">Tambah pengurus</button>' : ''}</div>`;
+  const av = p => fotoAman(p.foto) ? `<img class="org-av foto" src="${esc(p.foto)}" alt="Foto ${esc(p.nama)}" loading="lazy">` : `<span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span>`;
   const node = (p, l) => { const wa = D.kontak && p.hp && waNomor(p.hp).length >= 10;
-    return `<div class="org-node l${l}">${fotoAman(p.foto) ? `<img class="org-av foto" src="${esc(p.foto)}" alt="Foto ${esc(p.nama)}" loading="lazy">` : `<span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span>`}<b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
+    return `<div class="org-node l${l}">${av(p)}<b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
+  const kids = p => p.anak && p.anak.length ? `<div class="org-kids" aria-label="Petugas di bawah ${esc(p.jabatan || p.nama)}">${p.anak.map(k => `<div class="org-node l5 kid">${av(k)}<b>${esc(k.nama)}</b><span class="j">${esc(k.jabatan || '')}</span></div>`).join('')}</div>` : '';
   const tot = (D.pengurus || []).length;
   return head + `<div class="panel">
     <div class="org-kop"><b>STRUKTUR ORGANISASI PENGURUS RT ${esc(D.rt || '…')} / RW ${esc(D.rw || '…')}</b><span>${esc(D.lingkungan || lingk())}${D.kelurahan ? ' · Kel. ' + esc(D.kelurahan) : ''}</span>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
-    <div class="org">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}">${x.isi.map(p => node(p, x.l)).join('')}</div>`).join('')}</div></div>
+    <div class="org">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}">${x.isi.map(p => `<div class="org-col">${node(p, x.l)}${kids(p)}</div>`).join('')}</div>`).join('')}</div></div>
   <div class="toolbar"><a class="btn wa" href="${esc(waShare(teksStruktur(D, L)))}" target="_blank" rel="noopener">Bagikan ke WhatsApp</a><button class="btn" data-act="org-pdf">Unduh PDF</button></div>
-  <p class="muted" style="font-size:.8rem">${tot} pengurus aktif. Susunan diambil otomatis dari jabatan di menu Admin → Pengurus${(D.petugas || []).length ? ' dan data Pekerja' : ''}.${D.kontak ? '' : ' Nomor WhatsApp pengurus disembunyikan.'}</p>`;
+  <p class="muted" style="font-size:.8rem">${tot} pengurus aktif. Susunan diambil otomatis dari jabatan di menu Admin → Pengurus${(D.petugas || []).length ? ' dan data Pekerja (petugas tampil di bawah pengurus atasannya)' : ''}.${D.kontak ? '' : ' Nomor WhatsApp pengurus disembunyikan.'}</p>`;
 }
 function teksStruktur(D, L) {
   return `*STRUKTUR ORGANISASI PENGURUS RT ${D.rt || ''} / RW ${D.rw || ''}*\n${D.lingkungan || lingk()}${periodeTeks(D) ? '\n' + periodeTeks(D) : ''}\n\n`
-    + L.map(x => `*${x.lbl}*\n${x.isi.map(p => `- ${p.jabatan ? p.jabatan + ': ' : ''}${p.nama}${D.kontak && p.hp && x.l > 0 && x.l < 5 ? ' (' + p.hp + ')' : ''}`).join('\n')}`).join('\n\n') + `\n\n${pengirim()}`;
+    + L.map(x => `*${x.lbl}*\n${x.isi.map(p => `- ${p.jabatan ? p.jabatan + ': ' : ''}${p.nama}${D.kontak && p.hp && x.l > 0 && x.l < 5 ? ' (' + p.hp + ')' : ''}${(p.anak || []).map(k => `\n    • ${k.jabatan ? k.jabatan + ': ' : ''}${k.nama}`).join('')}`).join('\n')}`).join('\n\n') + `\n\n${pengirim()}`;
 }
 async function pdfStruktur() {
   const D = S.struktur; if (!D || D.gagal) return;
@@ -3097,32 +3109,48 @@ async function pdfStruktur() {
   P.text(105, 43, 'STRUKTUR ORGANISASI', {size: 15, bold: true, align: 'center'});
   if (periodeTeks(D)) P.text(105, 49, periodeTeks(D), {size: 10, align: 'center', color: [74, 59, 48]});
   const fotoIdx = new Map();
-  for (const x of L) for (const p of x.isi) { const u = fotoAman(p.foto); if (u && !fotoIdx.has(u)) { try { P.foto.push(await fotoJpeg(u)); fotoIdx.set(u, P.foto.length - 1); } catch (e) {} } }
-  const BW = 40, BH = 29, GAP = 5, PER = 4, warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
+  for (const x of L) for (const p of [...x.isi, ...x.isi.flatMap(q => q.anak || [])]) { const u = fotoAman(p.foto); if (u && !fotoIdx.has(u)) { try { P.foto.push(await fotoJpeg(u)); fotoIdx.set(u, P.foto.length - 1); } catch (e) {} } }
+  const rows = L.flatMap(x => { const r = []; for (let i = 0; i < x.isi.length; i += 4) r.push({lbl: i === 0 && (x.l === 0 || x.l >= 4), kid: Math.max(0, ...x.isi.slice(i, i + 4).map(p => (p.anak || []).length))}); return r; });
+  const est = (bh, kh, kg, gap) => rows.reduce((t, r) => t + bh + 3 + gap + (r.lbl ? 4 : 0) + (r.kid ? 4 + r.kid * (kh + kg) : 0), 0);
+  const kompak = est(29, 12, 3, 7) > 228;
+  const BW = 40, BH = kompak ? 24 : 29, GAP = 5, PER = 4, KH = kompak ? 10.5 : 12, KG = kompak ? 2.2 : 3, RG = kompak ? 4 : 7, abu = [190, 180, 168], warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
+  const tulis = (bx, w, ty, p, nmSize, jbSize, maxNm) => {
+    pdfWrap(p.nama, w - 4, true, nmSize).slice(0, maxNm).forEach(l => { P.text(bx + w / 2, ty, l, {size: nmSize, bold: true, align: 'center'}); ty += nmSize * .42; });
+    pdfWrap(p.jabatan || '', w - 4, false, jbSize).slice(0, 1).forEach(l => { P.text(bx + w / 2, ty, l, {size: jbSize, align: 'center', color: [90, 80, 70]}); });
+  };
   let y = 56, prevBottom = null;
   for (const x of L) {
     for (let i = 0; i < x.isi.length; i += PER) {
       const row = x.isi.slice(i, i + PER), n = row.length, wTot = n * BW + (n - 1) * GAP, x0 = 105 - wTot / 2;
-      if (y + BH > 270) { P.addPage(); y = 20; prevBottom = null; }
+      const maxKid = Math.max(0, ...row.map(p => (p.anak || []).length)), rowH = BH + (maxKid ? 4 + maxKid * (KH + KG) : 0);
+      if (y + rowH + 7 > 282) { P.addPage(); y = 20; prevBottom = null; }
       if (i === 0 && (x.l === 0 || x.l >= 4)) { P.text(105, y + 1, x.lbl.toUpperCase(), {size: 8, bold: true, align: 'center', color: [120, 110, 100]}); y += 4; }
       const top = y + 3;
       if (prevBottom !== null) {
-        P.line(105, prevBottom, 105, top - 2, .8, [190, 180, 168]);
-        if (n > 1) P.line(x0 + BW / 2, top - 2, x0 + wTot - BW / 2, top - 2, .8, [190, 180, 168]);
+        P.line(105, prevBottom, 105, top - 2, .8, abu);
+        if (n > 1) P.line(x0 + BW / 2, top - 2, x0 + wTot - BW / 2, top - 2, .8, abu);
       }
       row.forEach((p, k) => {
-        const bx = x0 + k * (BW + GAP), c = warna[x.l] || warna[4];
-        if (prevBottom !== null && n > 1) P.line(bx + BW / 2, top - 2, bx + BW / 2, top, .8, [190, 180, 168]);
+        const bx = x0 + k * (BW + GAP), c = warna[x.l] || warna[4], cx = bx + BW / 2;
+        if (prevBottom !== null && n > 1) P.line(cx, top - 2, cx, top, .8, abu);
         P.rect(bx, top, BW, BH, {fill: [250, 247, 242], stroke: c, lw: x.l === 1 ? 1.2 : .6});
         P.rect(bx, top, BW, 2.2, {fill: c});
-        const cx = bx + BW / 2, cy = top + 9, fi = fotoIdx.get(fotoAman(p.foto));
-        if (fi !== undefined) { P.fotoBulat(fi, cx, cy, 5.2); P.bulat(cx, cy, 5.2, {stroke: c, lw: .8}); }
-        else { P.bulat(cx, cy, 5.2, {fill: c}); P.text(cx, cy + 1.3, orgInisial(p.nama), {size: 8.5, bold: true, align: 'center', color: [255, 255, 255]}); }
-        const nm = pdfWrap(p.nama, BW - 4, true, 8.6).slice(0, 2), jb = pdfWrap(p.jabatan || '', BW - 4, false, 7.4).slice(0, 2);
-        let ty = top + 18.6; nm.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 8.6, bold: true, align: 'center'}); ty += 3.6; });
-        jb.forEach(l => { P.text(bx + BW / 2, ty, l, {size: 7.4, align: 'center', color: [90, 80, 70]}); ty += 3.1; });
+        const cy = top + (kompak ? 7.6 : 9), rr = kompak ? 4.3 : 5.2, fi = fotoIdx.get(fotoAman(p.foto));
+        if (fi !== undefined) { P.fotoBulat(fi, cx, cy, rr); P.bulat(cx, cy, rr, {stroke: c, lw: .8}); }
+        else { P.bulat(cx, cy, rr, {fill: c}); P.text(cx, cy + 1.3, orgInisial(p.nama), {size: 8.5, bold: true, align: 'center', color: [255, 255, 255]}); }
+        tulis(bx, BW, top + (kompak ? 15.6 : 18.6), p, 8.6, 7.4, kompak ? 1 : 2);
+        (p.anak || []).forEach((a, ai) => {
+          const ky = top + BH + 4 + ai * (KH + KG), kx = bx + 3, kw = BW - 6;
+          P.line(cx, ky - (ai ? KG : 4), cx, ky, .7, abu);
+          P.rect(kx, ky, kw, KH, {fill: [255, 255, 255], stroke: warna[5], lw: .5});
+          const fa = fotoIdx.get(fotoAman(a.foto)), acx = kx + 5.5, acy = ky + KH / 2;
+          if (fa !== undefined) P.fotoBulat(fa, acx, acy, 3.6); else { P.bulat(acx, acy, 3.6, {fill: warna[5]}); P.text(acx, acy + 1, orgInisial(a.nama), {size: 6.5, bold: true, align: 'center', color: [255, 255, 255]}); }
+          const tw = kw - 11, tx2 = kx + 10.5;
+          P.text(tx2 + tw / 2, ky + KH * .42, pdfWrap(a.nama, tw - 1, true, 7.4)[0] || '', {size: 7.4, bold: true, align: 'center'});
+          P.text(tx2 + tw / 2, ky + KH * .74, pdfWrap(a.jabatan || '', tw - 1, false, 6.4)[0] || '', {size: 6.4, align: 'center', color: [90, 80, 70]});
+        });
       });
-      prevBottom = top + BH; y = top + BH + 7;
+      prevBottom = top + rowH; y = top + rowH + RG;
     }
   }
   P.text(105, 287, `Dicetak dari aplikasi Warga Kasuari · ${tglSurat(todayISO())}`, {size: 7.5, align: 'center', color: [120, 110, 100]});

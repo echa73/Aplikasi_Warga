@@ -1235,7 +1235,8 @@ function authArt() {
     </svg>
   </aside>`;
 }
-function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? papanBell() : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : vLoginKartu()}</div></div>`; }
+const benderaId = () => `<span class="bendera-id" role="img" aria-label="Bendera Indonesia" title="Indonesia"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#E70011"/><rect y="10" width="30" height="10" fill="#FFFFFF"/><rect x=".5" y=".5" width="29" height="19" rx="2" fill="none" stroke="rgba(0,0,0,.18)"/></svg></span>`;
+function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? `<div class="auth-top">${benderaId()}${papanBell()}</div>` : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : vLoginKartu()}</div></div>`; }
 function vLoginKartu() {
   const brand = sub => `<div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Selamat datang</h2>
     <p class="muted" style="margin:4px 0 0">${sub}</p></div>`;

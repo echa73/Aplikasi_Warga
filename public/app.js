@@ -49,6 +49,7 @@ let U = null;
 const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['gaji', 'Pekerja & gaji'], ['keamanan', 'Keamanan (satpam)'], ['jaga', 'Jadwal jaga satpam'], ['kebersihan', 'Kebersihan lingkungan'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['lapak', 'Lapak Warga'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
 const LVL = {tidak: 0, lihat: 1, kelola: 2};
 const LVL_LBL = {tidak: 'Tidak bisa buka', lihat: 'Lihat saja', kelola: 'Lihat & ubah'};
+const MENU_IZIN_UI = MENU_IZIN.filter(([m]) => m !== 'portal'); // Rumah saya khusus tampilan warga
 const semua = v => Object.fromEntries(MENU_IZIN.map(([k]) => [k, v]));
 const DEFAULT_ROLES = [
   {id: 'ketua', nama: 'Ketua RT', ket: 'Semua menu, termasuk pengaturan', izin: semua('kelola')},
@@ -347,7 +348,7 @@ const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
 const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? (isWarga() || (lihat('portal') && !!wargaSaya())) : k === 'admin' ? bisaKelola() : lihat(k);
+const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
 const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
@@ -1608,9 +1609,9 @@ function avatarHtml(userId, namaTeks) {
   return src ? `<img class="av" src="${esc(src)}" alt="">` : `<span class="av av-i" aria-hidden="true">${esc(inisial(namaTeks))}</span>`;
 }
 function izinRingkas(r) {
-  const k = MENU_IZIN.filter(([m]) => izinRole(r, m) === 'kelola').map(m => m[1]);
-  const l = MENU_IZIN.filter(([m]) => izinRole(r, m) === 'lihat').map(m => m[1]);
-  const t = MENU_IZIN.filter(([m]) => !izinRole(r, m) || izinRole(r, m) === 'tidak').map(m => m[1]);
+  const k = MENU_IZIN_UI.filter(([m]) => izinRole(r, m) === 'kelola').map(m => m[1]);
+  const l = MENU_IZIN_UI.filter(([m]) => izinRole(r, m) === 'lihat').map(m => m[1]);
+  const t = MENU_IZIN_UI.filter(([m]) => !izinRole(r, m) || izinRole(r, m) === 'tidak').map(m => m[1]);
   return [k.length ? 'Ubah: ' + k.join(', ') : '', l.length ? 'Lihat: ' + l.join(', ') : '', t.length ? 'Tidak bisa buka: ' + t.join(', ') : ''].filter(Boolean).join(' · ') || 'Tidak bisa membuka menu apa pun';
 }
 const roleCocok = jab => { const j = String(jab || '').trim().toLowerCase(); if (!j) return null; return rolesAll().find(r => r.nama.toLowerCase() === j) || (/kerohanian|keagamaan|rohani/.test(j) ? roleById('koord_kerohanian') : null) || null; };
@@ -1677,12 +1678,12 @@ function vAdminRole() {
   const cell = v => v === 'kelola' ? '<span class="chip ok plain">Ubah</span>' : v === 'lihat' ? '<span class="chip info plain">Lihat</span>' : '<span class="muted">—</span>';
   const pakai = id => S.pengurus.filter(p => p.peranId === id).length;
   const rowsT = rolesAll().map(r => `<tr><td><div style="font-weight:600">${esc(r.nama)}</div><div class="muted" style="font-size:.78rem">${pakai(r.id)} pengurus</div></td>
-    ${MENU_IZIN.map(([m]) => `<td>${cell(izinRole(r, m))}</td>`).join('')}<td class="r"><button class="btn sm" data-act="role-edit" data-id="${esc(r.id)}">Ubah</button></td></tr>`).join('');
+    ${MENU_IZIN_UI.map(([m]) => `<td>${cell(izinRole(r, m))}</td>`).join('')}<td class="r"><button class="btn sm" data-act="role-edit" data-id="${esc(r.id)}">Ubah</button></td></tr>`).join('');
   const rowsM = rolesAll().map(r => `<div class="row"><div class="grow"><div class="t">${esc(r.nama)} <span class="muted" style="font-weight:400">· ${pakai(r.id)} pengurus</span></div><div class="s">${esc(izinRingkas(r))}</div></div>
     <button class="btn sm" data-act="role-edit" data-id="${esc(r.id)}">Ubah</button></div>`).join('');
   return `${S.peran.length ? '' : '<p class="muted" style="margin:-8px 0 0;font-size:.84rem">Ini role bawaan. Ubah atau tambah role sesuai struktur pengurus Anda.</p>'}
-    <div class="tbl-wrap hide-m"><table><thead><tr><th>Role</th>${MENU_IZIN.map(([, l]) => `<th>${esc(l.replace(' / ringkasan', ''))}</th>`).join('')}<th></th></tr></thead>
-    <tbody><tr><td><div style="font-weight:600">Pemilik</div><div class="muted" style="font-size:.78rem">tetap, + menu Admin</div></td>${MENU_IZIN.map(() => `<td>${cell('kelola')}</td>`).join('')}<td></td></tr>${rowsT}</tbody></table></div>
+    <div class="tbl-wrap hide-m"><table><thead><tr><th>Role</th>${MENU_IZIN_UI.map(([, l]) => `<th>${esc(l.replace(' / ringkasan', ''))}</th>`).join('')}<th></th></tr></thead>
+    <tbody><tr><td><div style="font-weight:600">Pemilik</div><div class="muted" style="font-size:.78rem">tetap, + menu Admin</div></td>${MENU_IZIN_UI.map(() => `<td>${cell('kelola')}</td>`).join('')}<td></td></tr>${rowsT}</tbody></table></div>
     <div class="list-mobile"><div class="row"><div class="grow"><div class="t">Pemilik</div><div class="s">Semua menu, bisa diubah, ditambah menu Admin. Tidak bisa diubah.</div></div></div>${rowsM}</div>
     <p class="muted" style="margin:0;font-size:.84rem"><b>Ubah</b> = bisa membuka dan mengubah data · <b>Lihat</b> = hanya membuka · <b>—</b> = menu disembunyikan.</p>`;
 }
@@ -1869,7 +1870,7 @@ function openRole(id) {
     body: `<div class="fld"><label for="rl_nama">Nama role <span class="req">*</span></label><input type="text" id="rl_nama" name="nama" required value="${esc(x.nama)}" placeholder="mis. Seksi Keamanan"></div>
     <div class="fld"><label for="rl_ket">Keterangan</label><input type="text" id="rl_ket" name="ket" value="${esc(x.ket)}" placeholder="Tugas singkat role ini"></div>
     <div class="fld"><label>Hak akses per menu</label>
-      <div class="izin-grid">${MENU_IZIN.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Lihat + moderasi' : 'Lihat saja') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
+      <div class="izin-grid">${MENU_IZIN_UI.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Lihat + moderasi' : 'Lihat saja') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
       <span class="hint">Menu yang "Tidak bisa buka" disembunyikan dari pengurus dengan role ini. Menu Admin hanya untuk Pemilik.</span></div>
     ${dipakai ? `<p class="muted" style="margin:0;font-size:.84rem">Dipakai oleh ${dipakai} pengurus. Perubahan langsung berlaku untuk mereka.</p>` : ''}`,
     onSubmit: async d => {

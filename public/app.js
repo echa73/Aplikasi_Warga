@@ -352,6 +352,7 @@ const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga'
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
+const URUT_W = ['struktur', 'portal', 'aman', 'lapor', 'info', 'sumbangan', 'bersih', 'rohani', 'lapak'];
 let PRIMER = PRIMER_P;
 const ICON = {
   bersih: '<path d="M14.5 3.5 10 12"/><path d="M6.5 12.5h7l1.5 3-1 5H6l-1-5z"/><path d="M8.5 16v4.5M11 16v4.5"/><path d="M17.5 7.5l1-1M19.5 10.5h1.5M17 4V2.5"/>',
@@ -396,7 +397,7 @@ function renderTabs() {
   const open = kelTerbuka().length;
   if (!sudahMasuk() || S.terkunci) { $('#tabs').innerHTML = ''; return; }
   const tabsVis = TABS.filter(([k]) => tabBoleh(k));
-  if (isWarga()) tabsVis.sort((a, b) => PRIMER_W.indexOf(a[0]) - PRIMER_W.indexOf(b[0]));
+  if (isWarga()) { const u = k => { const i = URUT_W.indexOf(k); return i < 0 ? 99 : i; }; tabsVis.sort((a, b) => u(a[0]) - u(b[0])); }
   if (!tabBoleh(S.tab)) S.tab = !tabBoleh('ringkasan') && tabBoleh('keamanan') ? 'keamanan' : tabsVis.length ? tabsVis[0][0] : 'ringkasan';
   const secOpen = !PRIMER.includes(S.tab), infoBaru = S.pengumuman.filter(a => a.sematkan).length;
   if (!isWarga()) tabsVis.sort((a, b) => (GRUP_IDX[a[0]] ?? 99) - (GRUP_IDX[b[0]] ?? 99));
@@ -1949,6 +1950,7 @@ function openKwitansi(pid) {
 /* ---------- menu lainnya (HP) ---------- */
 function openLainnya() {
   const items = TABS.filter(([k]) => !PRIMER.includes(k) && tabBoleh(k));
+  if (isWarga()) { const u = k => { const i = URUT_W.indexOf(k); return i < 0 ? 99 : i; }; items.sort((a, b) => u(a[0]) - u(b[0])); }
   openDlg({title: 'Menu lainnya', body: `<div class="menu-grid">${items.map(([k, l]) => `<button type="button" class="tab" data-act="tab" data-k="${k}" aria-selected="${S.tab === k}">${ico(k)}<span class="ll">${l}</span>${k === 'admin' && S.minta.length ? `<span class="chip bad plain">${S.minta.length} permintaan</span>` : ''}</button>`).join('')}</div>`});
 }
 

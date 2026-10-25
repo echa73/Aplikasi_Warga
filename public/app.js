@@ -2668,7 +2668,7 @@ function vStruktur() {
   if (!L.length) return head + `<div class="empty">Belum ada data pengurus.${bisaKelola() ? '<button class="btn pri" data-act="org-kelola">Tambah pengurus</button>' : ''}</div>`;
   const av = p => fotoAman(p.foto) ? `<img class="org-av foto" src="${esc(p.foto)}" alt="Foto ${esc(p.nama)}" loading="lazy">` : `<span class="org-av" aria-hidden="true">${esc(orgInisial(p.nama))}</span>`;
   const node = (p, l) => { const wa = D.kontak && p.hp && waNomor(p.hp).length >= 10;
-    return `<div class="org-node l${l}">${av(p)}<b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
+    return `<div class="org-node l${l}">${av(p)}<b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${D.kontak && p.hp && hpTampil(p.hp) ? `<a class="org-hp mono" href="tel:${esc(hpTampil(p.hp))}" aria-label="Telepon ${esc(p.nama)}">📞 ${esc(hpTampil(p.hp))}</a>` : ''}${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
   const kids = p => p.anak && p.anak.length ? `<div class="org-kids" aria-label="Petugas di bawah ${esc(p.jabatan || p.nama)}">${p.anak.map(k => `<div class="org-node l5 kid">${av(k)}<b>${esc(k.nama)}</b><span class="j">${esc(k.jabatan || '')}</span></div>`).join('')}</div>` : '';
   const tot = (D.pengurus || []).length;
   return head + `<div class="panel">
@@ -2696,12 +2696,14 @@ async function pdfStruktur() {
   const fotoIdx = new Map();
   for (const x of L) for (const p of [...x.isi, ...x.isi.flatMap(q => q.anak || [])]) { const u = fotoAman(p.foto); if (u && !fotoIdx.has(u)) { try { P.foto.push(await fotoJpeg(u)); fotoIdx.set(u, P.foto.length - 1); } catch (e) {} } }
   const rows = L.flatMap(x => { const r = []; for (let i = 0; i < x.isi.length; i += 4) r.push({lbl: i === 0 && (x.l === 0 || x.l >= 4), kid: Math.max(0, ...x.isi.slice(i, i + 4).map(p => (p.anak || []).length))}); return r; });
-  const est = (bh, kh, kg, gap) => rows.reduce((t, r) => t + bh + 3 + gap + (r.lbl ? 4 : 0) + (r.kid ? 4 + r.kid * (kh + kg) : 0), 0);
+  const adaHp = !!D.kontak && L.some(x => x.isi.some(p => p.hp && hpTampil(p.hp))), HP_H = adaHp ? 3.6 : 0;
+  const est = (bh, kh, kg, gap) => rows.reduce((t, r) => t + bh + HP_H + 3 + gap + (r.lbl ? 4 : 0) + (r.kid ? 4 + r.kid * (kh + kg) : 0), 0);
   const kompak = est(29, 12, 3, 7) > 228;
-  const BW = 40, BH = kompak ? 24 : 29, GAP = 5, PER = 4, KH = kompak ? 10.5 : 12, KG = kompak ? 2.2 : 3, RG = kompak ? 4 : 7, abu = [190, 180, 168], warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
+  const BW = 40, BH = (kompak ? 24 : 29) + HP_H, GAP = 5, PER = 4, KH = kompak ? 10.5 : 12, KG = kompak ? 2.2 : 3, RG = kompak ? 4 : 7, abu = [190, 180, 168], warna = {0: [107, 90, 76], 1: [31, 122, 77], 2: [31, 122, 77], 3: [47, 111, 159], 4: [183, 121, 31], 5: [122, 122, 122]};
   const tulis = (bx, w, ty, p, nmSize, jbSize, maxNm) => {
     pdfWrap(p.nama, w - 4, true, nmSize).slice(0, maxNm).forEach(l => { P.text(bx + w / 2, ty, l, {size: nmSize, bold: true, align: 'center'}); ty += nmSize * .42; });
     pdfWrap(p.jabatan || '', w - 4, false, jbSize).slice(0, 1).forEach(l => { P.text(bx + w / 2, ty, l, {size: jbSize, align: 'center', color: [90, 80, 70]}); });
+    if (adaHp && p.hp && hpTampil(p.hp)) P.text(bx + w / 2, ty + jbSize * .45, hpTampil(p.hp), {size: 7, align: 'center', color: [31, 122, 77]});
   };
   let y = 59, prevBottom = null;
   for (const x of L) {

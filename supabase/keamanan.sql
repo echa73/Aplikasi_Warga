@@ -425,3 +425,10 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 
 -- Jatuh tempo iuran: RPC atur_jatuh_tempo(p_hari 0..28) → pengaturan.umum.jatuhTempo
 --   hanya privat.izin('iuran') = 2 (pengurus keuangan / Pemilik); 0 = hapus. Warga hanya membaca.
+
+-- Akhiri sesi (kill session) — Admin → Pengguna online
+--   privat.sesi_valid(): token yang session_id-nya sudah tidak ada di auth.sessions ditolak.
+--   Policy RESTRICTIVE "sesi masih aktif" pada dokumen, profil, log_aktivitas, push_langganan.
+--   admin_keluarkan(p_user, p_perangkat_id|null): hanya Pemilik; hapus auth.sessions (refresh token ikut terhapus),
+--   tidak bisa mengakhiri sesi yang sedang dipakai sendiri; tercatat di log_aktivitas (aksi keluarkan_sesi).
+--   detak_online() mengembalikan false bila sesi sudah dicabut → aplikasi kembali ke layar login.

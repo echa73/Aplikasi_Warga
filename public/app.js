@@ -1698,8 +1698,8 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
-const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn']};
+const LOG_KOL = {sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn'], keluarkan_sesi: ['Akhiri sesi', 'bad']};
 /* ---------- Pengguna online (detak tiap 1 menit; dilihat Pemilik di Admin) ---------- */
 const ON = {last: 0, menu: '', data: null, err: '', memuat: false, tmr: null};
 function perangkatId() {
@@ -1720,7 +1720,14 @@ async function onlineDetak(paksa) {
   if (!paksa && now - ON.last < 60e3 && ON.menu === S.tab) return;
   if (now - ON.last < 10e3 && !paksa) return;
   ON.last = now; ON.menu = S.tab;
-  try { await SB.rpc('detak_online', {p_perangkat_id: perangkatId(), p_perangkat: labelPerangkat(), p_tampilan: tampilanSesi(), p_menu: S.tab || ''}); } catch (e) {}
+  try { const {data, error} = await SB.rpc('detak_online', {p_perangkat_id: perangkatId(), p_perangkat: labelPerangkat(), p_tampilan: tampilanSesi(), p_menu: S.tab || ''}); if (!error && data === false) await sesiDiakhiri(); } catch (e) {}
+}
+async function sesiDiakhiri() {
+  if (!S.authUser) return;
+  try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
+  ON.last = 0; ON.data = null; if (dlg.open) dlg.close();
+  resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik();
+  toast('Sesi Anda telah diakhiri oleh Pemilik aplikasi. Silakan masuk kembali.', 'bad');
 }
 async function onlineKeluar() { try { if (SB && S.authUser) await SB.rpc('keluar_online', {p_perangkat_id: perangkatId()}); } catch (e) {} ON.last = 0; ON.data = null; }
 setInterval(() => onlineDetak(false), 15e3);
@@ -1739,6 +1746,19 @@ function laluTeks(t) {
   if (d < 60) return 'baru saja'; if (d < 3600) return Math.floor(d / 60) + ' menit lalu'; if (d < 86400) return Math.floor(d / 3600) + ' jam lalu';
   return new Date(t).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'});
 }
+function openKillSesi(uid0, pid, nama, dev) {
+  if (!bisaKelola()) return;
+  const semua = !pid;
+  openDlg({title: semua ? 'Keluarkan dari semua perangkat' : 'Akhiri sesi perangkat', area: 'admin', submitLabel: semua ? 'Keluarkan' : 'Akhiri sesi',
+    body: `<p style="margin:0">${semua ? `Semua sesi login <b>${esc(nama)}</b> di semua perangkat akan diakhiri.` : `Sesi login <b>${esc(nama)}</b> di <b>${esc(dev || 'perangkat ini')}</b> akan diakhiri.`}</p>
+      <p class="muted" style="margin:0;font-size:.86rem">Akses data langsung ditolak dan aplikasinya kembali ke layar login. Akun tidak dihapus; pemiliknya bisa masuk lagi dengan password. Bila perangkat hilang atau password bocor, lanjutkan dengan reset password.</p>`,
+    onSubmit: async () => {
+      try { const {data, error} = await SB.rpc('admin_keluarkan', {p_user: uid0, p_perangkat_id: pid || null}); if (error) throw error;
+        toast(semua ? `${nama} dikeluarkan dari ${data || 0} sesi.` : `Sesi ${nama} di ${dev || 'perangkat'} diakhiri.`); }
+      catch (e) { pesanDlg('Gagal: ' + pesanAuth(e)); return false; }
+      S.logAkt = null; setTimeout(() => muatOnline(true), 300); return true;
+    }});
+}
 function vAdminOnline() {
   if (ON.data == null) { setTimeout(() => muatOnline(), 0); return '<div class="skel">Memuat pengguna online…</div>'; }
   const menuLbl = k => (TABS.find(t => t[0] === k) || [k, k])[1];
@@ -1753,15 +1773,15 @@ function vAdminOnline() {
   const rows = L.map(u => `<div class="row on-row"><span class="on-dot ${u.st}" aria-hidden="true"></span><div class="grow">
       <div class="t">${esc(u.nama || '—')} ${peranChip(u)}${u.user_id === (S.authUser && S.authUser.id) ? ' <span class="muted" style="font-weight:400">(Anda)</span>' : ''}</div>
       <div class="s">${esc([u.jabatan && u.peran !== 'pemilik' ? u.jabatan : '', u.blok].filter(Boolean).join(' · ') || u.akun || '')}</div>
-      ${u.dev.map(d => { const s2 = onStatus(d.terakhir); return `<div class="on-dev"><span class="on-dot sm ${s2}" aria-hidden="true"></span>${esc(d.perangkat || 'Perangkat')} · <b>${esc(d.tampilan || '')}</b>${s2 !== 'off' && d.menu ? ' · buka ' + esc(menuLbl(d.menu)) : ''} · <span class="muted">${s2 === 'on' ? 'aktif ' + laluTeks(d.terakhir) : 'terakhir ' + laluTeks(d.terakhir)}${s2 !== 'off' ? ', sejak ' + esc(new Date(d.mulai).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})) : ''}</span></div>`; }).join('')}
-    </div><span class="chip ${stLbl[u.st][1]} plain">${stLbl[u.st][0]}</span></div>`).join('');
+      ${u.dev.map(d => { const s2 = onStatus(d.terakhir); return `<div class="on-dev">${d.sesi_ini ? '<span class="chip ok plain" style="float:right;font-size:.72rem">Perangkat ini</span>' : u.dev.length < 2 ? '' : `<button type="button" class="btn sm on-kill" data-act="on-kill" data-u="${esc(u.user_id)}" data-p="${esc(d.perangkat_id || '')}" data-n="${esc(u.nama || '')}" data-d="${esc(d.perangkat || '')}" title="Akhiri sesi di perangkat ini">Akhiri</button>`}<span class="on-dot sm ${s2}" aria-hidden="true"></span>${esc(d.perangkat || 'Perangkat')} · <b>${esc(d.tampilan || '')}</b>${s2 !== 'off' && d.menu ? ' · buka ' + esc(menuLbl(d.menu)) : ''} · <span class="muted">${s2 === 'on' ? 'aktif ' + laluTeks(d.terakhir) : 'terakhir ' + laluTeks(d.terakhir)}${s2 !== 'off' ? ', sejak ' + esc(new Date(d.mulai).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})) : ''}</span></div>`; }).join('')}
+    </div><div class="on-aksi"><span class="chip ${stLbl[u.st][1]} plain">${stLbl[u.st][0]}</span>${u.dev.some(d => !d.sesi_ini) ? `<button type="button" class="btn sm bad-o" data-act="on-kill" data-u="${esc(u.user_id)}" data-p="" data-n="${esc(u.nama || '')}" title="Keluarkan akun ini dari semua perangkat">Keluarkan${u.dev.length > 1 ? ' semua' : ''}</button>` : ''}</div></div>`).join('');
   return `<div class="panel"><div class="papan-st on-stat"><div><b style="color:var(--ok)">${c.on}</b><span>Online sekarang</span></div><div><b style="color:var(--warn)">${c.idle}</b><span>Tidak aktif</span></div><div><b>${c.all}</b><span>Pengguna 24 jam</span></div></div></div>
     <div class="panel"><h3>Pengguna online <small>${ON.waktu ? 'diperbarui ' + new Date(ON.waktu).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit', second: '2-digit'}) : ''}</small></h3>
       <div class="toolbar" style="margin:-4px 0 8px"><div class="seg"><button type="button" data-act="on-f" data-k="aktif" aria-pressed="${f === 'aktif'}">Sedang aktif (${c.on + c.idle})</button><button type="button" data-act="on-f" data-k="semua" aria-pressed="${f === 'semua'}">24 jam terakhir (${c.all})</button></div>
         <button class="btn sm" data-act="on-muat">${ON.memuat ? 'Memuat…' : 'Muat ulang'}</button></div>
       ${ON.err ? `<div class="notice">Daftar tidak bisa dimuat: ${esc(ON.err)}</div>` : ''}
       ${rows ? `<div class="rows">${rows}</div>` : `<p class="muted" style="margin:0">${f === 'aktif' ? 'Tidak ada pengguna lain yang sedang aktif.' : 'Belum ada pengguna dalam 24 jam terakhir.'}</p>`}</div>
-    <p class="muted" style="margin:0;font-size:.84rem">Aplikasi yang sedang dibuka mengirim tanda aktif tiap 1 menit. Pengguna yang menutup aplikasi atau HP-nya terkunci akan berpindah ke "Tidak aktif" lalu "Offline". Daftar diperbarui otomatis tiap 30 detik dan hanya bisa dilihat Pemilik.</p>`;
+    <p class="muted" style="margin:0;font-size:.84rem">Aplikasi yang sedang dibuka mengirim tanda aktif tiap 1 menit. Pengguna yang menutup aplikasi atau HP-nya terkunci akan berpindah ke "Tidak aktif" lalu "Offline". Daftar diperbarui otomatis tiap 30 detik dan hanya bisa dilihat Pemilik. Tombol <b>Akhiri</b> / <b>Keluarkan</b> langsung memutus sesi login: akses datanya ditolak seketika dan aplikasinya kembali ke layar login dalam ±1 menit. Akun tetap aktif dan bisa masuk lagi dengan password (untuk memblokir, nonaktifkan pengurus/akun warga atau reset passwordnya).</p>`;
 }
 
 async function muatLog() {
@@ -1776,7 +1796,7 @@ function vAdminLog() {
   const ringkas = d => d ? esc(d.nama || d.judul || d.uraian || d.username || d.blok || '') : '';
   const rows = S.logAkt.map(l => { const [lbl, cls] = LOG_AKSI[l.aksi] || [l.aksi, 'mute']; return `<div class="row"><div class="grow">
     <div class="t">${esc(l.nama || 'Sistem')} <span class="muted" style="font-weight:400">· ${esc(LOG_KOL[l.koleksi] || l.koleksi)}</span></div>
-    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? ' · ' + ringkas(l.data_lama) : ''}${l.aksi === 'reset_password' && l.dok_id ? ' · untuk ' + esc(l.dok_id) : ''}</div></div>
+    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? ' · ' + ringkas(l.data_lama) : ''}${(l.aksi === 'reset_password' || l.aksi === 'keluarkan_sesi') && l.dok_id ? ' · untuk ' + esc(l.dok_id) : ''}${l.aksi === 'keluarkan_sesi' && l.data_lama ? (l.data_lama.perangkat === 'semua' ? ' · semua perangkat' : ' · 1 perangkat') : ''}</div></div>
     <span class="chip ${cls} plain">${esc(lbl)}</span></div>`; }).join('');
   return `<div class="panel"><h3>Log aktivitas <small>200 terakhir</small></h3>
     <div class="toolbar" style="margin:-4px 0 8px"><button class="btn sm" data-act="log-muat">Muat ulang</button></div>
@@ -6077,6 +6097,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lupa-pass') { S.lupaInfoHp = false; S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
   else if (a === 'ganti-pass') openKeamananAkun();
   else if (a === 'on-muat') muatOnline();
+  else if (a === 'on-kill') openKillSesi(b.dataset.u, b.dataset.p, b.dataset.n, b.dataset.d);
   else if (a === 'on-f') { S.onFilter = b.dataset.k; render(); }
   else if (a === 'jt-atur') openJatuhTempo();
   else if (a === 'blok-atur') openBlok(b.dataset.id);

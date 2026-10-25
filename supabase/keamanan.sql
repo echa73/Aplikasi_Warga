@@ -417,3 +417,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- (2026-10-25, revisi) Koordinator blok kini berupa MASTER BLOK: dokumen 'blok' id 'blk_<acak>' {kode otomatis B01.., nama manual,
 -- koordinator/wakil}. Rumah masuk blok lewat field warga.blokId (diisi di Data warga). jaga_dokumen mengunci blokId saat
 -- warga/pengurus mengubah rumahnya sendiri lewat jalur warga.
+
+-- Pengguna online: tabel public.sesi_online (RLS aktif, tanpa policy → hanya lewat RPC security definer)
+--   detak_online(perangkat_id, perangkat, tampilan, menu)  : akun sendiri, maks 5 perangkat, data >30 hari dihapus
+--   keluar_online(perangkat_id)                          : saat Keluar
+--   pengguna_online()                                    : hanya Pemilik (privat.peran_saya()='pemilik', MFA dihormati)

@@ -238,7 +238,7 @@ async function masukSesi(user) {
   S.loaded = true; render(); window.scrollTo(0, 0);
   if (S.terkunci) setTimeout(kunciAutoBio, 300);
   else if (sudahMasuk()) toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.');
-  pushCek = false; pushSub = null; pushSegarkan(); mfaMuat();
+  pushCek = false; pushSub = null; pushSegarkan(); mfaMuat(); ON.last = 0; setTimeout(() => onlineDetak(true), 800);
 }
 const pesanAuth = e => {
   const m = String((e && e.message) || e || '');
@@ -1623,7 +1623,7 @@ function roleInfoHtml(rid, jab) {
   return warn + esc(izinRingkas(r));
 }
 function vAdmin() {
-  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['blok', `Koordinator blok ${blokList().length}`], ['log', 'Log aktivitas']]
+  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['blok', `Koordinator blok ${blokList().length}`], ['online', 'Pengguna online'], ['log', 'Log aktivitas']]
     .map(([k, l]) => `<button type="button" data-act="admtab" data-k="${k}" aria-pressed="${S.admTab === k}">${l}</button>`).join('');
   const head = `<div class="sec-head"><div><h2>Admin</h2><p>Atur siapa pengurusnya, apa jabatannya, dan menu apa saja yang boleh mereka buka.</p></div>
     ${S.admTab === 'pengurus' ? '<button class="btn pri" data-act="pgr-new">+ Tambah pengurus</button>' : S.admTab === 'role' ? '<button class="btn pri" data-act="role-new">+ Tambah role</button>' : S.admTab === 'akun' ? '<button class="btn pri" data-act="akun-new">+ Buat akun warga</button>' : S.admTab === 'blok' ? '<button class="btn pri" data-act="blok-new">+ Tambah blok</button>' : ''}</div>
@@ -1632,6 +1632,7 @@ function vAdmin() {
   if (S.admTab === 'role') return head + vAdminRole();
   if (S.admTab === 'akun') return head + vAdminAkun();
   if (S.admTab === 'log') return head + vAdminLog();
+  if (S.admTab === 'online') return head + vAdminOnline();
   if (S.admTab === 'blok') return head + vAdminBlok();
   if (S.admTab === 'permintaan') return head + vAdminMinta();
   const list = [...S.pengurus].sort((a, b) => (a.aktif === false) - (b.aktif === false) || JABATAN.indexOf(a.jabatan) - JABATAN.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
@@ -1655,6 +1656,70 @@ function vAdmin() {
 }
 const LOG_KOL = {pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn']};
+/* ---------- Pengguna online (detak tiap 1 menit; dilihat Pemilik di Admin) ---------- */
+const ON = {last: 0, menu: '', data: null, err: '', memuat: false, tmr: null};
+function perangkatId() {
+  try { let id = localStorage.getItem('perangkat-id'); if (!id || !/^[A-Za-z0-9_-]{8,40}$/.test(id)) { id = uid().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 24).padEnd(12, '0'); localStorage.setItem('perangkat-id', id); } return id; }
+  catch (e) { return ON.idMem || (ON.idMem = 'm' + Math.random().toString(36).slice(2, 14).padEnd(12, '0')); }
+}
+function labelPerangkat() {
+  const u = navigator.userAgent || '';
+  const os = /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Windows/.test(u) ? 'Windows' : /Mac OS X|Macintosh/.test(u) ? 'Mac' : /CrOS/.test(u) ? 'Chromebook' : /Linux/.test(u) ? 'Linux' : 'Perangkat lain';
+  const br = /SamsungBrowser/.test(u) ? 'Samsung Internet' : /EdgA?\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Firefox|FxiOS/.test(u) ? 'Firefox' : /CriOS|Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : 'Browser';
+  const app = (window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) ? ' · aplikasi' : '';
+  return `${os} · ${br}${app}`;
+}
+const tampilanSesi = () => S.modeWarga ? 'Pengurus (tampilan warga)' : S.sesi === 'pemilik' ? 'Pemilik' : isWarga() ? 'Warga' : 'Pengurus';
+async function onlineDetak(paksa) {
+  if (!SB || !sudahMasuk() || S.terkunci || document.visibilityState !== 'visible') return;
+  const now = Date.now();
+  if (!paksa && now - ON.last < 60e3 && ON.menu === S.tab) return;
+  if (now - ON.last < 10e3 && !paksa) return;
+  ON.last = now; ON.menu = S.tab;
+  try { await SB.rpc('detak_online', {p_perangkat_id: perangkatId(), p_perangkat: labelPerangkat(), p_tampilan: tampilanSesi(), p_menu: S.tab || ''}); } catch (e) {}
+}
+async function onlineKeluar() { try { if (SB && S.authUser) await SB.rpc('keluar_online', {p_perangkat_id: perangkatId()}); } catch (e) {} ON.last = 0; ON.data = null; }
+setInterval(() => onlineDetak(false), 15e3);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') onlineDetak(true); });
+async function muatOnline(diam) {
+  if (ON.memuat) return; ON.memuat = true; if (!diam) { ON.err = ''; }
+  try { const {data, error} = await SB.rpc('pengguna_online'); if (error) throw error; ON.data = data || []; ON.err = ''; ON.waktu = Date.now(); }
+  catch (e) { ON.err = pesanAuth(e); if (!ON.data) ON.data = []; }
+  ON.memuat = false;
+  if (S.tab === 'admin' && S.admTab === 'online' && !dlg.open) render();
+}
+setInterval(() => { if (S.tab === 'admin' && S.admTab === 'online' && bisaKelola() && document.visibilityState === 'visible') muatOnline(true); }, 30e3);
+const onStatus = t => { const m = (Date.now() - new Date(t).getTime()) / 60e3; return m <= 2 ? 'on' : m <= 15 ? 'idle' : 'off'; };
+function laluTeks(t) {
+  const d = Math.max(0, (Date.now() - new Date(t).getTime()) / 1000);
+  if (d < 60) return 'baru saja'; if (d < 3600) return Math.floor(d / 60) + ' menit lalu'; if (d < 86400) return Math.floor(d / 3600) + ' jam lalu';
+  return new Date(t).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'});
+}
+function vAdminOnline() {
+  if (ON.data == null) { setTimeout(() => muatOnline(), 0); return '<div class="skel">Memuat pengguna online…</div>'; }
+  const menuLbl = k => (TABS.find(t => t[0] === k) || [k, k])[1];
+  const per = new Map();
+  ON.data.forEach(r => { if (!per.has(r.user_id)) per.set(r.user_id, {...r, dev: []}); per.get(r.user_id).dev.push(r); });
+  const U = [...per.values()].map(u => { const st = u.dev.map(d => onStatus(d.terakhir)); u.st = st.includes('on') ? 'on' : st.includes('idle') ? 'idle' : 'off'; return u; });
+  const c = {on: U.filter(u => u.st === 'on').length, idle: U.filter(u => u.st === 'idle').length, all: U.length};
+  const f = S.onFilter || 'aktif';
+  const L = U.filter(u => f === 'semua' || u.st !== 'off');
+  const peranChip = u => u.peran === 'pemilik' ? '<span class="chip ok plain">Pemilik</span>' : u.peran === 'warga' ? '<span class="chip mute plain">Warga</span>' : '<span class="chip info plain">Pengurus</span>';
+  const stLbl = {on: ['Online', 'ok'], idle: ['Tidak aktif', 'warn'], off: ['Offline', 'mute']};
+  const rows = L.map(u => `<div class="row on-row"><span class="on-dot ${u.st}" aria-hidden="true"></span><div class="grow">
+      <div class="t">${esc(u.nama || '—')} ${peranChip(u)}${u.user_id === (S.authUser && S.authUser.id) ? ' <span class="muted" style="font-weight:400">(Anda)</span>' : ''}</div>
+      <div class="s">${esc([u.jabatan && u.peran !== 'pemilik' ? u.jabatan : '', u.blok].filter(Boolean).join(' · ') || u.akun || '')}</div>
+      ${u.dev.map(d => { const s2 = onStatus(d.terakhir); return `<div class="on-dev"><span class="on-dot sm ${s2}" aria-hidden="true"></span>${esc(d.perangkat || 'Perangkat')} · <b>${esc(d.tampilan || '')}</b>${s2 !== 'off' && d.menu ? ' · buka ' + esc(menuLbl(d.menu)) : ''} · <span class="muted">${s2 === 'on' ? 'aktif ' + laluTeks(d.terakhir) : 'terakhir ' + laluTeks(d.terakhir)}${s2 !== 'off' ? ', sejak ' + esc(new Date(d.mulai).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})) : ''}</span></div>`; }).join('')}
+    </div><span class="chip ${stLbl[u.st][1]} plain">${stLbl[u.st][0]}</span></div>`).join('');
+  return `<div class="panel"><div class="papan-st on-stat"><div><b style="color:var(--ok)">${c.on}</b><span>Online sekarang</span></div><div><b style="color:var(--warn)">${c.idle}</b><span>Tidak aktif</span></div><div><b>${c.all}</b><span>Pengguna 24 jam</span></div></div></div>
+    <div class="panel"><h3>Pengguna online <small>${ON.waktu ? 'diperbarui ' + new Date(ON.waktu).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit', second: '2-digit'}) : ''}</small></h3>
+      <div class="toolbar" style="margin:-4px 0 8px"><div class="seg"><button type="button" data-act="on-f" data-k="aktif" aria-pressed="${f === 'aktif'}">Sedang aktif (${c.on + c.idle})</button><button type="button" data-act="on-f" data-k="semua" aria-pressed="${f === 'semua'}">24 jam terakhir (${c.all})</button></div>
+        <button class="btn sm" data-act="on-muat">${ON.memuat ? 'Memuat…' : 'Muat ulang'}</button></div>
+      ${ON.err ? `<div class="notice">Daftar tidak bisa dimuat: ${esc(ON.err)}</div>` : ''}
+      ${rows ? `<div class="rows">${rows}</div>` : `<p class="muted" style="margin:0">${f === 'aktif' ? 'Tidak ada pengguna lain yang sedang aktif.' : 'Belum ada pengguna dalam 24 jam terakhir.'}</p>`}</div>
+    <p class="muted" style="margin:0;font-size:.84rem">Aplikasi yang sedang dibuka mengirim tanda aktif tiap 1 menit. Pengguna yang menutup aplikasi atau HP-nya terkunci akan berpindah ke "Tidak aktif" lalu "Offline". Daftar diperbarui otomatis tiap 30 detik dan hanya bisa dilihat Pemilik.</p>`;
+}
+
 async function muatLog() {
   S.logAkt = 'memuat'; render();
   const {data, error} = await SB.from('log_aktivitas').select('id,waktu,nama,aksi,koleksi,dok_id,data_lama').order('waktu', {ascending: false}).limit(200);
@@ -2172,7 +2237,7 @@ function gantiMode(keWarga) {
   if (dlg.open) dlg.close();
   S.modeWarga = !!keWarga; S.sesi = keWarga ? 'w:' + S.authUser.id : S.sesiAsli; S.tab = keWarga ? 'portal' : 'ringkasan';
   try { localStorage.setItem(modeKey(), keWarga ? '1' : '0'); localStorage.setItem(modeKey() + ':kenal', '1'); } catch (e) {}
-  render(); window.scrollTo(0, 0);
+  render(); window.scrollTo(0, 0); onlineDetak(true);
   toast(keWarga ? `Tampilan warga · ${(wargaSaya() || {}).blok || ''}` : 'Tampilan pengurus');
 }
 function modeBar() {
@@ -2211,7 +2276,7 @@ async function pinHash(pin, salt, iter) {
   return kb64u(await crypto.subtle.deriveBits({name: 'PBKDF2', hash: 'SHA-256', salt: kunb64u(salt), iterations: iter}, k, 256));
 }
 function kunciSekarang() { if (!kunciAda() || !sudahMasuk()) return; if (dlg.open) dlg.close(); S.terkunci = true; S.kunciPesan = ''; render(); window.scrollTo(0, 0); }
-function kunciBuka() { S.terkunci = false; S.kunciPesan = ''; idleAkhir = Date.now(); try { localStorage.removeItem(kunciKey() + ':gagal'); } catch (e) {} render(); toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.'); }
+function kunciBuka() { setTimeout(() => onlineDetak(true), 300); S.terkunci = false; S.kunciPesan = ''; idleAkhir = Date.now(); try { localStorage.removeItem(kunciKey() + ':gagal'); } catch (e) {} render(); toast('Selamat datang, ' + namaSesi().split(' ')[0] + '.'); }
 function vKunci() {
   const c = kunciCfg(), n = namaSesi();
   return `<div class="kunci"><span class="ava" aria-hidden="true">${esc(orgInisial(n))}</span><div><h2>Halo, ${esc(n.split(' ')[0])}</h2><p class="muted" style="margin:4px 0 0">Aplikasi terkunci. ${c.bio ? 'Gunakan sidik jari / wajah' : 'Masukkan PIN'}${c.bio && c.pin ? ' atau PIN' : ''} untuk membuka.</p></div>
@@ -5924,7 +5989,7 @@ document.addEventListener('click', async e => {
     if (dlgDelete) { b.disabled = true; const ok = await dlgDelete(); if (ok !== false) dlg.close(); }
   }
   else if (a === 'pilih-user') { S.pilih = S.pilih === b.dataset.id ? null : b.dataset.id; S.pinGagal = 0; render(); const f = $('#pinMasuk') || $('#loginForm button'); if (f) f.focus(); }
-  else if (a === 'keluar') { b.disabled = true; try { if (pushSub) { const ep = pushSub.endpoint; await pushSub.unsubscribe(); await SB.rpc('push_lepas', {p_endpoint: ep}); pushSub = null; } } catch (err) {} try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
+  else if (a === 'keluar') { b.disabled = true; try { if (pushSub) { const ep = pushSub.endpoint; await pushSub.unsubscribe(); await SB.rpc('push_lepas', {p_endpoint: ep}); pushSub = null; } } catch (err) {} await onlineKeluar(); try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
   else if (a === 'pin-pemilik') openPinPemilik();
   else if (a === 'pemilik-hp') openPemilikHp();
   else if (a === 'loginmode') { S.loginMode = b.dataset.k; S.pilih = null; S.pinGagal = 0; render(); const f = $(S.loginMode === 'warga' ? '#wUser' : '.user-opt'); if (f) f.focus(); }
@@ -5936,6 +6001,8 @@ document.addEventListener('click', async e => {
   else if (a === 'lupa-hp-tutup') { S.lupaInfoHp = false; render(); }
   else if (a === 'lupa-pass') { S.lupaInfoHp = false; S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
   else if (a === 'ganti-pass') openKeamananAkun();
+  else if (a === 'on-muat') muatOnline();
+  else if (a === 'on-f') { S.onFilter = b.dataset.k; render(); }
   else if (a === 'blok-atur') openBlok(b.dataset.id);
   else if (a === 'blok-new') openBlok();
   else if (a === 'blok-tanpa') { S.tab = 'warga'; S.fBlok = '-'; S.q = ''; render(); window.scrollTo(0, 0); }

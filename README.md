@@ -97,3 +97,6 @@ Admin → **Koordinator blok**: master blok (kode otomatis B01, B02, …; nama b
 
 ### Batas percobaan login
 Salah password 5 kali → login dikunci 1 menit; 10 kali → 5 menit; 15 kali dst → 15 menit (hitungan per perangkat, reset setelah berhasil masuk atau 1 jam tanpa gagal). Peringatan sisa percobaan muncul mulai percobaan ke-3. Lapisan server tetap: Cloudflare Turnstile + rate limit Supabase Auth (Authentication → Rate Limits).
+
+### Pengguna online (Admin → Pengguna online)
+Aplikasi yang terbuka mengirim tanda aktif tiap 1 menit (dan saat pindah menu). Pemilik melihat siapa yang online (≤2 menit), tidak aktif (2–15 menit), dan riwayat 24 jam: nama, peran/jabatan/blok, perangkat, tampilan, dan menu yang sedang dibuka. Diperbarui otomatis tiap 30 detik.

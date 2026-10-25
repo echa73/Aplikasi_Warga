@@ -438,3 +438,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   privat.sesi_valid(): false bila sesi sudah dihapus ATAU ada sesi pemblokir → policy restrictive menolak semua data.
 --   klaim_sesi(): dipanggil aplikasi saat login/dibuka. Diizinkan → sesi lain dibersihkan; ditolak → sesi baru dihapus
 --   dan aplikasi menampilkan "Akun ini sedang login di perangkat lain". Sesi diam > 24 jam tidak memblokir.
+
+-- Warga pindah
+--   trg_warga_pindah (AFTER UPDATE dokumen warga, status → 'Pindah'): hapus profil warga rumah itu (+ cabut refresh token),
+--   hapus auth.sessions, lepas profil.warga_id pengurus/pemilik yang tertaut, akunWarga aktif=false nonaktifKarena='Pindah'.
+--   aktifkan_akun_warga(p_warga): izin('warga')=2 / Pemilik; status harus bukan Pindah; non-Pemilik hanya untuk nonaktifKarena='Pindah'.
+--   jaga_dokumen: warga tidak bisa mengubah tglPindah sendiri.

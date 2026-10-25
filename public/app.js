@@ -753,7 +753,7 @@ function vWarga() {
       <td><span class="house">${esc(w.blok)}</span>${blokById(w.blokId) ? `<div class="muted" style="font-size:.76rem;margin-top:3px">${esc(blokById(w.blokId).nama)}</div>` : ''}</td>
       <td><div style="font-weight:600">${esc(w.nama)}</div><div class="mono muted">${esc(w.nik || 'NIK belum diisi')}</div>${w.diubahWarga ? `<span class="chip info plain" style="margin-top:3px">Diperbarui warga ${esc(tgl(w.diubahWarga))}</span>` : ''}${w.izinLapak ? '<span class="chip ok plain" style="margin-top:3px">Penjual lapak</span>' : w.mintaLapak && w.mintaLapak.status === "Menunggu" ? '<span class="chip warn plain" style="margin-top:3px">Minta izin lapak</span>' : ''}</td>
       <td class="r num">${esc(w.jumlahJiwa || '–')}</td>
-      <td>${esc(w.statusHuni || '–')}${w.status === 'Pindah' ? ' <span class="chip mute">Pindah</span>' : ''}</td>
+      <td>${esc(w.statusHuni || '–')}${w.status === 'Pindah' ? ` <span class="chip mute" title="${w.tglPindah ? 'Pindah ' + esc(tgl(w.tglPindah)) : 'Pindah'}">Pindah${w.tglPindah ? ' · ' + esc(tgl(w.tglPindah)) : ''}</span>` : ''}</td>
       <td class="mono">${esc(w.noHp || '–')}</td>
       <td>${w.status === 'Pindah' ? '<span class="muted">–</span>' : t ? `<span class="chip ${t >= 3 ? 'bad' : 'warn'}">${t} bulan</span>` : '<span class="chip ok">Lancar</span>'}</td>
       <td class="r"><button class="btn sm" data-act="warga-edit" data-id="${esc(w.id)}">${bisa('warga') ? 'Ubah' : 'Lihat'}</button></td></tr>`; }).join('');
@@ -792,6 +792,8 @@ function formWarga(w, self = false) {
     <div class="fld"><label for="f_huni">Status huni</label><select id="f_huni" name="statusHuni" ${ro}>${HUNI.map(h => `<option ${w.statusHuni === h ? 'selected' : ''}>${h}</option>`).join('')}</select></div>
     <div class="fld"><label for="f_status">Status warga</label><select id="f_status" name="status" ${ro}>${['Aktif', 'Pindah'].map(h => `<option ${w.status === h ? 'selected' : ''}>${h}</option>`).join('')}</select></div>
   </div>
+  <div class="fld" id="f_pindahBox" ${w.status === 'Pindah' ? '' : 'hidden'}><label for="f_tp">Tanggal pindah</label><input type="date" id="f_tp" name="tglPindah" value="${esc(w.tglPindah || '')}" max="${todayISO()}" ${ro}>
+    <span class="hint">${w.status === 'Pindah' ? 'Rumah ini tidak lagi ditagih iuran dan akun login warganya nonaktif.' : 'Menyimpan status <b>Pindah</b> otomatis menonaktifkan akun login warga rumah ini dan memutus sesinya. Data tetap tersimpan sebagai arsip.'}</span></div>
   <div class="fld"><label for="f_bk">Nama blok</label><select id="f_bk" name="blokId" ${ro}><option value="">— belum ditentukan —</option>${blokList().map(b => `<option value="${esc(b.id)}" ${w.blokId === b.id ? 'selected' : ''}>${esc(b.nama)} (${esc(b.kode)})</option>`).join('')}</select><span class="hint">${blokList().length ? 'Menentukan koordinator blok rumah ini.' : 'Belum ada blok. Buat dulu di Admin → Koordinator blok.'}</span></div>
   <div class="fld"><label for="f_mulai">Wajib iuran mulai <span class="req">*</span></label><input type="date" id="f_mulai" name="mulaiIuran" required value="${esc(mulaiTgl(w))}" ${ro}><span class="hint" id="mulaiInfo">${esc(mulaiInfo(mulaiTgl(w)))}</span></div>`}
   <div class="ag-sec">
@@ -1478,8 +1480,10 @@ function vAdminAkun() {
   const rows = list.map(a => { const w = wById(a.wargaId); return `<div class="row" style="flex-wrap:wrap">
     ${w ? `<span class="house">${esc(w.blok)}</span>` : '<span class="house">?</span>'}
     <div class="grow"><div class="t">${esc(w ? w.nama : 'Data warga sudah dihapus')}</div><div class="s">Login No. HP: <span class="mono">${esc(hpTampil(a.hp || (w || {}).noHp) || '—')}</span>${a.userId ? '' : ' · <span style="color:var(--warn)">akun lama, buat ulang</span>'}</div></div>
-    <div class="racts">${a.aktif === false ? '<span class="chip mute">Nonaktif</span>' : '<span class="chip ok plain">Aktif</span>'}<button class="btn sm" data-act="akun-edit" data-id="${esc(a.id)}">Ubah</button></div></div>`; }).join('');
-  return `<div class="panel"><h3>Akun login warga <small>${list.length} akun · ${tanpa} KK belum punya akun</small></h3>
+    <div class="racts">${a.aktif === false ? `<span class="chip mute">Nonaktif${a.nonaktifKarena === 'Pindah' ? ' · pindah' : ''}</span>` : w && w.status === 'Pindah' ? `<span class="chip bad">Rumah sudah pindah</span><button class="btn sm bad-o" data-act="akun-pindah-off" data-id="${esc(a.id)}">Nonaktifkan</button>` : '<span class="chip ok plain">Aktif</span>'}<button class="btn sm" data-act="akun-edit" data-id="${esc(a.id)}">Ubah</button></div></div>`; }).join('');
+  const salah = list.filter(a => a.aktif !== false && (wById(a.wargaId) || {}).status === 'Pindah');
+  return `${salah.length ? `<div class="notice" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:200px"><b>${salah.length} akun</b> milik warga yang sudah <b>pindah</b> masih aktif dan masih bisa login.</span><button class="btn sm pri" data-act="akun-pindah-off" data-id="${esc(salah.map(a => a.id).join(','))}">Nonaktifkan ${salah.length > 1 ? 'semua' : ''}</button></div>` : ''}
+  <div class="panel"><h3>Akun login warga <small>${list.length} akun · ${tanpa} KK belum punya akun</small></h3>
     ${list.length ? `<div class="rows">${rows}</div>` : '<p class="muted" style="margin:0">Belum ada akun warga. Buat akun supaya warga bisa melihat status iurannya sendiri dan melaporkan keluhan.</p>'}</div>
     <div class="panel" style="display:grid;gap:6px"><h3>Yang bisa dilakukan warga</h3>
     <p class="muted" style="margin:0">Setelah masuk dengan No. HP dan password, warga hanya melihat menu <b>Rumah saya</b> (data keluarga, status dan riwayat iuran, kwitansi), <b>Keluhan saya</b> (melapor dan memantau tanggapan), dan <b>Pengumuman</b>. Warga tidak melihat data warga lain, buku kas, surat, atau menu pengurus.</p>
@@ -5826,6 +5830,7 @@ $('#dlgForm').addEventListener('input', e => {
   if (e.target.id === 'f_hp') { cekHp(e.target); return; }
   if (e.target.classList.contains('ag-nik')) { cekNik(e.target, e.target.nextElementSibling); return; }
   if (e.target.classList.contains('ag-lahir')) { e.target.nextElementSibling.textContent = umur(e.target.value); }
+  if (e.target.id === 'f_status' && $('#f_pindahBox')) { const pd = e.target.value === 'Pindah'; $('#f_pindahBox').hidden = !pd; if (pd && $('#f_tp') && !$('#f_tp').value) $('#f_tp').value = todayISO(); }
   if (e.target.id === 'f_mulai' && $('#mulaiInfo')) $('#mulaiInfo').textContent = mulaiInfo(e.target.value);
   if (e.target.getAttribute('aria-invalid')) e.target.removeAttribute('aria-invalid');
 });
@@ -5867,12 +5872,17 @@ function openWarga(id) {
       const anggota = ag.map(({_nikId, _namaId, ...x}) => x);
       const jiwa = Math.max(Number(d.jumlahJiwa) || 1, 1 + anggota.length);
       const row = {...(w || {}), ...d, blok, nama: d.nama.trim(), anggota, jumlahJiwa: jiwa, diperbarui: todayISO()};
+      if (row.status !== 'Pindah') delete row.tglPindah;
+      else if (row.tglPindah && row.tglPindah > todayISO()) { pesanDlg('Tanggal pindah tidak boleh di masa depan.', 'f_tp'); return false; }
+      const jadiPindah = !!w && w.status !== 'Pindah' && row.status === 'Pindah', jadiAktif = !!w && w.status === 'Pindah' && row.status !== 'Pindah';
       delete row.izinLapak;
       if (w && w.izinLapak !== undefined) row.izinLapak = w.izinLapak;
       if (bolehIzinLapak()) { const iz = !!d.izinLapak; if (iz !== !!(w && w.izinLapak)) { row.izinLapakOleh = namaSesi(); row.izinLapakTgl = todayISO(); if (row.mintaLapak) row.mintaLapak = {...row.mintaLapak, status: iz ? 'Disetujui' : row.mintaLapak.status}; } row.izinLapak = iz; }
       if (!w) row.dibuat = todayISO();
       const ok = await put('warga', w ? w.id : uid(), row);
       if (ok) toast(w ? 'Data warga diperbarui.' : `${row.nama} ditambahkan.`);
+      if (ok && jadiPindah) setTimeout(() => setelahPindah(w.id, row), 80);
+      if (ok && jadiAktif) setTimeout(() => tawarAktifkanAkun(w.id, row), 80);
       return ok;
     },
     onDelete: w ? async () => {
@@ -5884,6 +5894,42 @@ function openWarga(id) {
     } : null,
     deleteLabel: 'Hapus warga'
   });
+}
+/* --- warga pindah: akun login otomatis nonaktif (server), cek pengurus & aktifkan kembali --- */
+function setelahPindah(wid, w) {
+  const akun = S.akunWarga.find(a => a.wargaId === wid);
+  S.akunWarga = S.akunWarga.map(a => a.wargaId === wid && a.aktif !== false ? {...a, aktif: false, nonaktifKarena: 'Pindah'} : a);
+  const pg = S.pengurus.filter(p => p.wargaId === wid && p.aktif !== false && !p.dariPekerja);
+  const infoAkun = akun || !bisaKelola() ? 'Akun login warga rumah ini otomatis dinonaktifkan dan sesinya diputus.' : '';
+  if (!pg.length) { if (infoAkun) toast(`${w.nama} ditandai pindah. ${infoAkun}`); return; }
+  const daftar = pg.map(p => `<b>${esc(p.nama)}</b> (${esc(p.jabatan || 'Pengurus')})`).join(', ');
+  if (!bisaKelola()) { openDlg({title: 'Warga ini juga pengurus', submitLabel: 'Mengerti', body: `<p style="margin:0">${infoAkun}</p><p style="margin:0">${daftar} masih tercatat sebagai <b>pengurus aktif</b>. Minta Pemilik aplikasi menonaktifkan akses pengurusnya di Admin → Pengurus.</p>`, onSubmit: async () => true}); return; }
+  openDlg({title: 'Warga ini juga pengurus', area: 'admin', submitLabel: 'Nonaktifkan pengurus',
+    body: `<p style="margin:0">${infoAkun}</p><p style="margin:0">${daftar} masih tercatat sebagai <b>pengurus aktif</b>. Nonaktifkan juga akses pengurusnya? Namanya hilang dari Struktur Kepengurusan dan akunnya tidak bisa membuka menu pengurus.</p>`,
+    onSubmit: async () => {
+      let ok = true; for (const p of pg) ok = (await put('pengurus', p.id, {...p, aktif: false, nonaktifKarena: 'Pindah', diperbarui: todayISO()})) && ok;
+      if (ok) { S.struktur = null; toast('Akses pengurus dinonaktifkan.'); } return ok;
+    }});
+}
+function tawarAktifkanAkun(wid, w) {
+  const akun = S.akunWarga.find(a => a.wargaId === wid);
+  if (bisaKelola() && (!akun || akun.aktif !== false)) return;
+  openDlg({title: 'Aktifkan kembali akun login?', area: 'warga', submitLabel: 'Aktifkan akun',
+    body: `<p style="margin:0">${esc(w.nama)} (${esc(w.blok)}) kembali berstatus <b>Aktif</b>. ${bisaKelola() ? 'Akun login warganya masih nonaktif.' : 'Bila rumah ini punya akun login warga, akunnya masih nonaktif sejak ditandai pindah.'} Aktifkan kembali supaya warga bisa masuk dengan No. HP dan password lamanya?</p>`,
+    onSubmit: async () => {
+      try { const {data, error} = await SB.rpc('aktifkan_akun_warga', {p_warga: wid}); if (error) throw error;
+        if (data) { S.akunWarga = S.akunWarga.map(a => a.wargaId === wid ? {...a, aktif: true, nonaktifKarena: undefined} : a); if (bisaKelola()) muatProfil(); toast('Akun login warga aktif kembali.'); }
+        else toast('Rumah ini belum punya akun login warga. Buat di Admin → Akun warga.', 'bad');
+        return true; }
+      catch (e) { pesanDlg('Gagal: ' + pesanAuth(e)); return false; }
+    }});
+}
+async function nonaktifkanAkunPindah(ids) {
+  if (!bisaKelola()) return;
+  let n = 0;
+  for (const id of ids) { const a = S.akunWarga.find(x => x.id === id); if (!a) continue;
+    try { if (a.userId) await hapusProfil(a.userId); if (await put('akunWarga', a.id, {...a, aktif: false, nonaktifKarena: 'Pindah', diperbarui: todayISO()})) n++; } catch (e) { toast('Gagal menonaktifkan sebagian akun: ' + pesanAuth(e), 'bad'); break; } }
+  if (n) toast(`${n} akun warga pindah dinonaktifkan.`);
 }
 function openWargaSaya() {
   const w = wargaSaya(); if (!w) return;
@@ -6132,6 +6178,7 @@ document.addEventListener('click', async e => {
   else if (a === 'jt-atur') openJatuhTempo();
   else if (a === 'idle-tetap') { idleAkhir = Date.now(); idleWarn(0); }
   else if (a === 'idle-keluar') idleLogout(true);
+  else if (a === 'akun-pindah-off') { b.disabled = true; await nonaktifkanAkunPindah(String(b.dataset.id || '').split(',').filter(Boolean)); }
   else if (a === 'blok-atur') openBlok(b.dataset.id);
   else if (a === 'blok-new') openBlok();
   else if (a === 'blok-tanpa') { S.tab = 'warga'; S.fBlok = '-'; S.q = ''; render(); window.scrollTo(0, 0); }

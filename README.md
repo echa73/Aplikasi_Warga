@@ -107,3 +107,6 @@ Pemilik bisa menekan **Akhiri** (satu perangkat) atau **Keluarkan semua** (semua
 
 ### Satu akun satu perangkat
 Selama akun masih login di satu perangkat, login dari perangkat lain ditolak ("Akun ini sedang login di perangkat lain …") sampai perangkat pertama menekan Keluar. Berlaku untuk semua peran. Sesi yang tidak dipakai > 24 jam dianggap berakhir; Pemilik juga bisa mengakhiri sesi di Admin → Pengguna online.
+
+### Warga pindah
+Data warga → Status warga "Pindah" (+ Tanggal pindah). Server otomatis menonaktifkan akun login warga rumah itu dan memutus sesinya. Bila warga itu juga pengurus, muncul tawaran menonaktifkan akses pengurusnya (Pemilik). Status dikembalikan ke Aktif → tawaran mengaktifkan kembali akun login. Admin → Akun warga menandai akun warga pindah yang masih aktif (tombol Nonaktifkan / Nonaktifkan semua).

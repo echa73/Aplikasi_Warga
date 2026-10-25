@@ -110,3 +110,6 @@ Selama akun masih login di satu perangkat, login dari perangkat lain ditolak ("A
 
 ### Warga pindah
 Data warga → Status warga "Pindah" (+ Tanggal pindah). Server otomatis menonaktifkan akun login warga rumah itu dan memutus sesinya. Bila warga itu juga pengurus, muncul tawaran menonaktifkan akses pengurusnya (Pemilik). Status dikembalikan ke Aktif → tawaran mengaktifkan kembali akun login. Admin → Akun warga menandai akun warga pindah yang masih aktif (tombol Nonaktifkan / Nonaktifkan semua).
+
+### Tema halaman login
+Panel ilustrasi di samping form login berganti tema otomatis tiap bulan (Tahun Baru, musim hujan, Hari Air, Kartini, Kebangkitan Nasional, Lingkungan Hidup, Hari Anak, HUT RI, senja kemarau, Batik & Sumpah Pemuda, Hari Pahlawan, Hari Ibu) dan saat hari raya (Ramadan, Idul Fitri 1–7 Syawal, Idul Adha 9–13 Zulhijah — dihitung kalender Hijriah Umm al-Qura, Natal 20–26 Des). Tulisan "Lingkungan yang tertata, warga yang terhubung." tetap. Pratinjau: tambahkan `?tema=8` (atau 1–12, ramadan, fitri, adha, natal) di alamat.

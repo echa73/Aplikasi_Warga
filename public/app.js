@@ -1214,6 +1214,86 @@ function pilihanLogin() {
   if (a && !pengurusSaya()) list.push({id: 'akses', nama: me.name || 'Akun Anda', sub: roleById(LEGACY[a.peran]).nama, uid: me.id, img: me.avatarUrl, pin: false, boleh: true});
   return list;
 }
+/* ---------- Tema panel login: berganti tiap bulan + hari raya (otomatis) ---------- */
+function acakSeed(n) { let x = n >>> 0 || 1; return () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296; }
+function hijriah(d) {
+  try { const p = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {day: 'numeric', month: 'numeric'}).formatToParts(d);
+    return {m: Number((p.find(x => x.type === 'month') || {}).value), d: Number((p.find(x => x.type === 'day') || {}).value)}; } catch (e) { return null; }
+}
+const TH = {
+  bintang(n, seed, x0 = 0, x1 = 600, y0 = 10, y1 = 200, warna = '#FFFFFF') { const r = acakSeed(seed); let o = ''; for (let i = 0; i < n; i++) { const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), s = .6 + r() * 1.6; o += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${s.toFixed(2)}" fill="${warna}" opacity="${(.35 + r() * .6).toFixed(2)}"/>`; } return o; },
+  kembangApi(x, y, r, c) { let o = ''; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, x1 = x + Math.cos(a) * r * .35, y1 = y + Math.sin(a) * r * .35, x2 = x + Math.cos(a) * r, y2 = y + Math.sin(a) * r; o += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round"/><circle cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="1.8" fill="${c}"/>`; } return `<g opacity=".9">${o}</g>`; },
+  awan(x, y, k, c = '#FFFFFF', op = .85) { return `<g transform="translate(${x} ${y}) scale(${k})" fill="${c}" opacity="${op}"><ellipse cx="0" cy="0" rx="34" ry="16"/><ellipse cx="26" cy="-10" rx="24" ry="18"/><ellipse cx="52" cy="2" rx="28" ry="14"/><ellipse cx="-24" cy="4" rx="20" ry="11"/></g>`; },
+  hujan(seed, x0, x1) { const r = acakSeed(seed); let o = ''; for (let i = 0; i < 60; i++) { const x = x0 + r() * (x1 - x0), y = 40 + r() * 190; o += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x - 5).toFixed(1)}" y2="${(y + 14).toFixed(1)}" stroke="#DCEFF5" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>`; } return o; },
+  pelangi(cx, cy, r) { return ['#E74C3C', '#F39C12', '#F1C40F', '#2ECC71', '#3498DB', '#8E44AD'].map((c, i) => `<path d="M${cx - r + i * 7} ${cy} A${r - i * 7} ${r - i * 7} 0 0 1 ${cx + r - i * 7} ${cy}" fill="none" stroke="${c}" stroke-width="7" opacity=".38"/>`).join(''); },
+  tetes(x, y, k, c = '#BFE8F2') { return `<path transform="translate(${x} ${y}) scale(${k})" d="M0 -14 C6 -4 10 2 10 7 A10 10 0 0 1 -10 7 C-10 2 -6 -4 0 -14Z" fill="${c}" opacity=".75"/>`; },
+  ombak(y, c, op) { return `<path d="M0 ${y} q25 -10 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" opacity="${op}"/>`; },
+  bunga(x, y, k, c, tengah = '#FFE08A') { let o = ''; for (let i = 0; i < 5; i++) o += `<ellipse cx="0" cy="-9" rx="5.5" ry="9" fill="${c}" transform="rotate(${i * 72})"/>`; return `<g transform="translate(${x} ${y}) scale(${k})" opacity=".9">${o}<circle r="4" fill="${tengah}"/></g>`; },
+  burung(x, y, k, c = '#FFFFFF') { return `<path transform="translate(${x} ${y}) scale(${k})" d="M-10 0 Q-5 -6 0 0 Q5 -6 10 0" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" opacity=".85"/>`; },
+  daun(x, y, k, rot, c) { return `<path transform="translate(${x} ${y}) rotate(${rot}) scale(${k})" d="M0 -12 C8 -6 8 6 0 12 C-8 6 -8 -6 0 -12Z M0 -12 V12" fill="${c}" stroke="#0F4A2C" stroke-width=".8" opacity=".8"/>`; },
+  layangan(x, y, k, c1, c2, rot = 0) { return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${k})" opacity=".95"><path d="M0 -22 L15 0 L0 26 L-15 0Z" fill="${c1}"/><path d="M0 -22 L15 0 L0 26Z" fill="${c2}"/><path d="M0 26 q-8 12 0 22 t0 22 t-6 18" fill="none" stroke="#FFFFFF" stroke-width="1.2" opacity=".8"/><path d="M-3 46 l6 4 M-3 64 l6 4" stroke="${c1}" stroke-width="3"/></g>`; },
+  bendera(seed) { let o = '<path d="M20 14 Q300 70 580 14" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity=".7"/>'; for (let i = 0; i < 20; i++) { const t = (i + .5) / 20, x = 20 + t * 560, y = 14 + 4 * 28 * t * (1 - t); o += `<path d="M${(x - 9).toFixed(1)} ${y.toFixed(1)} L${(x + 9).toFixed(1)} ${y.toFixed(1)} L${x.toFixed(1)} ${(y + 20).toFixed(1)}Z" fill="${i % 2 ? '#FFFFFF' : '#E70011'}" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>`; } return o; },
+  umbul(x, y, h) { return `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" stroke="#F3E6D0" stroke-width="2.5"/><path d="M${x} ${y + 4} q22 18 6 40 q-12 20 4 44 L${x} ${y + 88}Z" fill="#E70011"/><path d="M${x} ${y + 4} q12 18 3 40 q-7 20 2 44 L${x} ${y + 88}Z" fill="#FFFFFF" opacity=".95"/>`; },
+  kawung(seed) { let o = ''; for (let y = 22; y < 236; y += 44) for (let x = 30; x < 600; x += 44) { o += `<g transform="translate(${x} ${y})" fill="none" stroke="#E7C08A" stroke-width="1.6" opacity=".35"><ellipse cx="0" cy="-10" rx="7" ry="10"/><ellipse cx="0" cy="10" rx="7" ry="10"/><ellipse cx="-10" cy="0" rx="10" ry="7"/><ellipse cx="10" cy="0" rx="10" ry="7"/><circle r="2" fill="#E7C08A"/></g>`; } return o; },
+  lampu(seed) { const r = acakSeed(seed), c = ['#FFD45A', '#FF7A7A', '#7CE0FF', '#9CFF8A', '#FFB0F0']; let o = '<path d="M20 14 Q160 64 300 24 T580 30" fill="none" stroke="#0B132B" stroke-width="1.5" opacity=".6"/>'; for (let i = 0; i < 16; i++) { const t = (i + .5) / 16, x = 20 + t * 560, y = t < .5 ? 14 + 4 * 25 * (t * 2) * (1 - t * 2) + 10 * t * 2 : 24 + 8 * Math.sin((t - .5) * 2 * Math.PI) + 6 * (t - .5) * 2; const k = c[i % c.length]; o += `<circle cx="${x.toFixed(1)}" cy="${(y + 8).toFixed(1)}" r="5" fill="${k}"/><circle cx="${x.toFixed(1)}" cy="${(y + 8).toFixed(1)}" r="11" fill="${k}" opacity=".18"/>`; } return o; },
+ lentera(x, y, tali, k, c) { return `<line x1="${x}" y1="${tali}" x2="${x}" y2="${y}" stroke="#F3D98B" stroke-width="1.2" opacity=".8"/><g transform="translate(${x} ${y}) scale(${k})"><path d="M-6 0 H6 L9 6 H-9Z" fill="#C9A23A"/><path d="M-10 6 H10 L13 30 L0 40 L-13 30Z" fill="${c}"/><path d="M-10 6 H10 L13 30 L0 40 L-13 30Z" fill="none" stroke="#C9A23A" stroke-width="1.5"/><ellipse cx="0" cy="22" rx="5" ry="8" fill="#FFF3B0" opacity=".9"/><circle cy="22" r="18" fill="#FFD45A" opacity=".15"/></g>`; },
+  ketupat(x, y, tali, k) { return `<line x1="${x}" y1="${tali}" x2="${x}" y2="${y - 16 * k}" stroke="#E8D9A8" stroke-width="1.2" opacity=".85"/><g transform="translate(${x} ${y}) scale(${k})"><path d="M0 -16 L16 0 L0 16 L-16 0Z" fill="#8BC34A"/><path d="M0 -16 L16 0 L0 16 L-16 0Z M-8 -8 L8 8 M8 -8 L-8 8 M-4 -12 L12 4 M4 -12 L-12 4 M-12 -4 L4 12 M12 -4 L-4 12" fill="none" stroke="#3E6B1F" stroke-width="1.3"/><path d="M0 16 q-4 8 -2 14 M0 16 q4 8 2 14" stroke="#D9C27A" stroke-width="1.5" fill="none"/></g>`; },
+  pohonNatal(x, y, k) { return `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 -40 L18 -12 H9 L24 10 H12 L28 32 H-28 L-12 10 H-24 L-9 -12 H-18Z" fill="#2E8B57"/><rect x="-4" y="32" width="8" height="10" fill="#6B4226"/><path d="M0 -50 l3 7 h7 l-6 4 l2 7 l-6 -4 l-6 4 l2 -7 l-6 -4 h7Z" fill="#FFD45A"/><circle cx="-8" cy="0" r="2.5" fill="#E74C3C"/><circle cx="9" cy="16" r="2.5" fill="#F1C40F"/><circle cx="-12" cy="22" r="2.5" fill="#3498DB"/><circle cx="5" cy="-14" r="2.5" fill="#E74C3C"/></g>`; },
+  benderaTiang(x, y, k) { return `<g transform="translate(${x} ${y}) scale(${k})"><line x1="0" y1="0" x2="0" y2="70" stroke="#E8DCC8" stroke-width="2.5"/><circle cy="-2" r="3" fill="#F5C842"/><rect x="1" y="2" width="34" height="11" fill="#E70011"/><rect x="1" y="13" width="34" height="11" fill="#FFFFFF"/></g>`; },
+  masjid(x, y, k) { return `<g transform="translate(${x} ${y}) scale(${k})" fill="#163018" opacity=".55"><rect x="-40" y="-20" width="80" height="30"/><path d="M-26 -20 A26 26 0 0 1 26 -20Z"/><rect x="-2" y="-58" width="4" height="12"/><rect x="50" y="-60" width="10" height="70"/><path d="M48 -60 L55 -74 L62 -60Z"/><rect x="-60" y="-60" width="10" height="70"/><path d="M-62 -60 L-55 -74 L-48 -60Z"/></g>`; },
+  pita(x, y) { return `<g transform="translate(${x} ${y})"><path d="M-14 0 C-14 -10 0 -10 0 0 C0 -10 14 -10 14 0 C14 8 0 18 0 26 C0 18 -14 8 -14 0Z" fill="#E70011"/><path d="M0 26 L-8 44 M0 26 L8 44" stroke="#FFFFFF" stroke-width="4"/></g>`; },
+};
+// langit: [atas, tengah, bawah], glow; benda: matahari | bulan | sabit | -
+const TEMA_LOGIN = {
+  1: {nama: 'Tahun Baru', langit: ['#0E1B3D', '#1B2E66', '#2A3F7E'], glow: 'rgb(255 200 120 / .12)', benda: 'bulan', sapa: 'Selamat Tahun Baru! Semoga lingkungan kita makin rukun.',
+    hias: () => TH.bintang(70, 11, 20, 580, 5, 220) + TH.kembangApi(150, 70, 46, '#FFD45A') + TH.kembangApi(300, 50, 34, '#FF8FB1') + TH.kembangApi(250, 150, 28, '#7CE0FF') + TH.kembangApi(560, 60, 26, '#9CFF8A')},
+  2: {nama: 'Musim hujan', langit: ['#2F4F5F', '#3E6F7A', '#4F8A86'], glow: 'rgb(220 240 255 / .10)', benda: '-', sapa: 'Musim hujan — yuk cek saluran air di depan rumah.',
+    hias: () => TH.pelangi(230, 250, 160) + TH.awan(120, 60, 1.1, '#E6F0F2') + TH.awan(360, 40, .9, '#D5E3E6') + TH.awan(520, 70, .8, '#E6F0F2') + TH.hujan(7, 40, 580)},
+  3: {nama: 'Hari Air Sedunia', langit: ['#0F4C6B', '#1D7A8C', '#2B9C97'], glow: 'rgb(190 240 255 / .14)', benda: 'matahari', mWarna: '#FFE9A6', sapa: 'Hari Air Sedunia (22 Maret) — hemat air, jaga sumbernya.',
+    hias: () => TH.tetes(120, 70, 1.4) + TH.tetes(220, 130, 1) + TH.tetes(330, 60, 1.2) + TH.tetes(80, 170, .8) + TH.tetes(560, 60, .9) + TH.ombak(226, '#BFE8F2', .45) + TH.ombak(212, '#E0F6FA', .28)},
+  4: {nama: 'Hari Kartini', langit: ['#5E2A47', '#8A4462', '#B0627C'], glow: 'rgb(255 210 220 / .16)', benda: 'matahari', mWarna: '#FFD9A0', sapa: 'Selamat Hari Kartini (21 April) — perempuan hebat, keluarga kuat.',
+    hias: () => TH.bunga(110, 70, 1.4, '#FFFFFF') + TH.bunga(230, 140, 1, '#FFE3EC') + TH.bunga(330, 60, 1.1, '#FFD1DC') + TH.bunga(80, 190, .8, '#FFFFFF') + TH.bunga(570, 50, .9, '#FFFFFF') + TH.bunga(300, 200, .7, '#FFFFFF')},
+  5: {nama: 'Hari Kebangkitan Nasional', langit: ['#1F5F7A', '#2E86A8', '#58A7C2'], glow: 'rgb(255 230 150 / .2)', benda: 'matahari', mWarna: '#FFD45A', sapa: 'Hari Kebangkitan Nasional (20 Mei) — bangkit dan maju bersama.',
+    hias: () => TH.burung(150, 80, 1.3) + TH.burung(190, 62, 1) + TH.burung(220, 96, 1.1) + TH.burung(320, 50, .8) + TH.burung(560, 50, .8) + TH.awan(90, 160, .8, '#FFFFFF', .6) + TH.awan(300, 190, .6, '#FFFFFF', .5)},
+  6: {nama: 'Hari Lingkungan Hidup', langit: ['#145233', '#1F7A4D', '#2B8C57'], glow: 'rgb(245 200 66 / .18)', benda: 'matahari', mWarna: '#F5C842', sapa: 'Hari Lingkungan Hidup (5 Juni) — jaga kebersihan kluster kita.',
+    hias: () => TH.daun(110, 70, 1.4, 30, '#8FD19E') + TH.daun(220, 150, 1, -20, '#B6E3A8') + TH.daun(330, 70, 1.2, 60, '#8FD19E') + TH.daun(70, 200, .9, -50, '#CDEBB0') + TH.daun(570, 50, .9, 10, '#B6E3A8') + TH.daun(300, 205, .8, 80, '#8FD19E')},
+  7: {nama: 'Hari Anak Nasional', langit: ['#1E6FB0', '#3E92D1', '#7DBBE8'], glow: 'rgb(255 255 255 / .18)', benda: 'matahari', mWarna: '#FFD45A', sapa: 'Hari Anak Nasional (23 Juli) — lingkungan aman untuk anak bermain.',
+    hias: () => TH.awan(100, 190, .8, '#FFFFFF', .7) + TH.awan(330, 40, .7, '#FFFFFF', .6) + TH.layangan(150, 70, 1.2, '#E74C3C', '#F1C40F', -12) + TH.layangan(300, 120, 1, '#2ECC71', '#FFFFFF', 10) + TH.layangan(220, 40, .7, '#9B59B6', '#F39C12', -6)},
+  8: {nama: 'HUT Republik Indonesia', langit: ['#7E1616', '#A82323', '#C23A3A'], glow: 'rgb(255 255 255 / .14)', benda: '-', sapa: () => `Dirgahayu Republik Indonesia ke-${new Date().getFullYear() - 1945} — 17 Agustus.`,
+    hias: () => TH.bendera(3) + TH.umbul(90, 46, 160) + TH.umbul(340, 56, 150) + TH.umbul(570, 46, 160) + TH.bintang(16, 5, 40, 560, 70, 220)},
+  9: {nama: 'Senja kemarau', langit: ['#6B3219', '#B5582A', '#E08B43'], glow: 'rgb(255 190 110 / .25)', benda: 'matahari', mWarna: '#FFB347', sapa: 'Musim kemarau — hemat air dan waspada kebakaran.',
+    hias: () => TH.burung(150, 90, 1.2, '#3B1A0C') + TH.burung(185, 74, .9, '#3B1A0C') + TH.burung(215, 100, 1, '#3B1A0C') + TH.burung(330, 60, .8, '#3B1A0C')},
+  10: {nama: 'Hari Batik & Sumpah Pemuda', langit: ['#3B2414', '#5E3A22', '#80532F'], glow: 'rgb(231 192 138 / .18)', benda: 'matahari', mWarna: '#E9B872', sapa: 'Hari Batik (2 Okt) & Sumpah Pemuda (28 Okt) — bersatu dalam keberagaman.',
+    hias: () => TH.kawung(1)},
+  11: {nama: 'Hari Pahlawan', langit: ['#4A1212', '#6E1D1D', '#4A3426'], glow: 'rgb(255 120 100 / .14)', benda: 'bulan', sapa: 'Hari Pahlawan (10 November) — mengenang jasa para pahlawan.',
+    hias: () => TH.bintang(45, 21, 20, 580, 5, 200, '#FFE7C2') + TH.benderaTiang(120, 110, 1.3) + TH.benderaTiang(320, 130, 1)},
+  12: {nama: 'Akhir tahun & Hari Ibu', langit: ['#1B2448', '#2B3A6B', '#3D4F86'], glow: 'rgb(255 210 140 / .14)', benda: 'bulan', sapa: 'Hari Ibu (22 Desember) — terima kasih para ibu. Sampai jumpa di tahun baru!',
+    hias: () => TH.lampu(9) + TH.bintang(50, 31, 20, 580, 60, 225)},
+  ramadan: {nama: 'Ramadan', langit: ['#0B2A2A', '#114040', '#1A5A50'], glow: 'rgb(243 217 139 / .14)', benda: 'sabit', sapa: 'Marhaban ya Ramadan — selamat menunaikan ibadah puasa.',
+    hias: () => TH.bintang(55, 41, 20, 580, 5, 225) + TH.lentera(110, 70, 8, 1.1, '#C0392B') + TH.lentera(200, 110, 8, .9, '#16A085') + TH.lentera(320, 60, 8, 1, '#8E44AD') + TH.lentera(570, 40, 8, .8, '#D68910')},
+  fitri: {nama: 'Idul Fitri', langit: ['#0F4A2C', '#1F7A4D', '#3A9A5E'], glow: 'rgb(245 220 120 / .2)', benda: 'sabit', sapa: 'Selamat Hari Raya Idul Fitri — mohon maaf lahir dan batin.',
+    hias: () => TH.bintang(35, 51, 20, 580, 5, 220, '#FFF3B0') + TH.ketupat(110, 80, 8, 1.2) + TH.ketupat(200, 120, 8, .9) + TH.ketupat(320, 70, 8, 1.1) + TH.ketupat(570, 50, 8, .8)},
+  adha: {nama: 'Idul Adha', langit: ['#243A17', '#3F5F24', '#5E8233'], glow: 'rgb(245 220 120 / .18)', benda: 'sabit', sapa: 'Selamat Hari Raya Idul Adha.',
+    hias: () => TH.bintang(45, 61, 20, 580, 5, 160, '#FFF3B0') + TH.masjid(180, 205, 1.1)},
+  natal: {nama: 'Natal', langit: ['#0F3B2A', '#164F38', '#5A1C24'], glow: 'rgb(255 220 150 / .16)', benda: 'bulan', sapa: 'Selamat Natal bagi warga yang merayakan — damai di lingkungan kita.',
+    hias: () => TH.bintang(55, 71, 20, 580, 5, 225) + TH.pohonNatal(150, 170, 1.3) + TH.pohonNatal(330, 182, .95)},
+};
+function temaLoginKini(d = new Date()) {
+  try { const q = new URLSearchParams(location.search).get('tema'); if (q && TEMA_LOGIN[q]) return {kode: q, ...TEMA_LOGIN[q]}; } catch (e) {}
+  const h = hijriah(d), bln = d.getMonth() + 1, tgl = d.getDate();
+  let kode = String(bln);
+  if (h && h.m === 9) kode = 'ramadan';
+  else if (h && h.m === 10 && h.d <= 7) kode = 'fitri';
+  else if (h && h.m === 12 && h.d >= 9 && h.d <= 13) kode = 'adha';
+  else if (bln === 12 && tgl >= 20 && tgl <= 26) kode = 'natal';
+  return {kode, ...TEMA_LOGIN[kode]};
+}
+function bendaLangit(t, mobile) {
+  if (t.benda === 'matahari') { const c = t.mWarna || '#F5C842'; return `<defs><radialGradient id="sunG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFF6CC"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs><circle cx="470" cy="150" r="150" fill="url(#sunG)" opacity=".35"/><circle cx="470" cy="150" r="62" fill="${c}"/>`; }
+  if (t.benda === 'bulan') return `<circle cx="470" cy="130" r="110" fill="#F4F1DE" opacity=".08"/><circle cx="470" cy="130" r="44" fill="#F4F1DE"/><circle cx="455" cy="120" r="8" fill="#DCD6BC" opacity=".6"/><circle cx="484" cy="142" r="5" fill="#DCD6BC" opacity=".6"/>`;
+  if (t.benda === 'sabit') return `<circle cx="470" cy="130" r="110" fill="#F3D98B" opacity=".08"/><path d="M490 84 A50 50 0 1 0 490 176 A40 40 0 1 1 490 84Z" fill="#F3D98B"/>`;
+  return '';
+}
 function authArt() {
   const rumah = [[118, 262, 1], [168, 268, .85], [212, 258, 1.1], [268, 266, .9], [318, 260, 1]].map(([x, y, k]) => {
     const w = 34 * k, h = 24 * k, r = 18 * k;
@@ -1221,13 +1301,15 @@ function authArt() {
       <rect x="${w * .18}" y="${h * .3}" width="${w * .22}" height="${h * .3}" fill="#F5C842"/><rect x="${w * .58}" y="${h * .38}" width="${w * .22}" height="${h * .62}" fill="#1F7A4D" opacity=".75"/></g>`;
   }).join('');
   const pohon = [[92, 284, 14], [372, 282, 16], [420, 292, 11], [250, 294, 10]].map(([x, y, r]) => `<rect x="${x - 1.5}" y="${y - 2}" width="3" height="${r}" fill="#0F3F27"/><circle cx="${x}" cy="${y - r * .55}" r="${r}" fill="#3FA06A"/><circle cx="${x + r * .45}" cy="${y - r * .9}" r="${r * .6}" fill="#58B47F"/>`).join('');
-  return `<aside class="auth-art" aria-hidden="false">
+  const t = temaLoginKini(), sapa = typeof t.sapa === 'function' ? t.sapa() : t.sapa;
+  const mob = t.benda === 'matahari' ? `--m-bg:${t.mWarna || '#F5C842'};--m-sh:0 0 0 10px rgb(245 200 66 / .18),0 0 0 22px rgb(245 200 66 / .08)` : t.benda === 'bulan' ? '--m-bg:#F4F1DE;--m-sh:0 0 0 10px rgb(244 241 222 / .12)' : t.benda === 'sabit' ? '--m-bg:transparent;--m-sh:inset -11px 4px 0 0 #F3D98B' : '--m-bg:transparent;--m-sh:none';
+  return `<aside class="auth-art" data-tema="${esc(t.kode)}" style="--art-bg:radial-gradient(700px 400px at 85% 15%,${t.glow},transparent 60%),linear-gradient(160deg,${t.langit[0]} 0%,${t.langit[1]} 60%,${t.langit[2]} 100%);${mob}" aria-hidden="false">
     <div class="auth-brand"><img src="${LOGO}" alt="Logo Vila Nusa Indah 5"><div><b>Warga Kasuari</b><span>Vila Nusa Indah 5 · Kluster Kasuari</span></div></div>
     <div class="auth-copy"><h1>Lingkungan yang tertata,<br>warga yang terhubung.</h1>
-      <ul><li>Iuran dan kas RT yang transparan</li><li>Keamanan dan pos jaga terpantau</li><li>Layanan warga dalam satu aplikasi</li></ul></div>
+      <ul><li>Iuran dan kas RT yang transparan</li><li>Keamanan dan pos jaga terpantau</li><li>Layanan warga dalam satu aplikasi</li></ul>
+      ${sapa ? `<p class="tema-sapa" title="Tema ${esc(t.nama)}">${esc(sapa)}</p>` : ''}</div>
     <svg class="scene" viewBox="0 0 600 400" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Ilustrasi perumahan">
-      <defs><radialGradient id="sunG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFE38A"/><stop offset=".55" stop-color="#F5C842"/><stop offset="1" stop-color="#F5C842" stop-opacity="0"/></radialGradient></defs>
-      <circle cx="470" cy="150" r="150" fill="url(#sunG)" opacity=".35"/><circle cx="470" cy="150" r="62" fill="#F5C842"/>
+      <g class="benda-langit">${bendaLangit(t)}</g><g class="tema-hias" transform="translate(0 18)">${t.hias ? t.hias() : ''}</g>
       <path d="M0 290 C110 240 220 262 330 276 C440 290 520 238 600 248 V400 H0Z" fill="#2E8F5B"/>
       ${rumah}${pohon}
       <path d="M0 322 C150 288 270 318 380 328 C480 338 540 310 600 318 V400 H0Z" fill="#17603C"/>

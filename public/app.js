@@ -207,9 +207,20 @@ function resetSesi() {
   S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
+/* 1 akun 1 perangkat: sesi baru ditolak selama akun masih login di perangkat lain */
+async function tolakSesi(k, user) {
+  try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
+  resetSesi();
+  S.lEmailDraft = (user && (hpDariEmail(user.email || '') || user.email)) || S.lEmailDraft || '';
+  S.loginPesan = k && k.alasan === 'dipakai'
+    ? `Akun ini sedang login di perangkat lain${k.perangkat ? ' (' + k.perangkat + ')' : ''}${k.terakhir ? ', terakhir aktif ' + laluTeks(k.terakhir) : ''}. Keluar dulu dari perangkat tersebut, lalu coba lagi. Bila perangkat itu hilang, hubungi Pemilik aplikasi untuk mengakhiri sesinya.`
+    : 'Sesi Anda sudah berakhir. Silakan masuk kembali.';
+  S.loaded = true; render(); window.scrollTo(0, 0); muatInfoPublik();
+}
 async function masukSesi(user) {
   S.loaded = false; render();
-  S.authUser = user;
+  try { const {data: k, error: ke} = await SB.rpc('klaim_sesi'); if (!ke && k && k.ok === false) { await tolakSesi(k, user); return; } } catch (e) {}
+  S.authUser = user; S.loginPesan = '';
   const {data: prof, error} = await SB.from('profil').select('*').eq('user_id', user.id).maybeSingle();
   if (error) { S.loaded = true; S.loginError = 'Gagal membaca profil: ' + error.message; render(); return; }
   S.profil = prof || null;
@@ -1258,7 +1269,7 @@ function vLoginKartu() {
       <div class="fld"><label for="lEmail">No. HP</label><input type="text" id="lEmail" inputmode="tel" autocomplete="username" autocapitalize="none" placeholder="08xxxxxxxxxx" value="${esc(S.lEmailDraft || '')}"></div>
       <div class="fld"><label for="lPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="lPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem">
         <button type="button" class="btn sm" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password">Lihat</button></div>
-        <span class="hint" id="lPesan" style="color:var(--bad)"></span></div>
+        <span class="hint" id="lPesan" style="color:var(--bad)">${esc(S.loginPesan || '')}</span></div>
       ${tsSlot()}${lgSisa() > 0 ? `<button type="submit" class="btn pri" data-lg="1" disabled>Coba lagi dalam ${lgFmt(lgSisa())}</button>` : '<button type="submit" class="btn pri">Masuk</button>'}
       <button type="button" class="linkbtn" data-act="lupa-hp">Lupa password?</button></form>
     ${!PWA.standalone && (PWA.prompt || PWA.ios) ? '<button type="button" class="btn ghost" data-act="pwa-pasang" style="width:100%;margin-top:4px">📲 Pasang aplikasi di HP</button>' : ''}</div>`;
@@ -1412,6 +1423,7 @@ setInterval(lgDetak, 1000);
 async function prosesLogin() {
   const isian = String(($('#lEmail') || {}).value || '').trim(), pw = ($('#lPass') || {}).value || '';
   const msg = t => { const m = $('#lPesan'); if (m) m.textContent = t; };
+  S.loginPesan = '';
   if (lgSisa() > 0) { msg(lgPesanKunci()); lgDetak(); return; }
   if (!isian || !pw) { msg('Isi No. HP dan password.'); return; }
   const pakaiEmail = isian.includes('@');
@@ -1727,7 +1739,7 @@ async function sesiDiakhiri() {
   try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
   ON.last = 0; ON.data = null; if (dlg.open) dlg.close();
   resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik();
-  toast('Sesi Anda telah diakhiri oleh Pemilik aplikasi. Silakan masuk kembali.', 'bad');
+  S.loginPesan = 'Sesi Anda telah berakhir (diakhiri Pemilik aplikasi). Silakan masuk kembali.'; render();
 }
 async function onlineKeluar() { try { if (SB && S.authUser) await SB.rpc('keluar_online', {p_perangkat_id: perangkatId()}); } catch (e) {} ON.last = 0; ON.data = null; }
 setInterval(() => onlineDetak(false), 15e3);

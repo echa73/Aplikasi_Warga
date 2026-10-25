@@ -432,3 +432,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   admin_keluarkan(p_user, p_perangkat_id|null): hanya Pemilik; hapus auth.sessions (refresh token ikut terhapus),
 --   tidak bisa mengakhiri sesi yang sedang dipakai sendiri; tercatat di log_aktivitas (aksi keluarkan_sesi).
 --   detak_online() mengembalikan false bila sesi sudah dicabut → aplikasi kembali ke layar login.
+
+-- 1 akun 1 perangkat (semua peran)
+--   privat.sesi_pemblokir(uid, sid): sesi lain akun yang sama, login lebih dulu, aktif ≤ 24 jam.
+--   privat.sesi_valid(): false bila sesi sudah dihapus ATAU ada sesi pemblokir → policy restrictive menolak semua data.
+--   klaim_sesi(): dipanggil aplikasi saat login/dibuka. Diizinkan → sesi lain dibersihkan; ditolak → sesi baru dihapus
+--   dan aplikasi menampilkan "Akun ini sedang login di perangkat lain". Sesi diam > 24 jam tidak memblokir.

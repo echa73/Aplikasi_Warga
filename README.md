@@ -104,3 +104,6 @@ Aplikasi yang terbuka mengirim tanda aktif tiap 1 menit (dan saat pindah menu). 
 ### Jatuh tempo iuran
 Menu Iuran → "Atur jatuh tempo" (pengurus dengan hak kelola Iuran, mis. Bendahara). Sebelum tanggal jatuh tempo, KK yang belum bayar berstatus "Belum tempo" (tidak dihitung tunggakan, tombol Ingatkan belum muncul); lewat tanggal itu masuk tunggakan. Info jatuh tempo tampil di menu Iuran, Rumah saya, riwayat iuran, PDF iuran, dan pesan pengingat WhatsApp. Bila belum diatur, perilaku lama (dihitung sejak tanggal 1).
 Pemilik bisa menekan **Akhiri** (satu perangkat) atau **Keluarkan semua** (semua perangkat akun) untuk memutus sesi login. Akses data langsung ditolak server, aplikasi korban kembali ke layar login ±1 menit, dan tindakan tercatat di Log aktivitas. Akun tetap aktif (bisa masuk lagi dengan password).
+
+### Satu akun satu perangkat
+Selama akun masih login di satu perangkat, login dari perangkat lain ditolak ("Akun ini sedang login di perangkat lain …") sampai perangkat pertama menekan Keluar. Berlaku untuk semua peran. Sesi yang tidak dipakai > 24 jam dianggap berakhir; Pemilik juga bisa mengakhiri sesi di Admin → Pengguna online.

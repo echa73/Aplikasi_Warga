@@ -875,12 +875,12 @@ function vIuran() {
     .map(([k, l]) => `<button type="button" data-act="iurf" data-k="${k}" aria-pressed="${S.iurFilter === k}">${l}</button>`).join('');
   const rowsT = list.map(w => { const p = r.pm.get(w.id), t = tunggakan(w); return `<tr>
       <td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td>
-      <td>${p ? `<span class="chip ok">Lunas</span>` : lewatTempo(S.per) ? `<span class="chip bad">Belum</span>${jtHari() ? `<div class="muted" style="font-size:.76rem;margin-top:2px">lewat tempo</div>` : ''}` : `<span class="chip mute">Belum tempo</span><div class="muted" style="font-size:.76rem;margin-top:2px">s.d. ${esc(tgl(tglTempo(S.per)))}</div>`}</td>
+      <td>${p ? `<span class="chip ok">Lunas</span>` : lewatTempo(S.per) ? `<span class="chip bad">Belum</span>${jtHari() ? `<div class="muted" style="font-size:.76rem;margin-top:2px">lewat tempo</div>` : ''}` : `<span class="chip mute">Belum jatuh tempo</span><div class="muted" style="font-size:.76rem;margin-top:2px">s.d. ${esc(tgl(tglTempo(S.per)))}</div>`}</td>
       <td class="num">${p ? `${esc(rp(p.jumlah))}<div class="muted" style="font-size:.78rem">${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}</div>` : '<span class="muted">–</span>'}</td>
       <td>${t ? `<span class="chip ${t >= 3 ? 'bad' : 'warn'} plain">${t} bln</span>` : '<span class="muted">–</span>'}</td>
       <td class="r"><div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat bayar</button>` : ''}`}</div></td></tr>`; }).join('');
   const rowsM = list.map(w => { const p = r.pm.get(w.id), t = tunggakan(w); return `<div class="row"><span class="house">${esc(w.blok)}</span>
-      <div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${p ? `Lunas ${esc(tgl(p.tanggal))} · ${esc(rp(p.jumlah))}` : `${lewatTempo(S.per) ? 'Belum bayar' + (jtHari() ? ' · lewat tempo' : '') : 'Belum tempo · s.d. ' + esc(tgl(tglTempo(S.per)))}${t ? ` · tunggakan ${t} bln` : ''}`}</div></div>
+      <div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${p ? `Lunas ${esc(tgl(p.tanggal))} · ${esc(rp(p.jumlah))}` : `${lewatTempo(S.per) ? 'Belum bayar' + (jtHari() ? ' · lewat tempo' : '') : 'Belum jatuh tempo · s.d. ' + esc(tgl(tglTempo(S.per)))}${t ? ` · tunggakan ${t} bln` : ''}`}</div></div>
       <div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w, true)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat</button>` : ''}`}</div></div>`; }).join('');
   const jtInfo = jtHari() ? (() => { const d = sisaHariTempo(S.per), belum = r.total - r.lunas;
     const cls = d < 0 ? 'bad' : d <= 3 ? 'warn' : 'info';
@@ -903,7 +903,7 @@ function openJatuhTempo() {
   if (!bisa('iuran')) return;
   const kini = jtHari(), contoh = n => n ? tgl(nowPer() + '-' + pad(n)) : '';
   openDlg({title: 'Jatuh tempo iuran', area: 'iuran', submitLabel: 'Simpan',
-    body: `<p style="margin:0">Tentukan batas tanggal pembayaran iuran setiap bulan. Sebelum tanggal ini, warga yang belum bayar berstatus <b>Belum tempo</b> (belum dihitung tunggakan dan tombol Ingatkan belum muncul). Lewat tanggal ini baru masuk <b>tunggakan</b>.</p>
+    body: `<p style="margin:0">Tentukan batas tanggal pembayaran iuran setiap bulan. Sebelum tanggal ini, warga yang belum bayar berstatus <b>Belum jatuh tempo</b> (belum dihitung tunggakan dan tombol Ingatkan belum muncul). Lewat tanggal ini baru masuk <b>tunggakan</b>.</p>
       <div class="fld"><label for="jt_h">Jatuh tempo setiap tanggal</label><select id="jt_h" name="hari"><option value="0" ${kini ? '' : 'selected'}>— belum diatur (tunggakan dihitung sejak tanggal 1) —</option>${Array.from({length: 28}, (_, i) => i + 1).map(n => `<option value="${n}" ${n === kini ? 'selected' : ''}>Tanggal ${n}</option>`).join('')}</select>
       <span class="hint" id="jt_c">${kini ? `Contoh: iuran ${esc(perLbl(nowPer(), true))} jatuh tempo ${esc(contoh(kini))}.` : 'Maksimal tanggal 28 agar berlaku di semua bulan, termasuk Februari.'}</span></div>`,
     onSubmit: async d => {
@@ -1558,7 +1558,7 @@ function riwayatIuran(w, pm) {
       <div class="tile"><span class="lbl">Total dibayar</span><span class="val">${esc(rp(total))}</span><span class="sub">${belum.length ? belum.length + ' bulan belum dibayar' : 'Tidak ada tunggakan'}</span></div></div>
     ${rows.length ? `<div class="tbl-wrap"><table class="rw-tbl"><thead><tr><th class="r rw-x">No</th><th>Bulan</th><th>Status</th><th><span class="rw-l">Tanggal bayar</span><span class="rw-s">Tgl</span></th><th class="rw-x">Metode</th><th class="r">Jumlah</th><th></th></tr></thead><tbody>
       ${rows.map((r, i) => `<tr><td class="r num rw-x">${i + 1}</td><td style="font-weight:600;white-space:nowrap"><span class="rw-l">${esc(perLbl(r.p, true))}</span><span class="rw-s">${esc(perLbl(r.p))}</span></td>
-        <td>${r.x ? '<span class="chip ok">Lunas</span>' : !lewatTempo(r.p) ? `<span class="chip mute" title="${jtHari() ? 'Jatuh tempo ' + esc(tgl(tglTempo(r.p))) : ''}">Belum tempo</span>` : '<span class="chip bad">Belum</span>'}</td>
+        <td>${r.x ? '<span class="chip ok">Lunas</span>' : !lewatTempo(r.p) ? `<span class="chip mute" title="${jtHari() ? 'Jatuh tempo ' + esc(tgl(tglTempo(r.p))) : ''}">Belum jatuh tempo</span>` : '<span class="chip bad">Belum</span>'}</td>
         <td class="num" style="white-space:nowrap">${r.x ? `<span class="rw-l">${esc(tgl(r.x.tanggal))}</span><span class="rw-s">${esc(String(r.x.tanggal || '').slice(8, 10) + '/' + String(r.x.tanggal || '').slice(5, 7))}</span>` : '—'}</td><td class="rw-x">${r.x ? esc(r.x.metode || '—') : '—'}</td>
         <td class="r num" style="white-space:nowrap">${r.x ? esc(rp(r.x.jumlah)) : `<span class="muted">${esc(rp(nominal()))}</span>`}</td>
         <td class="r">${r.x ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(r.x.id)}" aria-label="Kwitansi ${esc(perLbl(r.p, true))}"><span class="rw-l">Kwitansi</span><span class="rw-s">🧾</span></button>` : ''}</td></tr>`).join('')}
@@ -1572,7 +1572,7 @@ function vPortal() {
   const ang = (w.anggota || []);
   return `<div class="sec-head"><div><h2>Rumah saya</h2><p>${esc(w.blok)} · ${esc(lingk())}</p></div></div>
   <div class="tiles">
-    <div class="tile"><span class="lbl">Iuran ${esc(perLbl(cur))}</span><span class="val" style="color:${lunasIni ? 'var(--ok)' : lewatTempo(cur) ? 'var(--bad)' : 'var(--warn)'}">${lunasIni ? 'Lunas' : lewatTempo(cur) ? 'Belum' : 'Belum tempo'}</span><span class="sub">${esc(rp(nominal()))} per bulan${!lunasIni && jtHari() ? ' · ' + esc(tempoTeks(cur)) : jtHari() ? ' · jatuh tempo tgl ' + jtHari() : ''}</span></div>
+    <div class="tile"><span class="lbl">Iuran ${esc(perLbl(cur))}</span><span class="val" style="color:${lunasIni ? 'var(--ok)' : lewatTempo(cur) ? 'var(--bad)' : 'var(--warn)'}">${lunasIni ? 'Lunas' : lewatTempo(cur) ? 'Belum' : 'Belum jatuh tempo'}</span><span class="sub">${esc(rp(nominal()))} per bulan${!lunasIni && jtHari() ? ' · ' + esc(tempoTeks(cur)) : jtHari() ? ' · jatuh tempo tgl ' + jtHari() : ''}</span></div>
     <div class="tile"><span class="lbl">Tunggakan</span><span class="val">${tl.length} bulan</span><span class="sub">${tl.length ? esc(rp(tl.length * nominal())) + ' belum dibayar' : 'Tidak ada tunggakan'}</span></div>
   </div>
   ${tl.length ? `<div class="notice">Belum terbayar: ${esc(tl.map(p => perLbl(p)).join(', '))}.${S.set.infoBayar ? '' : ' Silakan hubungi bendahara RT untuk membayar.'}</div>` : ''}

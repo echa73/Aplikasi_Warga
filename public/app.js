@@ -35,7 +35,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -64,7 +64,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -114,7 +114,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -1498,6 +1498,7 @@ function vPortal() {
   </div>
   ${tl.length ? `<div class="notice">Belum terbayar: ${esc(tl.map(p => perLbl(p)).join(', '))}.${S.set.infoBayar ? '' : ' Silakan hubungi bendahara RT untuk membayar.'}</div>` : ''}
   ${S.set.infoBayar ? `<div class="panel"><h3>Cara pembayaran</h3><p style="margin:0;white-space:pre-wrap">${esc(S.set.infoBayar)}</p></div>` : ''}
+  ${kartuKoordBlok(w)}
   <div class="panel"><h3>Data rumah <small>${isWarga() ? '<button class="btn sm pri" data-act="rumah-ubah">Ubah data</button>' : ''}</small></h3>
     <dl class="data-rumah">
       <div><dt>Nomor rumah</dt><dd><span class="house">${esc(w.blok)}</span></dd></div>
@@ -1577,7 +1578,7 @@ function roleInfoHtml(rid, jab) {
   return warn + esc(izinRingkas(r));
 }
 function vAdmin() {
-  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['log', 'Log aktivitas']]
+  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['blok', `Koordinator blok ${blokDaftar().filter(b => b.koordinatorNama).length}`], ['log', 'Log aktivitas']]
     .map(([k, l]) => `<button type="button" data-act="admtab" data-k="${k}" aria-pressed="${S.admTab === k}">${l}</button>`).join('');
   const head = `<div class="sec-head"><div><h2>Admin</h2><p>Atur siapa pengurusnya, apa jabatannya, dan menu apa saja yang boleh mereka buka.</p></div>
     ${S.admTab === 'pengurus' ? '<button class="btn pri" data-act="pgr-new">+ Tambah pengurus</button>' : S.admTab === 'role' ? '<button class="btn pri" data-act="role-new">+ Tambah role</button>' : S.admTab === 'akun' ? '<button class="btn pri" data-act="akun-new">+ Buat akun warga</button>' : ''}</div>
@@ -1586,6 +1587,7 @@ function vAdmin() {
   if (S.admTab === 'role') return head + vAdminRole();
   if (S.admTab === 'akun') return head + vAdminAkun();
   if (S.admTab === 'log') return head + vAdminLog();
+  if (S.admTab === 'blok') return head + vAdminBlok();
   if (S.admTab === 'permintaan') return head + vAdminMinta();
   const list = [...S.pengurus].sort((a, b) => (a.aktif === false) - (b.aktif === false) || JABATAN.indexOf(a.jabatan) - JABATAN.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
   const pemilik = S.owner && S.me ? `<div class="row">${avatarHtml(S.me.id, S.me.name)}<div class="grow"><div class="t">${esc(S.me.name || 'Anda')} <span class="muted">(Anda)</span></div><div class="s">Pemilik aplikasi · semua menu dan Admin</div><div class="s">${hpDariEmail(S.authUser && S.authUser.email) ? `Login No. HP: <span class="mono">${esc(hpDariEmail(S.authUser.email))}</span>` : '<span style="color:var(--warn)">Masih login dengan email. Atur No. HP login Anda.</span>'}</div></div><span class="chip ok plain">Pemilik</span><button class="btn sm" data-act="pemilik-rumah">${S.profil && S.profil.warga_id && wById(S.profil.warga_id) ? 'Rumah ' + esc(wById(S.profil.warga_id).blok) : 'Tautkan rumah'}</button><button class="btn sm" data-act="pemilik-hp">${hpDariEmail(S.authUser && S.authUser.email) ? 'Ubah No. HP' : 'Atur No. HP login'}</button></div>` : '';
@@ -2442,6 +2444,63 @@ function vBersihRingkas() {
     <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" data-act="br-lapor">Lapor masalah kebersihan</button></div></div>`;
 }
 
+/* ---------- Koordinator blok ---------- */
+const kodeBlok = blok => { const t = String(blok || '').toUpperCase().replace(/\s+/g, ''); const k = t.split(/[\/\-.]/)[0]; return k && k !== t ? k : (t.match(/^[A-Z]+\d*/) || [t])[0] || ''; };
+function blokDaftar() {
+  const map = new Map();
+  S.warga.filter(w => w.status !== 'Pindah').forEach(w => { const k = kodeBlok(w.blok); if (!k) return; if (!map.has(k)) map.set(k, {id: 'blok-' + k, kode: k, rumah: []}); map.get(k).rumah.push(w); });
+  S.blok.forEach(b => { const k = b.kode || String(b.id).replace(/^blok-/, ''); if (!map.has(k)) map.set(k, {id: b.id, kode: k, rumah: []}); Object.assign(map.get(k), b, {kode: k, rumah: map.get(k).rumah}); });
+  return [...map.values()].sort((a, b) => a.kode.localeCompare(b.kode, 'id', {numeric: true}));
+}
+const blokSaya = w => { if (!w) return null; const k = kodeBlok(w.blok); return blokDaftar().find(b => b.kode === k) || null; };
+function vAdminBlok() {
+  const L = blokDaftar(), per = nowPer(), pm = paidMap(per);
+  if (!L.length) return '<div class="empty">Belum ada data warga, jadi belum ada blok. Tambahkan data warga terlebih dahulu.</div>';
+  const isi = L.map(b => { const wjb = b.rumah.filter(w => wajib(w, per)), lunas = wjb.filter(w => pm.has(w.id)).length;
+    const kw = b.koordinatorWargaId && wById(b.koordinatorWargaId), ww = b.wakilWargaId && wById(b.wakilWargaId);
+    return {b, wjb, lunas, kw, ww}; });
+  return `<p class="muted" style="margin:0 0 10px;font-size:.88rem">Blok dikenali otomatis dari nomor rumah di Data warga (mis. <b>SB1</b>/01 → blok <b>SB1</b>). Tunjuk koordinator tiap blok untuk membantu pengurus: menyebarkan informasi, mengingatkan iuran, dan menjadi kontak warga di bloknya. Koordinator tampil di Rumah saya milik warga dan di Struktur Kepengurusan.</p>
+  <div class="tbl-wrap hide-m" style="display:block"><table><thead><tr><th>Blok</th><th class="r">Rumah</th><th>Iuran ${esc(perLbl(per))}</th><th>Koordinator</th><th>Wakil</th><th></th></tr></thead><tbody>
+    ${isi.map(({b, wjb, lunas, kw, ww}) => `<tr><td><b>${esc(b.nama || 'Blok ' + b.kode)}</b><div class="muted" style="font-size:.78rem">${esc(b.kode)}</div></td><td class="r num">${b.rumah.length}</td>
+      <td>${wjb.length ? `${lunas}/${wjb.length} lunas <div class="meter" style="margin-top:4px;max-width:120px"><i style="width:${Math.round(lunas / wjb.length * 100)}%"></i></div>` : '<span class="muted">–</span>'}</td>
+      <td>${b.koordinatorNama ? `<b>${esc(b.koordinatorNama)}</b><div class="muted" style="font-size:.78rem">${esc(kw ? kw.blok : '')}${b.koordinatorHp ? ' · ' + esc(b.koordinatorHp) : ''}</div>` : '<span class="chip warn plain">Belum ditunjuk</span>'}</td>
+      <td>${b.wakilNama ? esc(b.wakilNama) + (ww ? ` <span class="muted" style="font-size:.78rem">${esc(ww.blok)}</span>` : '') : '<span class="muted">–</span>'}</td>
+      <td class="r"><div class="racts">${b.koordinatorHp ? `<a class="btn sm wa" href="${esc(waLink(b.koordinatorHp, `Halo ${b.koordinatorNama}, dari pengurus ${lingk()}.`))}" target="_blank" rel="noopener">WA</a>` : ''}<button class="btn sm" data-act="blok-atur" data-k="${esc(b.kode)}">Atur</button></div></td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="toolbar"><a class="btn wa" href="${esc(waShare(teksKoordBlok(L)))}" target="_blank" rel="noopener">Bagikan daftar koordinator ke WhatsApp</a></div>`;
+}
+const teksKoordBlok = L => `*Koordinator Blok ${lingk()}*\n\n${L.filter(b => b.koordinatorNama).map(b => `• ${b.nama || 'Blok ' + b.kode}: ${b.koordinatorNama}${b.koordinatorHp && b.tampilkanHp !== false ? ' (' + b.koordinatorHp + ')' : ''}${b.wakilNama ? ' · wakil ' + b.wakilNama : ''}`).join('\n') || 'Belum ada koordinator.'}\n\n${pengirim()}`;
+function openBlok(kode) {
+  if (!bisaKelola()) return;
+  const b = blokDaftar().find(x => x.kode === kode); if (!b) return;
+  const urut = [...b.rumah.sort(sortHouse), ...S.warga.filter(w => w.status !== 'Pindah' && kodeBlok(w.blok) !== kode).sort(sortHouse)];
+  const opsi = sel => '<option value="">— belum ditunjuk —</option>' + urut.map(w => `<option value="${esc(w.id)}" ${w.id === sel ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}${kodeBlok(w.blok) !== kode ? ' (blok lain)' : ''}</option>`).join('');
+  openDlg({title: 'Koordinator ' + (b.nama || 'Blok ' + kode), area: 'admin', submitLabel: 'Simpan',
+    body: `<div class="grid2"><div class="fld"><label>Kode blok</label><input type="text" value="${esc(kode)}" disabled><span class="hint">${b.rumah.length} rumah terdaftar</span></div>
+      <div class="fld"><label for="bk_nm">Nama blok</label><input type="text" id="bk_nm" name="nama" maxlength="40" value="${esc(b.nama || '')}" placeholder="mis. Blok ${esc(kode)} / Jalan Kasuari 1"></div></div>
+      <div class="fld"><label for="bk_k">Koordinator blok</label><select id="bk_k" name="koordinatorWargaId">${opsi(b.koordinatorWargaId)}</select><span class="hint">Pilih dari warga; nomor HP diambil dari Data warga.</span></div>
+      <div class="fld"><label for="bk_w">Wakil koordinator (opsional)</label><select id="bk_w" name="wakilWargaId">${opsi(b.wakilWargaId)}</select></div>
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="tampilkanHp" ${b.tampilkanHp === false ? '' : 'checked'}> Tampilkan nomor WhatsApp koordinator ke warga</label>
+      <div class="fld"><label for="bk_c">Catatan / tugas</label><textarea id="bk_c" name="catatan" rows="2" maxlength="300" placeholder="mis. membantu menagih iuran dan menyebarkan undangan rapat">${esc(b.catatan || '')}</textarea></div>`,
+    onSubmit: async d => {
+      if (d.koordinatorWargaId && d.koordinatorWargaId === d.wakilWargaId) { pesanDlg('Koordinator dan wakil harus orang yang berbeda.', 'bk_w'); return false; }
+      const k = wById(d.koordinatorWargaId), wk = wById(d.wakilWargaId);
+      const row = {kode, nama: String(d.nama || '').trim(), koordinatorWargaId: k ? k.id : '', koordinatorNama: k ? k.nama : '', koordinatorBlok: k ? k.blok : '', koordinatorHp: k ? (k.noHp || '') : '',
+        wakilWargaId: wk ? wk.id : '', wakilNama: wk ? wk.nama : '', wakilHp: wk ? (wk.noHp || '') : '', tampilkanHp: !!d.tampilkanHp, catatan: String(d.catatan || '').trim(), diperbarui: todayISO()};
+      const ok = await put('blok', 'blok-' + kode, row);
+      if (ok) { S.struktur = null; toast(k ? `${k.nama} ditetapkan sebagai koordinator ${row.nama || 'Blok ' + kode}.` : 'Koordinator blok dikosongkan.'); }
+      return ok;
+    }});
+}
+function kartuKoordBlok(w) {
+  const b = blokSaya(w); if (!b || !b.koordinatorNama) return '';
+  const hp = b.tampilkanHp !== false && b.koordinatorHp && waNomor(b.koordinatorHp).length >= 10;
+  const diri = b.koordinatorWargaId === w.id;
+  return `<div class="panel" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="av av-i" aria-hidden="true">${esc(orgInisial(b.koordinatorNama))}</span>
+    <div class="grow" style="flex:1;min-width:180px"><div class="muted" style="font-size:.8rem">Koordinator ${esc(b.nama || 'Blok ' + b.kode)}</div><b>${esc(b.koordinatorNama)}${diri ? ' (Anda)' : ''}</b>${b.koordinatorBlok ? ` <span class="muted" style="font-size:.84rem">· ${esc(b.koordinatorBlok)}</span>` : ''}${b.wakilNama ? `<div class="muted" style="font-size:.8rem">Wakil: ${esc(b.wakilNama)}</div>` : ''}</div>
+    ${hp && !diri ? `<a class="btn sm wa" href="${esc(waLink(b.koordinatorHp, `Halo ${b.koordinatorNama}, saya ${w.nama} (${w.blok}).`))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>`;
+}
+
 /* ---------- Struktur Kepengurusan pengurus ---------- */
 const orgLevel = j => { const t = String(j || '').toLowerCase(); return /^ketua rt$|^ketua$/.test(t) ? 1 : /wakil/.test(t) ? 2 : /sekretaris|bendahara/.test(t) ? 3 : /^satpam$/.test(t) ? 5 : 4; };
 const orgInisial = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
@@ -2474,7 +2533,8 @@ function strukturLevel(D) {
   const L = [
     D.ketuaRw ? {lbl: 'Pelindung', l: 0, isi: [{nama: D.ketuaRw, jabatan: 'Ketua RW' + (D.rw ? ' ' + D.rw : '')}]} : null,
     {lbl: 'Ketua', l: 1, isi: by(1)}, {lbl: 'Wakil ketua', l: 2, isi: by(2)}, {lbl: 'Sekretaris & bendahara', l: 3, isi: by(3)},
-    {lbl: 'Koordinator & seksi', l: 4, isi: by(4)}, ...grupL
+    {lbl: 'Koordinator & seksi', l: 4, isi: by(4)}, ...grupL,
+    {lbl: 'Koordinator blok', l: 6, isi: (D.koordinatorBlok || []).map(b => ({nama: b.koordinator, jabatan: 'Koordinator ' + (b.nama || 'Blok ' + b.kode) + (b.wakil ? ' · wakil: ' + b.wakil : ''), hp: b.hp}))}
   ].filter(x => x && x.isi.length);
   // petugas menempel pada pengurus pertama yang jabatannya cocok
   const sudah = new Set();
@@ -5827,6 +5887,7 @@ document.addEventListener('click', async e => {
   else if (a === 'lupa-hp-tutup') { S.lupaInfoHp = false; render(); }
   else if (a === 'lupa-pass') { S.lupaInfoHp = false; S.lEmailDraft = String(($('#lEmail') || {}).value || '').trim(); S.lupa = true; S.lupaTerkirim = ''; render(); const f = $('#lupaEmail'); if (f) f.focus(); }
   else if (a === 'ganti-pass') openKeamananAkun();
+  else if (a === 'blok-atur') openBlok(b.dataset.k);
   else if (a === 'mode-ke') gantiMode(b.dataset.k === 'warga');
   else if (a === 'mode-kenal') { try { localStorage.setItem(modeKey() + ':kenal', '1'); } catch (err) {} render(); }
   else if (a === 'pemilik-rumah') openPemilikRumah();

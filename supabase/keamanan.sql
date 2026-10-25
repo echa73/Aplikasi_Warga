@@ -408,3 +408,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- (larangan jualan saat tampilan Pengurus diterapkan di aplikasi). push 'ditangani' ke semua akun yang tertaut ke rumah tsb.
 -- Diuji (rollback): bendahara-tertaut-rumah: keluhan dipaksa Baru, rumah lain DITOLAK, SOS BOLEH, lapak tanpa izin DITOLAK,
 -- dengan izin BOLEH, blok rumah tidak bisa diubah; satpam tanpa rumah DITOLAK.
+
+-- ===== Koordinator blok (2026-10-25) =====
+-- Koleksi 'blok' (id 'blok-<kode>'): nama blok, koordinator & wakil (wargaId + nama/blok/HP disalin saat disimpan), tampilkanHp, catatan.
+-- Tulis: hanya Pemilik (tidak ada kasus 'blok' di boleh_tulis). Baca: semua pengurus (boleh_baca) & warga (policy).
+-- struktur_organisasi() menambah 'koordinatorBlok' (HP hanya bila kontak & tampilkanHp).

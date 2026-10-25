@@ -93,3 +93,4 @@ Rumah saya → **Riwayat iuran** kini berupa tabel per tahun (pilihan tahun + Se
 
 ### Tampilan Pengurus / Warga
 Pengurus yang tertaut ke rumah (Admin → Pengurus → Rumah / data warga) dan Pemilik yang menautkan rumahnya (Admin → baris Pemilik → Tautkan rumah) mendapat pilihan **Tampilan: Pengurus | Warga** di atas halaman. Default Pengurus; pilihan terakhir diingat per perangkat. Tampilan Warga identik dengan akun warga (Rumah saya, Aman/SOS, Lapor, Info, Lapak — boleh berjualan bila rumahnya diizinkan). Saat tampilan Pengurus, tidak bisa berjualan.
+Admin → **Koordinator blok**: blok dikenali otomatis dari nomor rumah (SB1/01 → SB1), Pemilik menunjuk koordinator & wakil dari data warga, melihat jumlah rumah & kepatuhan iuran per blok, dan membagikan daftar ke WhatsApp. Koordinator tampil di Rumah saya warga di blok tsb dan di Struktur Kepengurusan.

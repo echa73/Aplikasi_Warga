@@ -213,8 +213,8 @@ async function tolakSesi(k, user) {
   resetSesi();
   S.lEmailDraft = (user && (hpDariEmail(user.email || '') || user.email)) || S.lEmailDraft || '';
   S.loginPesan = k && k.alasan === 'dipakai'
-    ? `Akun ini sedang login di perangkat lain${k.perangkat ? ' (' + k.perangkat + ')' : ''}${k.terakhir ? ', terakhir aktif ' + laluTeks(k.terakhir) : ''}. Keluar dulu dari perangkat tersebut, lalu coba lagi. Bila perangkat itu hilang, hubungi Pemilik aplikasi untuk mengakhiri sesinya.`
-    : 'Sesi Anda sudah berakhir. Silakan masuk kembali.';
+    ? `Akun ini sedang dipakai di perangkat lain${k.perangkat ? ' (' + k.perangkat.split(' · ')[0] + ')' : ''}. Keluar dulu dari perangkat itu, lalu coba lagi. HP hilang? Hubungi Pemilik aplikasi.`
+    : 'Sesi berakhir. Silakan masuk lagi.';
   S.loaded = true; render(); window.scrollTo(0, 0); muatInfoPublik();
 }
 async function masukSesi(user) {
@@ -1739,7 +1739,7 @@ async function sesiDiakhiri() {
   try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
   ON.last = 0; ON.data = null; if (dlg.open) dlg.close();
   resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik();
-  S.loginPesan = 'Sesi Anda telah berakhir (diakhiri Pemilik aplikasi). Silakan masuk kembali.'; render();
+  S.loginPesan = 'Sesi Anda diakhiri oleh Pemilik aplikasi. Silakan masuk lagi.'; render();
 }
 async function onlineKeluar() { try { if (SB && S.authUser) await SB.rpc('keluar_online', {p_perangkat_id: perangkatId()}); } catch (e) {} ON.last = 0; ON.data = null; }
 setInterval(() => onlineDetak(false), 15e3);

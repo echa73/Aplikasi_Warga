@@ -422,3 +422,6 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   detak_online(perangkat_id, perangkat, tampilan, menu)  : akun sendiri, maks 5 perangkat, data >30 hari dihapus
 --   keluar_online(perangkat_id)                          : saat Keluar
 --   pengguna_online()                                    : hanya Pemilik (privat.peran_saya()='pemilik', MFA dihormati)
+
+-- Jatuh tempo iuran: RPC atur_jatuh_tempo(p_hari 0..28) → pengaturan.umum.jatuhTempo
+--   hanya privat.izin('iuran') = 2 (pengurus keuangan / Pemilik); 0 = hapus. Warga hanya membaca.

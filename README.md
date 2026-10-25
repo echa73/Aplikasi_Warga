@@ -100,3 +100,6 @@ Salah password 5 kali → login dikunci 1 menit; 10 kali → 5 menit; 15 kali ds
 
 ### Pengguna online (Admin → Pengguna online)
 Aplikasi yang terbuka mengirim tanda aktif tiap 1 menit (dan saat pindah menu). Pemilik melihat siapa yang online (≤2 menit), tidak aktif (2–15 menit), dan riwayat 24 jam: nama, peran/jabatan/blok, perangkat, tampilan, dan menu yang sedang dibuka. Diperbarui otomatis tiap 30 detik.
+
+### Jatuh tempo iuran
+Menu Iuran → "Atur jatuh tempo" (pengurus dengan hak kelola Iuran, mis. Bendahara). Sebelum tanggal jatuh tempo, KK yang belum bayar berstatus "Belum tempo" (tidak dihitung tunggakan, tombol Ingatkan belum muncul); lewat tanggal itu masuk tunggakan. Info jatuh tempo tampil di menu Iuran, Rumah saya, riwayat iuran, PDF iuran, dan pesan pengingat WhatsApp. Bila belum diatur, perilaku lama (dihitung sejak tanggal 1).

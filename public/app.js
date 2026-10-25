@@ -328,11 +328,21 @@ function paidMap(per) { const m = new Map(); for (const p of S.iuran) if (p.peri
 const mulaiTgl = w => { const v = String(w.mulaiIuran || ''); return v.length === 7 ? v + '-01' : v; };
 const mulaiPer = w => mulaiTgl(w).slice(0, 7);
 function wajib(w, per) { return w.status !== 'Pindah' && (mulaiPer(w) || '0000-00') <= per; }
+/* Jatuh tempo iuran: tanggal 1–28 tiap bulan (0 = belum diatur → dihitung sejak awal bulan) */
+const jtHari = () => { const n = Math.floor(Number(S.set.jatuhTempo) || 0); return n >= 1 && n <= 28 ? n : 0; };
+const tglTempo = per => per + '-' + pad(jtHari() || 1);
+const lewatTempo = per => jtHari() ? todayISO() > tglTempo(per) : per <= nowPer();
+const sisaHariTempo = per => Math.round((new Date(tglTempo(per) + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 864e5);
+function tempoTeks(per, pendek) {
+  if (!jtHari()) return '';
+  const d = sisaHariTempo(per), t = pendek ? tglTempo(per).slice(8) + ' ' + BLN[Number(per.slice(5, 7)) - 1] : tgl(tglTempo(per));
+  return d > 0 ? `jatuh tempo ${t} · ${d} hari lagi` : d === 0 ? `jatuh tempo hari ini (${t})` : `lewat jatuh tempo ${-d} hari (${t})`;
+}
 function tunggakanList(w) {
   if (w.status === 'Pindah') return [];
   const end = nowPer(), out = []; let p = mulaiPer(w) || end, g = 0;
   const paid = new Set(S.iuran.filter(x => x.wargaId === w.id).map(x => x.periode));
-  while (p <= end && g++ < 240) { if (!paid.has(p)) out.push(p); p = addM(p, 1); }
+  while (p <= end && g++ < 240) { if (!paid.has(p) && lewatTempo(p)) out.push(p); p = addM(p, 1); }
   return out;
 }
 const tunggakan = w => tunggakanList(w).length;
@@ -851,7 +861,7 @@ function riwayatBayar(w) {
 
 /* --- Iuran --- */
 function vIuran() {
-  const head = `<div class="sec-head"><div><h2>Iuran warga</h2><p>Iuran bulanan ${esc(rp(nominal()))} per KK. Ubah nominal di tab Pengaturan.</p></div>
+  const head = `<div class="sec-head"><div><h2>Iuran warga</h2><p>Iuran bulanan ${esc(rp(nominal()))} per KK · ${jtHari() ? `jatuh tempo tanggal <b>${jtHari()}</b> setiap bulan` : 'jatuh tempo belum diatur'}.${bisa('iuran') ? ' <button type="button" class="linkbtn" data-act="jt-atur">Atur jatuh tempo</button>' : ''}</p></div>
     <div class="monthnav"><button class="btn sm" data-act="per" data-n="-1" aria-label="Bulan sebelumnya">‹</button><strong>${esc(perLbl(S.per))}</strong><button class="btn sm" data-act="per" data-n="1" aria-label="Bulan berikutnya">›</button>
     ${S.per !== nowPer() ? '<button class="btn ghost sm" data-act="per" data-n="0">Bulan ini</button>' : ''}</div></div>`;
   if (!S.warga.length) return head + emptyWarga();
@@ -865,14 +875,20 @@ function vIuran() {
     .map(([k, l]) => `<button type="button" data-act="iurf" data-k="${k}" aria-pressed="${S.iurFilter === k}">${l}</button>`).join('');
   const rowsT = list.map(w => { const p = r.pm.get(w.id), t = tunggakan(w); return `<tr>
       <td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td>
-      <td>${p ? `<span class="chip ok">Lunas</span>` : '<span class="chip bad">Belum</span>'}</td>
+      <td>${p ? `<span class="chip ok">Lunas</span>` : lewatTempo(S.per) ? `<span class="chip bad">Belum</span>${jtHari() ? `<div class="muted" style="font-size:.76rem;margin-top:2px">lewat tempo</div>` : ''}` : `<span class="chip mute">Belum tempo</span><div class="muted" style="font-size:.76rem;margin-top:2px">s.d. ${esc(tgl(tglTempo(S.per)))}</div>`}</td>
       <td class="num">${p ? `${esc(rp(p.jumlah))}<div class="muted" style="font-size:.78rem">${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}</div>` : '<span class="muted">–</span>'}</td>
       <td>${t ? `<span class="chip ${t >= 3 ? 'bad' : 'warn'} plain">${t} bln</span>` : '<span class="muted">–</span>'}</td>
       <td class="r"><div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat bayar</button>` : ''}`}</div></td></tr>`; }).join('');
   const rowsM = list.map(w => { const p = r.pm.get(w.id), t = tunggakan(w); return `<div class="row"><span class="house">${esc(w.blok)}</span>
-      <div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${p ? `Lunas ${esc(tgl(p.tanggal))} · ${esc(rp(p.jumlah))}` : `Belum bayar${t ? ` · total ${t} bln` : ''}`}</div></div>
+      <div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${p ? `Lunas ${esc(tgl(p.tanggal))} · ${esc(rp(p.jumlah))}` : `${lewatTempo(S.per) ? 'Belum bayar' + (jtHari() ? ' · lewat tempo' : '') : 'Belum tempo · s.d. ' + esc(tgl(tglTempo(S.per)))}${t ? ` · tunggakan ${t} bln` : ''}`}</div></div>
       <div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w, true)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat</button>` : ''}`}</div></div>`; }).join('');
-  return head + modeSeg + `
+  const jtInfo = jtHari() ? (() => { const d = sisaHariTempo(S.per), belum = r.total - r.lunas;
+    const cls = d < 0 ? 'bad' : d <= 3 ? 'warn' : 'info';
+    return `<div class="jt-bar ${cls}"><span class="jt-ico" aria-hidden="true">📅</span><div class="grow"><b>Jatuh tempo ${esc(perLbl(S.per, true))}: ${esc(tgl(tglTempo(S.per)))}</b>
+      <div class="muted" style="font-size:.84rem">${d > 0 ? `${d} hari lagi` : d === 0 ? 'Hari ini batas pembayaran' : `Sudah lewat ${-d} hari`}${belum ? ` · ${belum} KK belum bayar${d < 0 ? ' (masuk tunggakan, tombol Ingatkan aktif)' : ' (belum dihitung tunggakan)'}` : ' · semua KK sudah lunas'}</div></div>
+      ${bisa('iuran') ? '<button type="button" class="btn sm" data-act="jt-atur">Ubah</button>' : ''}</div>`; })()
+    : bisa('iuran') ? `<div class="jt-bar info"><span class="jt-ico" aria-hidden="true">📅</span><div class="grow"><b>Jatuh tempo iuran belum diatur</b><div class="muted" style="font-size:.84rem">Saat ini iuran bulan berjalan langsung dihitung tunggakan sejak tanggal 1. Atur tanggal jatuh tempo agar warga punya waktu membayar.</div></div><button type="button" class="btn sm pri" data-act="jt-atur">Atur</button></div>` : '';
+  return head + modeSeg + jtInfo + `
   <div class="tiles">
     <div class="tile"><span class="lbl">Terkumpul</span><span class="val">${esc(rp(r.terkumpul))}</span><span class="sub">dari target ${esc(rp(r.target))}</span><div class="meter"><i style="width:${r.target ? Math.min(100, r.terkumpul / r.target * 100) : 0}%"></i></div></div>
     <div class="tile"><span class="lbl">KK lunas</span><span class="val">${r.lunas} / ${r.total}</span><span class="sub">${pct}% sudah membayar</span></div>
@@ -881,6 +897,24 @@ function vIuran() {
   <div class="toolbar"><div class="seg" role="group" aria-label="Saring status">${seg}</div><span style="flex:1"></span><button class="btn" data-act="iur-pdf" ${list.length ? '' : 'disabled'} title="Cetak daftar iuran ${esc(perLbl(S.per, true))} sesuai saringan">Cetak PDF</button></div>
   ${list.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th>Rumah</th><th>Kepala keluarga</th><th>Status</th><th>Pembayaran</th><th>Total tunggakan</th><th></th></tr></thead><tbody>${rowsT}</tbody></table></div>
   <div class="list-mobile">${rowsM}</div>` : `<div class="empty">${r.total ? 'Tidak ada KK pada saringan ini.' : 'Belum ada KK yang wajib iuran pada bulan ini.'}</div>`}`;
+}
+/* --- Atur jatuh tempo (pengurus keuangan: kelola iuran) --- */
+function openJatuhTempo() {
+  if (!bisa('iuran')) return;
+  const kini = jtHari(), contoh = n => n ? tgl(nowPer() + '-' + pad(n)) : '';
+  openDlg({title: 'Jatuh tempo iuran', area: 'iuran', submitLabel: 'Simpan',
+    body: `<p style="margin:0">Tentukan batas tanggal pembayaran iuran setiap bulan. Sebelum tanggal ini, warga yang belum bayar berstatus <b>Belum tempo</b> (belum dihitung tunggakan dan tombol Ingatkan belum muncul). Lewat tanggal ini baru masuk <b>tunggakan</b>.</p>
+      <div class="fld"><label for="jt_h">Jatuh tempo setiap tanggal</label><select id="jt_h" name="hari"><option value="0" ${kini ? '' : 'selected'}>— belum diatur (tunggakan dihitung sejak tanggal 1) —</option>${Array.from({length: 28}, (_, i) => i + 1).map(n => `<option value="${n}" ${n === kini ? 'selected' : ''}>Tanggal ${n}</option>`).join('')}</select>
+      <span class="hint" id="jt_c">${kini ? `Contoh: iuran ${esc(perLbl(nowPer(), true))} jatuh tempo ${esc(contoh(kini))}.` : 'Maksimal tanggal 28 agar berlaku di semua bulan, termasuk Februari.'}</span></div>`,
+    onSubmit: async d => {
+      const n = Math.max(0, Math.min(28, Number(d.hari) || 0));
+      try { const {error} = await SB.rpc('atur_jatuh_tempo', {p_hari: n}); if (error) throw error; }
+      catch (e) { pesanDlg('Gagal menyimpan: ' + pesanAuth(e)); return false; }
+      S.set = {...S.set}; if (n) S.set.jatuhTempo = n; else delete S.set.jatuhTempo;
+      setTimeout(render, 0);
+      toast(n ? `Jatuh tempo iuran diatur: tanggal ${n} setiap bulan.` : 'Jatuh tempo iuran dikosongkan.'); return true;
+    }});
+  const sel = $('#jt_h'); if (sel) sel.addEventListener('change', () => { const n = Number(sel.value) || 0, h = $('#jt_c'); if (h) h.textContent = n ? `Contoh: iuran ${perLbl(nowPer(), true)} jatuh tempo ${contoh(n)}.` : 'Maksimal tanggal 28 agar berlaku di semua bulan, termasuk Februari.'; });
 }
 /* --- Entry iuran massal (bendahara) --- */
 function mzState() {
@@ -1516,7 +1550,7 @@ function riwayatIuran(w, pm) {
   const bulanTahun = y => { const out = []; for (let m = 1; m <= 12; m++) { const p = y + '-' + pad(m); if ((p >= awal && p <= cur) || pm.some(q => q.periode === p)) out.push(p); } return out; };
   const per = (pilih === 'semua' ? thList.slice().reverse().flatMap(bulanTahun) : bulanTahun(pilih)).reverse();
   const rows = per.map(p => ({p, x: pm.find(q => q.periode === p)}));
-  const lunas = rows.filter(r => r.x), belum = rows.filter(r => !r.x && r.p <= cur), total = lunas.reduce((t, r) => t + (Number(r.x.jumlah) || 0), 0);
+  const lunas = rows.filter(r => r.x), belum = rows.filter(r => !r.x && lewatTempo(r.p)), total = lunas.reduce((t, r) => t + (Number(r.x.jumlah) || 0), 0);
   const opsi = `<option value="semua" ${pilih === 'semua' ? 'selected' : ''}>Semua tahun</option>` + thList.map(y => `<option value="${y}" ${y === pilih ? 'selected' : ''}>${y}</option>`).join('');
   return `<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><h3 style="margin:0">Riwayat iuran</h3>
       <label style="display:flex;align-items:center;gap:8px;font-size:.88rem"><span class="muted">Tahun</span><select id="rwTh" data-rw="th" aria-label="Pilih tahun riwayat iuran" style="min-width:130px">${opsi}</select></label></div>
@@ -1524,7 +1558,7 @@ function riwayatIuran(w, pm) {
       <div class="tile"><span class="lbl">Total dibayar</span><span class="val">${esc(rp(total))}</span><span class="sub">${belum.length ? belum.length + ' bulan belum dibayar' : 'Tidak ada tunggakan'}</span></div></div>
     ${rows.length ? `<div class="tbl-wrap"><table class="rw-tbl"><thead><tr><th class="r rw-x">No</th><th>Bulan</th><th>Status</th><th><span class="rw-l">Tanggal bayar</span><span class="rw-s">Tgl</span></th><th class="rw-x">Metode</th><th class="r">Jumlah</th><th></th></tr></thead><tbody>
       ${rows.map((r, i) => `<tr><td class="r num rw-x">${i + 1}</td><td style="font-weight:600;white-space:nowrap"><span class="rw-l">${esc(perLbl(r.p, true))}</span><span class="rw-s">${esc(perLbl(r.p))}</span></td>
-        <td>${r.x ? '<span class="chip ok">Lunas</span>' : r.p > cur ? '<span class="chip mute">Belum tempo</span>' : '<span class="chip bad">Belum</span>'}</td>
+        <td>${r.x ? '<span class="chip ok">Lunas</span>' : !lewatTempo(r.p) ? `<span class="chip mute" title="${jtHari() ? 'Jatuh tempo ' + esc(tgl(tglTempo(r.p))) : ''}">Belum tempo</span>` : '<span class="chip bad">Belum</span>'}</td>
         <td class="num" style="white-space:nowrap">${r.x ? `<span class="rw-l">${esc(tgl(r.x.tanggal))}</span><span class="rw-s">${esc(String(r.x.tanggal || '').slice(8, 10) + '/' + String(r.x.tanggal || '').slice(5, 7))}</span>` : '—'}</td><td class="rw-x">${r.x ? esc(r.x.metode || '—') : '—'}</td>
         <td class="r num" style="white-space:nowrap">${r.x ? esc(rp(r.x.jumlah)) : `<span class="muted">${esc(rp(nominal()))}</span>`}</td>
         <td class="r">${r.x ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(r.x.id)}" aria-label="Kwitansi ${esc(perLbl(r.p, true))}"><span class="rw-l">Kwitansi</span><span class="rw-s">🧾</span></button>` : ''}</td></tr>`).join('')}
@@ -1538,7 +1572,7 @@ function vPortal() {
   const ang = (w.anggota || []);
   return `<div class="sec-head"><div><h2>Rumah saya</h2><p>${esc(w.blok)} · ${esc(lingk())}</p></div></div>
   <div class="tiles">
-    <div class="tile"><span class="lbl">Iuran ${esc(perLbl(cur))}</span><span class="val" style="color:${lunasIni ? 'var(--ok)' : 'var(--bad)'}">${lunasIni ? 'Lunas' : 'Belum'}</span><span class="sub">${esc(rp(nominal()))} per bulan</span></div>
+    <div class="tile"><span class="lbl">Iuran ${esc(perLbl(cur))}</span><span class="val" style="color:${lunasIni ? 'var(--ok)' : lewatTempo(cur) ? 'var(--bad)' : 'var(--warn)'}">${lunasIni ? 'Lunas' : lewatTempo(cur) ? 'Belum' : 'Belum tempo'}</span><span class="sub">${esc(rp(nominal()))} per bulan${!lunasIni && jtHari() ? ' · ' + esc(tempoTeks(cur)) : jtHari() ? ' · jatuh tempo tgl ' + jtHari() : ''}</span></div>
     <div class="tile"><span class="lbl">Tunggakan</span><span class="val">${tl.length} bulan</span><span class="sub">${tl.length ? esc(rp(tl.length * nominal())) + ' belum dibayar' : 'Tidak ada tunggakan'}</span></div>
   </div>
   ${tl.length ? `<div class="notice">Belum terbayar: ${esc(tl.map(p => perLbl(p)).join(', '))}.${S.set.infoBayar ? '' : ' Silakan hubungi bendahara RT untuk membayar.'}</div>` : ''}
@@ -2008,6 +2042,7 @@ function teksPengingat(w) {
   const list = tunggakanList(w);
   return `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nKami mengingatkan iuran warga ${lingk()} sebesar ${rp(nominal())} per bulan.\n`
     + `Belum terbayar: ${list.length} bulan (${list.map(p => perLbl(p)).join(', ')}), total ${rp(list.length * nominal())}.\n\n`
+    + (jtHari() ? `Jatuh tempo pembayaran setiap tanggal ${jtHari()}. Iuran ${perLbl(list[list.length - 1] || nowPer())} jatuh tempo ${tgl(tglTempo(list[list.length - 1] || nowPer()))}.\n\n` : '')
     + `Pembayaran bisa melalui bendahara. Mohon abaikan pesan ini bila sudah membayar.\nTerima kasih.\n\n${pengirim()}`;
 }
 const MIME = {csv: 'text/csv;charset=utf-8', pdf: 'application/pdf', html: 'text/html;charset=utf-8', txt: 'text/plain;charset=utf-8', json: 'application/json'};
@@ -4708,7 +4743,7 @@ async function pdfIuranBulan(per, saring) {
   P.text(105, 42, 'DAFTAR PEMBAYARAN IURAN WARGA', {size: 14, bold: true, align: 'center'});
   P.text(105, 48, `Bulan ${perLbl(per, true)}${saring === 'belum' ? ' · Belum bayar' : saring === 'lunas' ? ' · Sudah lunas' : ''}`, {size: 10.5, align: 'center', color: [74, 59, 48]});
   const s = {y: 54};
-  P.text(M, s.y, `Iuran per KK: ${rp(nominal())} / bulan`, {size: 9, color: [74, 59, 48]});
+  P.text(M, s.y, `Iuran per KK: ${rp(nominal())} / bulan${jtHari() ? ` · Jatuh tempo: ${tgl(tglTempo(per))}` : ''}`, {size: 9, color: [74, 59, 48]});
   P.text(M + CW, s.y, `Dicetak: ${tglSurat(todayISO())}`, {size: 9, align: 'right', color: [74, 59, 48]}); s.y += 4;
   let tot = 0;
   pdfTabel(P, s, {size: 8.8, cols: [{w: 9, align: "center"}, {w: 20}, {w: 48}, {w: 22}, {w: 25}, {w: 22, align: "right"}, {w: 14, align: "center"}, {w: 18}],
@@ -6033,6 +6068,7 @@ document.addEventListener('click', async e => {
   else if (a === 'ganti-pass') openKeamananAkun();
   else if (a === 'on-muat') muatOnline();
   else if (a === 'on-f') { S.onFilter = b.dataset.k; render(); }
+  else if (a === 'jt-atur') openJatuhTempo();
   else if (a === 'blok-atur') openBlok(b.dataset.id);
   else if (a === 'blok-new') openBlok();
   else if (a === 'blok-tanpa') { S.tab = 'warga'; S.fBlok = '-'; S.q = ''; render(); window.scrollTo(0, 0); }

@@ -2498,7 +2498,9 @@ function kartuKoordBlok(w) {
   if (!b.koordinatorNama) return `<div class="panel" style="font-size:.9rem"><span class="muted">Blok rumah Anda:</span> <b>${esc(b.nama)}</b> · koordinator belum ditunjuk.</div>`;
   const hp = b.tampilkanHp !== false && b.koordinatorHp && waNomor(b.koordinatorHp).length >= 10, diri = b.koordinatorWargaId === w.id;
   return `<div class="panel" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="av av-i" aria-hidden="true">${esc(orgInisial(b.koordinatorNama))}</span>
-    <div style="flex:1;min-width:180px"><div class="muted" style="font-size:.8rem">Koordinator ${esc(b.nama)}</div><b>${esc(b.koordinatorNama)}${diri ? ' (Anda)' : ''}</b>${b.koordinatorBlok ? ` <span class="muted" style="font-size:.84rem">· ${esc(b.koordinatorBlok)}</span>` : ''}${b.wakilNama ? `<div class="muted" style="font-size:.8rem">Wakil: ${esc(b.wakilNama)}</div>` : ''}</div>
+    <div style="flex:1;min-width:180px"><div class="muted" style="font-size:.8rem">Koordinator ${esc(b.nama)}</div><b>${esc(b.koordinatorNama)}${diri ? ' (Anda)' : ''}</b>${b.koordinatorBlok ? ` <span class="muted" style="font-size:.84rem">· ${esc(b.koordinatorBlok)}</span>` : ''}
+    ${b.tampilkanHp !== false && b.koordinatorHp ? `<div style="font-size:.9rem;margin-top:2px">📞 <a href="tel:${esc(String(b.koordinatorHp).replace(/[^\d+]/g, ''))}" class="mono" style="color:var(--accent)">${esc(b.koordinatorHp)}</a></div>` : ''}
+    ${b.wakilNama ? `<div class="muted" style="font-size:.8rem;margin-top:2px">Wakil: ${esc(b.wakilNama)}${b.tampilkanHp !== false && b.wakilHp ? ` · <a href="tel:${esc(String(b.wakilHp).replace(/[^\d+]/g, ''))}" class="mono" style="color:var(--accent)">${esc(b.wakilHp)}</a>` : ''}</div>` : ''}</div>
     ${hp && !diri ? `<a class="btn sm wa" href="${esc(waLink(b.koordinatorHp, `Halo ${b.koordinatorNama}, saya ${w.nama} (${w.blok}).`))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>`;
 }
 

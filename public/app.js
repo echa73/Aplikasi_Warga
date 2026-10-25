@@ -2658,6 +2658,24 @@ function strukturLevel(D) {
 const strukturNama = D => D.namaLengkap || (S.set && S.set.namaLengkap) || D.lingkungan || lingk();
 const strukturRtRw = D => `RT ${D.rt || '…'} / RW ${D.rw || '…'}`;
 function periodeTeks(D) { return D.periodeMulai ? `Periode ${tglSurat(D.periodeMulai)}${D.periodeSelesai ? ' – ' + tglSurat(D.periodeSelesai) : ''}` : ''; }
+/* garis koordinator blok langsung ke Ketua RT (digambar setelah tata letak selesai) */
+function strukturGaris() {
+  const org = document.querySelector('.org.ada-langsung'); if (!org) return;
+  let svg = org.querySelector(':scope > svg.org-svg');
+  const ketua = org.querySelector('.org-node.l1'), row = org.querySelector('.org-lvl.langsung'), col = row && row.querySelector('.org-col');
+  if (!ketua || !col || getComputedStyle(row).flexDirection === 'column') { if (svg) svg.remove(); return; }
+  if (!svg) { svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'org-svg'); svg.setAttribute('aria-hidden', 'true'); org.appendChild(svg); }
+  const o = org.getBoundingClientRect(), sx = org.scrollLeft, sy = org.scrollTop;
+  const rel = r => ({l: r.left - o.left + sx, t: r.top - o.top + sy, w: r.width, h: r.height});
+  const k = rel(ketua.getBoundingClientRect()), c = rel(col.getBoundingClientRect());
+  const kiri = Math.min(...[...org.querySelectorAll('.org-node')].map(n => rel(n.getBoundingClientRect()).l));
+  const rx = Math.max(4, kiri - 16), ky = k.t + k.h / 2, by = c.t - 13, cx = c.l + c.w / 2;
+  svg.setAttribute('width', org.scrollWidth); svg.setAttribute('height', org.scrollHeight);
+  svg.innerHTML = `<path d="M${k.l} ${ky}H${rx}V${by}H${cx}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`;
+}
+window.addEventListener('resize', () => { if (S.tab === 'struktur') strukturGaris(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (S.tab === 'struktur') strukturGaris(); });
+
 function vStruktur() {
   const D = S.struktur; muatStruktur();
   const head = `<div class="sec-head"><div><h2>Struktur Kepengurusan</h2><p>Susunan pengurus dan petugas lingkungan ${esc(lingk())}. Hubungi pengurus langsung lewat WhatsApp.</p></div>
@@ -2671,9 +2689,10 @@ function vStruktur() {
     return `<div class="org-node l${l}">${av(p)}<b>${esc(p.nama)}</b><span class="j">${esc(p.jabatan || '')}</span>${D.kontak && p.hp && hpTampil(p.hp) ? `<a class="org-hp mono" href="tel:${esc(hpTampil(p.hp))}" aria-label="Telepon ${esc(p.nama)}">📞 ${esc(hpTampil(p.hp))}</a>` : ''}${wa ? `<a class="btn sm wa" href="${esc(waLink(p.hp, `Halo ${p.nama}, saya ${namaSesi()}${wargaSaya() ? ' (' + wargaSaya().blok + ')' : ''} warga ${lingk()}.`))}" target="_blank" rel="noopener" aria-label="Chat ${esc(p.nama)} di WhatsApp">WhatsApp</a>` : ''}</div>`; };
   const kids = p => p.anak && p.anak.length ? `<div class="org-kids" aria-label="Petugas di bawah ${esc(p.jabatan || p.nama)}">${p.anak.map(k => `<div class="org-node l5 kid">${av(k)}<b>${esc(k.nama)}</b><span class="j">${esc(k.jabatan || '')}</span></div>`).join('')}</div>` : '';
   const tot = (D.pengurus || []).length;
+  setTimeout(strukturGaris, 0);
   return head + `<div class="panel">
     <div class="org-kop"><b>STRUKTUR KEPENGURUSAN ${esc(strukturNama(D))} ${esc(strukturRtRw(D))}</b>${periodeTeks(D) ? `<span class="muted" style="font-size:.86rem">${esc(periodeTeks(D))}</span>` : ''}</div>
-    <div class="org">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}">${x.isi.map(p => `<div class="org-col">${node(p, x.l)}${kids(p)}</div>`).join('')}</div>`).join('')}</div></div>
+    <div class="org${L.some(z => z.l === 6) && L.some(z => z.l === 1) ? ' ada-langsung' : ''}">${L.map((x, i) => `${x.l >= 4 || x.l === 0 ? `<div class="org-lbl${i === 0 ? ' first' : ''}"><span>${esc(x.lbl)}</span></div>` : ''}<div class="org-lvl${i === 0 ? ' top' : ''}${x.isi.length > 1 ? ' multi' : ''}${x.l === 6 && L.some(z => z.l === 1) ? ' langsung' : ''}">${x.isi.map(p => `<div class="org-col">${node(p, x.l)}${kids(p)}</div>`).join('')}</div>`).join('')}</div></div>
   <div class="toolbar"><a class="btn wa" href="${esc(waShare(teksStruktur(D, L)))}" target="_blank" rel="noopener">Bagikan ke WhatsApp</a><button class="btn" data-act="org-pdf">Unduh PDF</button></div>
   <p class="muted" style="font-size:.8rem">${tot} pengurus aktif. Susunan diambil otomatis dari jabatan di menu Admin → Pengurus${(D.petugas || []).length ? ' dan data Pekerja (petugas tampil di bawah pengurus atasannya)' : ''}.${D.kontak ? '' : ' Nomor WhatsApp pengurus disembunyikan.'}</p>`;
 }
@@ -2705,21 +2724,30 @@ async function pdfStruktur() {
     pdfWrap(p.jabatan || '', w - 4, false, jbSize).slice(0, 1).forEach(l => { P.text(bx + w / 2, ty, l, {size: jbSize, align: 'center', color: [90, 80, 70]}); });
     if (adaHp && p.hp && hpTampil(p.hp)) P.text(bx + w / 2, ty + jbSize * .45, hpTampil(p.hp), {size: 7, align: 'center', color: [31, 122, 77]});
   };
-  let y = 59, prevBottom = null;
+  let y = 59, prevBottom = null, hal = 0, ketuaBox = null, kiriMin = 999;
+  const langsungPdf = L.some(z => z.l === 1);
   for (const x of L) {
     for (let i = 0; i < x.isi.length; i += PER) {
       const row = x.isi.slice(i, i + PER), n = row.length, wTot = n * BW + (n - 1) * GAP, x0 = 105 - wTot / 2;
       const maxKid = Math.max(0, ...row.map(p => (p.anak || []).length)), rowH = BH + (maxKid ? 4 + maxKid * (KH + KG) : 0);
-      if (y + rowH + 7 > 282) { P.addPage(); y = 20; prevBottom = null; }
+      if (y + rowH + 7 > 282) { P.addPage(); y = 20; prevBottom = null; hal++; kiriMin = 999; }
       if (i === 0 && (x.l === 0 || x.l >= 4)) { P.text(105, y + 1, x.lbl.toUpperCase(), {size: 8, bold: true, align: 'center', color: [120, 110, 100]}); y += 4; }
       const top = y + 3;
-      if (prevBottom !== null) {
+      const jalurKetua = x.l === 6 && i === 0 && langsungPdf && ketuaBox && ketuaBox.hal === hal;
+      if (jalurKetua) {
+        const rx = Math.max(8, Math.min(kiriMin, x0) - 4);
+        P.line(ketuaBox.x, ketuaBox.y, rx, ketuaBox.y, .8, abu); P.line(rx, ketuaBox.y, rx, top - 2, .8, abu); P.line(rx, top - 2, x0 + BW / 2, top - 2, .8, abu);
+        if (n > 1) P.line(x0 + BW / 2, top - 2, x0 + wTot - BW / 2, top - 2, .8, abu);
+        row.forEach((p, k) => { const cx = x0 + k * (BW + GAP) + BW / 2; P.line(cx, top - 2, cx, top, .8, abu); });
+      } else if (prevBottom !== null) {
         P.line(105, prevBottom, 105, top - 2, .8, abu);
         if (n > 1) P.line(x0 + BW / 2, top - 2, x0 + wTot - BW / 2, top - 2, .8, abu);
       }
       row.forEach((p, k) => {
         const bx = x0 + k * (BW + GAP), c = warna[x.l] || warna[4], cx = bx + BW / 2;
         if (prevBottom !== null && n > 1) P.line(cx, top - 2, cx, top, .8, abu);
+        if (x.l === 1 && k === 0 && !ketuaBox) ketuaBox = {x: bx, y: top + BH / 2, hal};
+        if (ketuaBox) kiriMin = Math.min(kiriMin, bx);
         P.rect(bx, top, BW, BH, {fill: [250, 247, 242], stroke: c, lw: x.l === 1 ? 1.2 : .6});
         P.rect(bx, top, BW, 2.2, {fill: c});
         const cy = top + (kompak ? 7.6 : 9), rr = kompak ? 4.3 : 5.2, fi = fotoIdx.get(fotoAman(p.foto));

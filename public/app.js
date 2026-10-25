@@ -1565,6 +1565,15 @@ function riwayatIuran(w, pm) {
       </tbody><tfoot><tr><td class="rw-x"></td><td colspan="3" style="font-weight:700">Jumlah dibayar</td><td class="rw-x"></td><td class="r num" style="font-weight:700;white-space:nowrap">${esc(rp(total))}</td><td></td></tr></tfoot></table></div>`
       : '<p class="muted" style="margin:0">Belum ada tagihan pada tahun ini.</p>'}</div>`;
 }
+/* info jatuh tempo untuk warga (Rumah saya) */
+function jtWarga(w, cur, lunasIni) {
+  if (!jtHari() || !wajib(w, cur)) return '';
+  if (lunasIni) { const nx = addM(cur, 1);
+    return `<div class="jt-bar ok"><span class="jt-ico" aria-hidden="true">✅</span><div class="grow"><b>Iuran ${esc(perLbl(cur, true))} sudah lunas</b><div class="muted" style="font-size:.84rem">Iuran berikutnya (${esc(perLbl(nx, true))}) jatuh tempo <b>${esc(tgl(tglTempo(nx)))}</b>. Jatuh tempo pembayaran setiap tanggal ${jtHari()}.</div></div></div>`; }
+  const d = sisaHariTempo(cur), cls = d < 0 ? 'bad' : d <= 3 ? 'warn' : 'info';
+  return `<div class="jt-bar ${cls}" role="status"><span class="jt-ico" aria-hidden="true">📅</span><div class="grow"><b>Iuran ${esc(perLbl(cur, true))} jatuh tempo ${esc(tgl(tglTempo(cur)))}</b>
+    <div class="muted" style="font-size:.84rem">${d > 0 ? `${d} hari lagi. ` : d === 0 ? 'Hari ini batas pembayaran. ' : `Sudah lewat ${-d} hari dan tercatat sebagai tunggakan. `}Besarnya ${esc(rp(nominal()))}. Jatuh tempo pembayaran setiap tanggal ${jtHari()}.</div></div></div>`;
+}
 function vPortal() {
   const w = wargaSaya(); if (!w) return '<div class="empty">Data rumah Anda tidak ditemukan. Hubungi pengurus RT.</div>';
   const cur = nowPer(), pm = S.iuran.filter(p => p.wargaId === w.id), lunasIni = pm.find(p => p.periode === cur);
@@ -1572,9 +1581,10 @@ function vPortal() {
   const ang = (w.anggota || []);
   return `<div class="sec-head"><div><h2>Rumah saya</h2><p>${esc(w.blok)} · ${esc(lingk())}</p></div></div>
   <div class="tiles">
-    <div class="tile"><span class="lbl">Iuran ${esc(perLbl(cur))}</span><span class="val" style="color:${lunasIni ? 'var(--ok)' : lewatTempo(cur) ? 'var(--bad)' : 'var(--warn)'}">${lunasIni ? 'Lunas' : lewatTempo(cur) ? 'Belum' : 'Belum jatuh tempo'}</span><span class="sub">${esc(rp(nominal()))} per bulan${!lunasIni && jtHari() ? ' · ' + esc(tempoTeks(cur)) : jtHari() ? ' · jatuh tempo tgl ' + jtHari() : ''}</span></div>
+    <div class="tile"><span class="lbl">Iuran ${esc(perLbl(cur))}</span><span class="val" style="color:${lunasIni ? 'var(--ok)' : lewatTempo(cur) ? 'var(--bad)' : 'var(--warn)'}">${lunasIni ? 'Lunas' : lewatTempo(cur) ? 'Belum' : 'Belum bayar'}</span><span class="sub">${esc(rp(nominal()))} per bulan${jtHari() ? ` · jatuh tempo tgl ${jtHari()}` : ''}</span></div>
     <div class="tile"><span class="lbl">Tunggakan</span><span class="val">${tl.length} bulan</span><span class="sub">${tl.length ? esc(rp(tl.length * nominal())) + ' belum dibayar' : 'Tidak ada tunggakan'}</span></div>
   </div>
+  ${jtWarga(w, cur, lunasIni)}
   ${tl.length ? `<div class="notice">Belum terbayar: ${esc(tl.map(p => perLbl(p)).join(', '))}.${S.set.infoBayar ? '' : ' Silakan hubungi bendahara RT untuk membayar.'}</div>` : ''}
   ${S.set.infoBayar ? `<div class="panel"><h3>Cara pembayaran</h3><p style="margin:0;white-space:pre-wrap">${esc(S.set.infoBayar)}</p></div>` : ''}
   ${kartuKoordBlok(w)}

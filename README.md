@@ -94,3 +94,6 @@ Rumah saya → **Riwayat iuran** kini berupa tabel per tahun (pilihan tahun + Se
 ### Tampilan Pengurus / Warga
 Pengurus yang tertaut ke rumah (Admin → Pengurus → Rumah / data warga) dan Pemilik yang menautkan rumahnya (Admin → baris Pemilik → Tautkan rumah) mendapat pilihan **Tampilan: Pengurus | Warga** di atas halaman. Default Pengurus; pilihan terakhir diingat per perangkat. Tampilan Warga identik dengan akun warga (Rumah saya, Aman/SOS, Lapor, Info, Lapak — boleh berjualan bila rumahnya diizinkan). Saat tampilan Pengurus, tidak bisa berjualan.
 Admin → **Koordinator blok**: master blok (kode otomatis B01, B02, …; nama blok diisi manual) beserta koordinator & wakilnya. Setiap rumah dimasukkan ke blok lewat kolom **Nama blok** di Data warga (bisa disaring per blok). Tabel menampilkan jumlah rumah & kepatuhan iuran per blok, dan daftar bisa dibagikan ke WhatsApp. Koordinator tampil di Rumah saya warga di blok tsb dan di Struktur Kepengurusan.
+
+### Batas percobaan login
+Salah password 5 kali → login dikunci 1 menit; 10 kali → 5 menit; 15 kali dst → 15 menit (hitungan per perangkat, reset setelah berhasil masuk atau 1 jam tanpa gagal). Peringatan sisa percobaan muncul mulai percobaan ke-3. Lapisan server tetap: Cloudflare Turnstile + rate limit Supabase Auth (Authentication → Rate Limits).

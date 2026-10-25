@@ -1224,7 +1224,7 @@ function vLoginKartu() {
       <div class="fld"><label for="lPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="lPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem">
         <button type="button" class="btn sm" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password">Lihat</button></div>
         <span class="hint" id="lPesan" style="color:var(--bad)"></span></div>
-      ${tsSlot()}<button type="submit" class="btn pri">Masuk</button>
+      ${tsSlot()}${lgSisa() > 0 ? `<button type="submit" class="btn pri" data-lg="1" disabled>Coba lagi dalam ${lgFmt(lgSisa())}</button>` : '<button type="submit" class="btn pri">Masuk</button>'}
       <button type="button" class="linkbtn" data-act="lupa-hp">Lupa password?</button></form>
     ${!PWA.standalone && (PWA.prompt || PWA.ios) ? '<button type="button" class="btn ghost" data-act="pwa-pasang" style="width:100%;margin-top:4px">📲 Pasang aplikasi di HP</button>' : ''}</div>`;
 }
@@ -1339,9 +1339,45 @@ async function prosesPulih() {
   toast('Password baru tersimpan.');
   await masukSesi(data.user);
 }
+/* ---------- Batas percobaan login (per perangkat) ----------
+   5 gagal → tunggu 1 menit, 10 → 5 menit, 15 dst → 15 menit. Hitungan direset saat berhasil masuk
+   atau setelah 1 jam tanpa percobaan gagal. Lapisan server: Turnstile + rate limit Supabase Auth. */
+const LG_KEY = 'login-gagal', LG_RESET = 3600e3;
+let LG_MEM = {n: 0, sampai: 0, t: 0};
+function lgBaca() {
+  let o = LG_MEM; try { const r = localStorage.getItem(LG_KEY); if (r) o = JSON.parse(r) || o; } catch (e) {}
+  o = {n: Number(o.n) || 0, sampai: Number(o.sampai) || 0, t: Number(o.t) || 0};
+  return o.t && Date.now() - o.t > LG_RESET && Date.now() > o.sampai ? {n: 0, sampai: 0, t: 0} : o;
+}
+function lgTulis(o) { LG_MEM = o; try { if (o.n) localStorage.setItem(LG_KEY, JSON.stringify(o)); else localStorage.removeItem(LG_KEY); } catch (e) {} }
+const lgDurasi = n => n >= 15 ? 900 : n >= 10 ? 300 : 60;
+const lgSisa = () => Math.max(0, lgBaca().sampai - Date.now());
+const lgFmt = ms => { const d = Math.ceil(ms / 1000); return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); };
+const lgMenit = n => { const d = lgDurasi(n) / 60; return d + ' menit'; };
+function lgCatat() {
+  const o = lgBaca(); o.n++; o.t = Date.now();
+  if (o.n % 5 === 0) o.sampai = Date.now() + lgDurasi(o.n) * 1000;
+  lgTulis(o); return o;
+}
+const lgBersih = () => lgTulis({n: 0, sampai: 0, t: 0});
+const lgPesanKunci = () => `Terlalu banyak percobaan masuk yang gagal. Demi keamanan, coba lagi dalam ${lgFmt(lgSisa())}.`;
+function lgDetak() {
+  const f = $('#loginForm'); if (!f) return;
+  const btn = f.querySelector('button[type=submit]'), sisa = lgSisa();
+  if (sisa > 0) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Coba lagi dalam ' + lgFmt(sisa); }
+    const m = $('#lPesan'); if (m && !m.textContent) m.textContent = lgPesanKunci();
+  } else if (btn && btn.disabled && btn.dataset.lg) {
+    btn.disabled = false; btn.textContent = 'Masuk'; delete btn.dataset.lg;
+    const m = $('#lPesan'); if (m) m.textContent = 'Silakan coba lagi. Pastikan No. HP dan password benar.';
+  }
+}
+setInterval(lgDetak, 1000);
+
 async function prosesLogin() {
   const isian = String(($('#lEmail') || {}).value || '').trim(), pw = ($('#lPass') || {}).value || '';
   const msg = t => { const m = $('#lPesan'); if (m) m.textContent = t; };
+  if (lgSisa() > 0) { msg(lgPesanKunci()); lgDetak(); return; }
   if (!isian || !pw) { msg('Isi No. HP dan password.'); return; }
   const pakaiEmail = isian.includes('@');
   if (!pakaiEmail && !hpValid(isian)) { msg('No. HP minimal 10 digit, mis. 081234567890.'); return; }
@@ -1349,8 +1385,15 @@ async function prosesLogin() {
   const cap = tsAmbil(msg); if (cap === false) return;
   const btn = $('#loginForm button[type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'Memeriksa…'; }
   const {data, error} = await SB.auth.signInWithPassword({email, password: pw, ...(cap ? {options: {captchaToken: cap}} : {})}); tsReset();
-  if (error) { S.lEmailDraft = isian; render(); msg(/invalid login/i.test(error.message) ? (pakaiEmail ? 'Email atau password salah.' : 'No. HP atau password salah.') : pesanAuth(error)); const p = $('#lPass'); if (p) p.focus(); return; }
-  S.lEmailDraft = ''; S.loginError = '';
+  if (error) {
+    S.lEmailDraft = isian;
+    const salah = /invalid login/i.test(error.message), o = salah ? lgCatat() : lgBaca(), sisaCoba = 5 - (o.n % 5);
+    render();
+    if (salah && lgSisa() > 0) { msg(`Password salah ${o.n} kali. Demi keamanan, login dikunci sementara ${lgMenit(o.n)}.`); lgDetak(); return; }
+    msg(salah ? (pakaiEmail ? 'Email atau password salah.' : 'No. HP atau password salah.') + (sisaCoba <= 2 ? ` Sisa ${sisaCoba} percobaan sebelum dikunci sementara ${lgMenit(o.n + sisaCoba)}.` : '') : pesanAuth(error));
+    const p = $('#lPass'); if (p) p.focus(); return;
+  }
+  lgBersih(); S.lEmailDraft = ''; S.loginError = '';
   await masukSesi(data.user);
 }
 

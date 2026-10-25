@@ -413,3 +413,7 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 -- Koleksi 'blok' (id 'blok-<kode>'): nama blok, koordinator & wakil (wargaId + nama/blok/HP disalin saat disimpan), tampilkanHp, catatan.
 -- Tulis: hanya Pemilik (tidak ada kasus 'blok' di boleh_tulis). Baca: semua pengurus (boleh_baca) & warga (policy).
 -- struktur_organisasi() menambah 'koordinatorBlok' (HP hanya bila kontak & tampilkanHp).
+
+-- (2026-10-25, revisi) Koordinator blok kini berupa MASTER BLOK: dokumen 'blok' id 'blk_<acak>' {kode otomatis B01.., nama manual,
+-- koordinator/wakil}. Rumah masuk blok lewat field warga.blokId (diisi di Data warga). jaga_dokumen mengunci blokId saat
+-- warga/pengurus mengubah rumahnya sendiri lewat jalur warga.

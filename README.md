@@ -37,7 +37,7 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
 - Data pengurus, role, dan akun hanya bisa diubah Pemilik; akun dibuat lewat fungsi server (`admin_buat_user`).
 - Warga hanya bisa membaca/mengubah data rumahnya sendiri; nomor rumah, status, dan tanggal iuran dikunci server.
 - Kolom `oleh` diisi server; setiap tambah/ubah/hapus tercatat di `log_aktivitas` (dibaca Pemilik di Admin → Log aktivitas).
-- Password minimal 8 karakter, logout otomatis setelah 30 menit tidak aktif, Content-Security-Policy & header keamanan.
+- Password minimal 8 karakter, logout otomatis setelah 15 menit tidak aktif (peringatan 60 detik sebelumnya, aktivitas apa pun mereset hitungan; dengan kunci PIN/sidik jari aplikasi terkunci setelah 5 menit), Content-Security-Policy & header keamanan.
 - Pengaturan dashboard Supabase yang disarankan: matikan *Allow new users to sign up* dan *Confirm email*, minimal password 8.
 
 ## Aplikasi di HP (PWA)
@@ -81,7 +81,7 @@ Pemilik bisa membuatkan akun login untuk pekerja (mis. satpam) langsung dari for
 Jadwal jaga punya hak akses sendiri ("Jadwal jaga satpam" di editor role). Bawaan: satpam hanya lihat; koordinator keamanan, ketua, dan pengurus bisa mengatur.
 
 ### Kunci aplikasi (sidik jari / wajah / PIN)
-Tombol gembok di header membuka **Keamanan akun**: ganti password, aktifkan sidik jari / Face ID / kunci layar perangkat (WebAuthn platform authenticator), dan PIN aplikasi 4–6 angka (PBKDF2, disimpan hanya di perangkat). Bila aktif, sesi tetap masuk di perangkat itu tetapi aplikasi terkunci saat dibuka ulang atau setelah 5 menit tidak dipakai (menggantikan logout otomatis 30 menit). PIN salah 5 kali = keluar penuh. Selalu ada pilihan "Masuk dengan No. HP & password".
+Tombol gembok di header membuka **Keamanan akun**: ganti password, aktifkan sidik jari / Face ID / kunci layar perangkat (WebAuthn platform authenticator), dan PIN aplikasi 4–6 angka (PBKDF2, disimpan hanya di perangkat). Bila aktif, sesi tetap masuk di perangkat itu tetapi aplikasi terkunci saat dibuka ulang atau setelah 5 menit tidak dipakai (menggantikan logout otomatis 15 menit). PIN salah 5 kali = keluar penuh. Selalu ada pilihan "Masuk dengan No. HP & password".
 
 ### Catatan teknis (2026-10-24)
 Kode aplikasi kini di `public/app.js` (bukan lagi skrip inline di `index.html`) agar CSP bisa melarang skrip inline. Deploy seperti biasa dengan seluruh isi folder `public/`.

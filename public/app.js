@@ -185,19 +185,37 @@ async function muatProfil() {
   for (const p of S.profilList) S.names[p.user_id] = {name: p.nama || ''};
   sbSched();
 }
-const IDLE_MS = 30 * 60 * 1000, KUNCI_MS = 5 * 60 * 1000;
+const IDLE_MS = 15 * 60 * 1000, IDLE_WARN = 60 * 1000, KUNCI_MS = 5 * 60 * 1000;
 let idleAkhir = Date.now(), idleTmr = null;
-['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, () => { idleAkhir = Date.now(); }, {passive: true}));
+['pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'].forEach(ev => addEventListener(ev, e => { if (e.target && e.target.closest && e.target.closest('.idle-box')) return; idleAkhir = Date.now(); idleWarn(0); }, {passive: true}));
+// peringatan 60 detik terakhir sebelum logout otomatis (aktivitas apa pun membatalkan)
+function idleWarn(sisa) {
+  let el = document.getElementById('idleWarn');
+  if (!sisa) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement('div'); el.id = 'idleWarn'; el.className = 'idle-warn'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-live', 'assertive'); el.setAttribute('aria-labelledby', 'idleWarnT');
+    el.innerHTML = '<div class="idle-box"><div class="idle-ico" aria-hidden="true">⏳</div><b id="idleWarnT">Anda akan keluar otomatis</b><p>Tidak ada aktivitas selama 14 menit. Demi keamanan, aplikasi akan keluar dalam <b class="mono" id="idleWarnS">60</b> detik.</p><div class="idle-acts"><button type="button" class="btn" data-act="idle-keluar">Keluar sekarang</button><button type="button" class="btn pri" data-act="idle-tetap">Tetap masuk</button></div></div>';
+    document.body.appendChild(el);
+  }
+  const induk = typeof dlg !== 'undefined' && dlg.open ? dlg : document.body; if (el.parentNode !== induk) induk.appendChild(el); // di atas dialog form yang sedang terbuka
+  const s = el.querySelector('#idleWarnS'); if (s) s.textContent = String(Math.ceil(sisa / 1000));
+  if (el.hidden !== false) { el.hidden = false; const b = el.querySelector('[data-act="idle-tetap"]'); if (b) b.focus({preventScroll: true}); }
+}
+async function idleLogout(manual) {
+  clearInterval(idleTmr); idleWarn(0);
+  try { await onlineKeluar(); } catch (e) {}
+  try { await SB.auth.signOut(); } catch (e) {}
+  resetSesi(); S.loginPesan = manual ? '' : 'Anda keluar otomatis karena tidak aktif 15 menit.'; render(); muatInfoPublik();
+}
 function mulaiIdle() {
   clearInterval(idleTmr);
   idleTmr = setInterval(async () => {
-    if (S.authUser && !S.terkunci && sudahMasuk() && kunciAda() && Date.now() - idleAkhir >= KUNCI_MS) { kunciSekarang(); return; }
-    if (!S.authUser || Date.now() - idleAkhir < IDLE_MS) return;
-    if (kunciAda()) return;
-    clearInterval(idleTmr);
-    try { await SB.auth.signOut(); } catch (e) {}
-    resetSesi(); render(); toast('Anda keluar otomatis karena tidak aktif 30 menit.');
-  }, 30000);
+    if (S.authUser && !S.terkunci && sudahMasuk() && kunciAda() && Date.now() - idleAkhir >= KUNCI_MS) { idleWarn(0); kunciSekarang(); return; }
+    if (!S.authUser || kunciAda()) { idleWarn(0); return; }
+    const diam = Date.now() - idleAkhir;
+    if (diam >= IDLE_MS) { await idleLogout(); return; }
+    idleWarn(diam >= IDLE_MS - IDLE_WARN ? IDLE_MS - diam : 0);
+  }, 1000);
 }
 function resetSesi() {
   if (SB_CH) { try { SB.removeChannel(SB_CH); } catch (e) {} SB_CH = null; }
@@ -6112,6 +6130,8 @@ document.addEventListener('click', async e => {
   else if (a === 'on-kill') openKillSesi(b.dataset.u, b.dataset.p, b.dataset.n, b.dataset.d);
   else if (a === 'on-f') { S.onFilter = b.dataset.k; render(); }
   else if (a === 'jt-atur') openJatuhTempo();
+  else if (a === 'idle-tetap') { idleAkhir = Date.now(); idleWarn(0); }
+  else if (a === 'idle-keluar') idleLogout(true);
   else if (a === 'blok-atur') openBlok(b.dataset.id);
   else if (a === 'blok-new') openBlok();
   else if (a === 'blok-tanpa') { S.tab = 'warga'; S.fBlok = '-'; S.q = ''; render(); window.scrollTo(0, 0); }

@@ -113,3 +113,6 @@ Data warga → Status warga "Pindah" (+ Tanggal pindah). Server otomatis menonak
 
 ### Tema halaman login
 Panel ilustrasi di samping form login berganti tema otomatis tiap bulan (Tahun Baru, musim hujan, Hari Air, Kartini, Kebangkitan Nasional, Lingkungan Hidup, Hari Anak, HUT RI, senja kemarau, Batik & Sumpah Pemuda, Hari Pahlawan, Hari Ibu) dan saat hari raya (Ramadan, Idul Fitri 1–7 Syawal, Idul Adha 9–13 Zulhijah — dihitung kalender Hijriah Umm al-Qura, Natal 20–26 Des). Tulisan "Lingkungan yang tertata, warga yang terhubung." tetap. Pratinjau: tambahkan `?tema=8` (atau 1–12, ramadan, fitri, adha, natal) di alamat.
+
+### Foto keluhan
+Warga bisa melampirkan maksimal 2 foto kejadian (hanya gambar, bukan video). Foto dari HP otomatis dikecilkan di bawah 1 MB sebelum diunggah ke Supabase Storage (bucket privat `keluhan`). Foto tampil di Keluhan saya, menu Keluhan pengurus, dan laporan Kebersihan; dibuka lewat tautan bertanda tangan yang berlaku 1 jam.

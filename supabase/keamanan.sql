@@ -444,3 +444,9 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   hapus auth.sessions, lepas profil.warga_id pengurus/pemilik yang tertaut, akunWarga aktif=false nonaktifKarena='Pindah'.
 --   aktifkan_akun_warga(p_warga): izin('warga')=2 / Pemilik; status harus bukan Pindah; non-Pemilik hanya untuk nonaktifKarena='Pindah'.
 --   jaga_dokumen: warga tidak bisa mengubah tglPindah sendiri.
+
+-- Foto keluhan warga: bucket privat "keluhan" (≤ 1.000.000 byte, image/jpeg|png|webp)
+--   unggah: hanya sebagai warga, folder = warga_saya(), nama <acak>.jpg, maks 10 foto/rumah/24 jam
+--   baca  : warga rumah itu sendiri, atau izin keluhan/kebersihan ≥ lihat (signed URL 1 jam)
+--   hapus : warga (hanya yang belum dipakai di keluhan) atau izin keluhan = kelola
+--   jaga_dokumen: keluhan dari warga maks 2 foto & harus di folder rumahnya sendiri

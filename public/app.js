@@ -1093,7 +1093,7 @@ function vKeluhan() {
       <div class="meta">${chipK(k.status)}<span class="chip mute plain">${esc(k.kategori)}</span><span>Prioritas ${esc(k.prioritas)}</span><span>·</span><span>${esc(tgl(k.dibuat))}</span></div>
       <h4>${esc(k.judul)}</h4>
       ${k.isi ? `<p>${esc(k.isi)}</p>` : ''}
-      <div class="meta"><span>Pelapor: ${esc(pel)}</span>${k.lokasi ? `<span>· Lokasi: ${esc(k.lokasi)}</span>` : ''}</div>
+      <div class="meta"><span>Pelapor: ${esc(pel)}</span>${k.lokasi ? `<span>· Lokasi: ${esc(k.lokasi)}</span>` : ''}${Array.isArray(k.foto) && k.foto.length ? `<span>· 📷 ${k.foto.length} foto</span>` : ''}</div>${kelFoto(k)}
       ${k.tanggapan ? `<div class="resp"><b>Tanggapan pengurus${k.diperbarui ? ' · ' + esc(tgl(k.diperbarui)) : ''}</b>${esc(k.tanggapan)}</div>` : ''}
       ${!bisa('keluhan') ? '' : `<div class="acts">
         ${k.status === 'Baru' ? `<button class="btn sm" data-act="kel-st" data-id="${esc(k.id)}" data-s="Diproses">Mulai proses</button>` : ''}
@@ -1104,7 +1104,7 @@ function vKeluhan() {
 function formKel(k) {
   k = k || {kategori: KATEGORI[0], prioritas: 'Sedang', status: 'Baru'};
   const opts = wargaAktif().map(w => `<option value="${esc(w.id)}" ${k.wargaId === w.id ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}</option>`).join('');
-  return `
+  return `${k ? kelFoto(k, true) : ''}
   <div class="fld"><label for="k_j">Judul keluhan <span class="req">*</span></label><input type="text" id="k_j" name="judul" required value="${esc(k.judul)}" placeholder="mis. Lampu jalan depan Blok B mati"></div>
   <div class="grid2">
     <div class="fld"><label for="k_kat">Kategori</label><select id="k_kat" name="kategori">${KATEGORI.map(x => `<option ${k.kategori === x ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
@@ -1740,26 +1740,91 @@ function vLapor() {
     <button class="btn pri" data-act="lapor-new">+ Laporkan keluhan</button></div>
   <div class="kel-list">${list.length ? list.map(k => `<article class="kel p-${esc(k.prioritas)}">
       <div class="meta">${chipK(k.status)}<span class="chip mute plain">${esc(k.kategori)}</span><span>${esc(tgl(k.dibuat))}</span></div>
-      <h4>${esc(k.judul)}</h4>${k.isi ? `<p>${esc(k.isi)}</p>` : ''}${k.lokasi ? `<div class="meta"><span>Lokasi: ${esc(k.lokasi)}</span></div>` : ''}
+      <h4>${esc(k.judul)}</h4>${k.isi ? `<p>${esc(k.isi)}</p>` : ''}${k.lokasi ? `<div class="meta"><span>Lokasi: ${esc(k.lokasi)}</span></div>` : ''}${kelFoto(k)}
       ${k.tanggapan ? `<div class="resp"><b>Tanggapan pengurus${k.diperbarui ? ' · ' + esc(tgl(k.diperbarui)) : ''}</b>${esc(k.tanggapan)}</div>` : `<div class="muted" style="font-size:.84rem">${k.status === 'Baru' ? 'Menunggu ditinjau pengurus.' : 'Sedang ditangani.'}</div>`}
     </article>`).join('') : '<div class="empty">Anda belum pernah mengirim keluhan.</div>'}</div>`;
 }
+/* ---------- Foto keluhan warga (maks 2, hanya gambar, < 1 MB; bucket privat "keluhan") ---------- */
+const KF_MAKS = 2, KF_BATAS = 1000000, KF_URL = new Map();
+async function kecilkanKeluhan(file) {
+  for (const [max, q] of [[1280, .82], [1280, .7], [1080, .65], [960, .6], [800, .55]]) {
+    const b = await kecilkanFoto(file, max, q); if (!b) throw new Error('baca');
+    if (b.size < KF_BATAS * .95) return b;
+  }
+  throw new Error('besar');
+}
+const kfNama = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), x => 'abcdefghijklmnopqrstuvwxyz0123456789'[x % 36]).join('');
+function kelFoto(k, kecil) {
+  const f = Array.isArray(k && k.foto) ? k.foto.filter(x => typeof x === 'string') : [];
+  if (!f.length) return '';
+  setTimeout(isiFotoKeluhan, 0);
+  return `<div class="kel-foto${kecil ? ' kecil' : ''}">${f.map((p, i) => `<a class="kf-th" data-kf="${esc(p)}" target="_blank" rel="noopener" aria-label="Buka foto kejadian ${i + 1}"><img data-kf="${esc(p)}" alt="Foto kejadian ${i + 1}" loading="lazy"></a>`).join('')}</div>`;
+}
+async function isiFotoKeluhan() {
+  if (!SB) return;
+  const els = [...document.querySelectorAll('img[data-kf]:not([src])')]; if (!els.length) return;
+  const now = Date.now(), perlu = [...new Set(els.map(e => e.dataset.kf))].filter(p => !(KF_URL.get(p) && KF_URL.get(p).exp > now + 60e3));
+  if (perlu.length) {
+    try { const {data, error} = await SB.storage.from('keluhan').createSignedUrls(perlu, 3600); if (error) throw error;
+      (data || []).forEach(x => { if (x.signedUrl && x.path) KF_URL.set(x.path, {url: x.signedUrl, exp: now + 3500e3}); }); } catch (e) {}
+  }
+  document.querySelectorAll('[data-kf]').forEach(e => { const u = KF_URL.get(e.dataset.kf); if (!u) { if (e.tagName === 'IMG' && !e.src) e.closest('.kf-th') && e.closest('.kf-th').classList.add('gagal'); return; }
+    if (e.tagName === 'IMG') { if (!e.src) e.src = u.url; } else e.href = u.url; });
+}
+function kfPicker(kf, gambar) {
+  const box = $('#kfPick'), inp = $('#kf_in'); if (!box || !inp) return;
+  const tulis = (t, bad) => { const h = $('#kfInfo'); if (h) { h.textContent = t; h.style.color = bad ? 'var(--bad)' : ''; } };
+  const isi = () => { box.innerHTML = kf.map((x, i) => `<div class="kf-th"><img src="${x.url}" alt="Foto ${i + 1}"><button type="button" class="kf-x" data-kfx="${i}" aria-label="Hapus foto ${i + 1}">✕</button><span class="kf-sz">${(x.blob.size / 1024).toFixed(0)} KB</span></div>`).join('')
+      + (kf.length < KF_MAKS ? `<label class="kf-add" for="kf_in"><span aria-hidden="true">📷</span>${kf.length ? 'Tambah foto' : 'Tambah foto'}<small>${kf.length}/${KF_MAKS}</small></label>` : ''); };
+  isi();
+  box.addEventListener('click', e => { const b = e.target.closest('[data-kfx]'); if (!b) return; const i = Number(b.dataset.kfx); URL.revokeObjectURL(kf[i].url); kf.splice(i, 1); isi(); tulis('Hanya foto (JPG/PNG/WebP), bukan video. Maksimal 2 foto; foto besar otomatis dikecilkan di bawah 1 MB.'); });
+  inp.addEventListener('change', async () => {
+    const files = [...inp.files]; inp.value = '';
+    for (const f of files) {
+      if (kf.length >= KF_MAKS) { tulis(`Maksimal ${KF_MAKS} foto per laporan.`, true); break; }
+      if (/^video\//.test(f.type) || !/^image\//.test(f.type || 'image/')) { tulis('Video atau file selain foto tidak bisa diunggah. Pilih foto (JPG/PNG/WebP).', true); continue; }
+      if (f.size > 25e6) { tulis('Foto terlalu besar (lebih dari 25 MB). Pilih foto lain.', true); continue; }
+      tulis('Menyiapkan foto…');
+      try { const blob = await kecilkanKeluhan(f); kf.push({blob, url: URL.createObjectURL(blob)}); isi(); tulis(`Foto siap (${(blob.size / 1024).toFixed(0)} KB). ${kf.length < KF_MAKS ? 'Bisa tambah 1 foto lagi.' : 'Sudah 2 foto (maksimal).'}`); }
+      catch (e) { tulis(e && e.message === 'besar' ? 'Foto tidak bisa dikecilkan di bawah 1 MB. Pilih foto lain.' : 'Format foto tidak didukung. Pilih foto JPG/PNG (di iPhone: Pengaturan › Kamera › Format › Paling Kompatibel).', true); }
+    }
+  });
+}
+async function kfUnggah(wid, kf) {
+  const paths = [];
+  for (const x of kf) {
+    const path = `${wid}/${kfNama()}.jpg`;
+    const {error} = await SB.storage.from('keluhan').upload(path, x.blob, {contentType: 'image/jpeg', upsert: false});
+    if (error) { if (paths.length) SB.storage.from('keluhan').remove(paths).catch(() => {}); throw error; }
+    paths.push(path);
+  }
+  return paths;
+}
 function openLapor(katAwal) {
   const w = wargaSaya(); if (!w) return;
+  const kf = [];
   openDlg({
     title: 'Laporkan keluhan', submitLabel: 'Kirim laporan',
     body: `<div class="fld"><label for="lp_j">Judul <span class="req">*</span></label><input type="text" id="lp_j" name="judul" required placeholder="mis. Lampu jalan depan rumah mati"></div>
     <div class="fld"><label for="lp_k">Kategori</label><select id="lp_k" name="kategori">${KATEGORI.map(k => `<option ${k === katAwal ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
     <div class="fld"><label for="lp_i">Uraian</label><textarea id="lp_i" name="isi" rows="3" placeholder="Apa yang terjadi, sejak kapan"></textarea></div>
-    <div class="fld"><label for="lp_l">Lokasi</label><input type="text" id="lp_l" name="lokasi" placeholder="mis. Depan ${esc(w.blok)}"></div>`,
+    <div class="fld"><label for="lp_l">Lokasi</label><input type="text" id="lp_l" name="lokasi" placeholder="mis. Depan ${esc(w.blok)}"></div>
+    <div class="fld"><span class="lbl-f">Foto kejadian <span class="muted" style="font-weight:400">(opsional, maks. 2)</span></span>
+      <div class="kf-pick" id="kfPick"></div><input type="file" id="kf_in" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden>
+      <span class="hint" id="kfInfo">Hanya foto (JPG/PNG/WebP), bukan video. Maksimal 2 foto; foto besar otomatis dikecilkan di bawah 1 MB.</span></div>`,
     onSubmit: async d => {
       const row = {judul: d.judul.trim(), kategori: d.kategori, isi: String(d.isi || '').trim(), lokasi: String(d.lokasi || '').trim(), prioritas: 'Sedang', status: 'Baru',
         wargaId: w.id, pelaporNama: '', tanggapan: '', sumber: 'warga', dibuat: todayISO(), diperbarui: todayISO(), olehSesi: S.sesi};
       if (!DB) { S.keluhan.push({...row, id: uid()}); render(); toast('Laporan terkirim.'); return true; }
-      try { await DB.collection('keluhan').doc(uid()).set(row); toast('Laporan terkirim. Pengurus akan menindaklanjuti.'); return true; }
-      catch (e) { return fail(e); }
+      let foto = [];
+      if (kf.length) { const b = $('#dlg button[type=submit]') || document.querySelector('dialog[open] button[type=submit]'); if (b) b.textContent = 'Mengunggah foto…';
+        try { foto = await kfUnggah(w.id, kf); } catch (e) { if (b) b.textContent = 'Kirim laporan'; pesanDlg('Foto gagal diunggah: ' + (/limit|quota|exceed/i.test(e.message || '') ? 'batas unggah harian tercapai, coba lagi besok.' : pesanAuth(e)) + ' Hapus foto lalu kirim tanpa foto, atau coba lagi.'); return false; } }
+      if (foto.length) row.foto = foto;
+      try { await DB.collection('keluhan').doc(uid()).set(row); kf.forEach(x => URL.revokeObjectURL(x.url)); toast('Laporan terkirim. Pengurus akan menindaklanjuti.'); return true; }
+      catch (e) { if (foto.length) SB.storage.from('keluhan').remove(foto).catch(() => {}); return fail(e); }
     }
   });
+  kfPicker(kf);
 }
 
 /* --- Admin: pengurus & role --- */
@@ -2716,7 +2781,7 @@ function brLaporanV() {
   const boleh = bisa('kebersihan') || bisa('keluhan');
   return `<p class="muted" style="margin:0 0 10px;font-size:.88rem">Laporan warga dengan kategori <b>Kebersihan & sampah</b>. Warga melapor lewat menu Keluhan saya atau tombol "Lapor masalah kebersihan".</p>
   ${L.length ? `<div class="kel-list">${L.map(k => { const w = S.warga.find(x => x.id === k.wargaId); return `<article class="kel p-${esc(k.prioritas)}"><div class="meta">${chipK(k.status)}<span>${esc(tgl(k.dibuat))}</span>${w ? `<span>${esc(w.blok)} · ${esc(w.nama)}</span>` : k.pelaporNama ? `<span>${esc(k.pelaporNama)}</span>` : ''}</div>
-      <h4>${esc(k.judul)}</h4>${k.isi ? `<p>${esc(k.isi)}</p>` : ''}${k.lokasi ? `<div class="meta"><span>Lokasi: ${esc(k.lokasi)}</span></div>` : ''}
+      <h4>${esc(k.judul)}</h4>${k.isi ? `<p>${esc(k.isi)}</p>` : ''}${k.lokasi ? `<div class="meta"><span>Lokasi: ${esc(k.lokasi)}</span></div>` : ''}${kelFoto(k)}
       ${k.tanggapan ? `<div class="resp"><b>Tanggapan</b>${esc(k.tanggapan)}</div>` : ''}
       ${boleh ? `<div class="racts" style="margin-top:6px"><button class="btn sm" data-act="br-tanggap" data-id="${esc(k.id)}">Tanggapi / ubah status</button></div>` : ''}</article>`; }).join('')}</div>` : '<div class="empty">Belum ada laporan kebersihan dari warga.</div>'}`;
 }
@@ -6074,7 +6139,7 @@ function openKel(id) {
       if (ok) toast(k ? 'Keluhan diperbarui.' : 'Keluhan dicatat.');
       return ok;
     },
-    onDelete: k ? async () => { const ok = await del('keluhan', k.id); if (ok) toast('Keluhan dihapus.'); return ok; } : null,
+    onDelete: k ? async () => { const ok = await del('keluhan', k.id); if (ok) { if (Array.isArray(k.foto) && k.foto.length && SB) SB.storage.from('keluhan').remove(k.foto).catch(() => {}); toast('Keluhan dihapus.'); } return ok; } : null,
     deleteLabel: 'Hapus keluhan'
   });
 }

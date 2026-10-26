@@ -1073,7 +1073,7 @@ function formBayar(w, per) {
 function chipK(s) { return `<span class="chip ${s === 'Selesai' ? 'ok' : s === 'Diproses' ? 'info' : 'warn'}">${esc(s)}</span>`; }
 function vKeluhan() {
   const head = `<div class="sec-head"><div><h2>Keluhan warga</h2><p>Catat laporan warga, lalu ikuti sampai selesai.</p></div>
-    <button class="btn pri" data-act="kel-new" ${dis('keluhan')}>+ Catat keluhan</button></div>`;
+    <button class="btn pri" data-act="kel-new" ${isSatpam() ? 'disabled aria-disabled="true" title="Satpam tidak dapat mencatat keluhan baru"' : dis('keluhan')}>+ Catat keluhan</button></div>`;
   const open = kelTerbuka().length, done = S.keluhan.length - open;
   const seg = [['terbuka', `Terbuka ${open}`], ['selesai', `Selesai ${done}`], ['semua', `Semua ${S.keluhan.length}`]]
     .map(([k, l]) => `<button type="button" data-act="kelf" data-k="${k}" aria-pressed="${S.kelFilter === k}">${l}</button>`).join('');
@@ -1083,7 +1083,7 @@ function vKeluhan() {
     .filter(k => !q || [k.judul, k.isi, k.kategori, k.pelaporNama, k.lokasi].some(v => String(v || '').toLowerCase().includes(q)))
     .sort((a, b) => (st[a.status] - st[b.status]) || (pr[a.prioritas] - pr[b.prioritas]) || String(b.dibuat).localeCompare(String(a.dibuat)));
   if (!S.keluhan.length) return head + `<div class="empty"><h3>Belum ada keluhan</h3><p style="margin:0">Catat keluhan pertama, misalnya lampu jalan mati atau sampah belum diangkut.</p>
-    <button class="btn pri" data-act="kel-new" ${dis('keluhan')}>+ Catat keluhan</button></div>`;
+    <button class="btn pri" data-act="kel-new" ${isSatpam() ? 'disabled aria-disabled="true" title="Satpam tidak dapat mencatat keluhan baru"' : dis('keluhan')}>+ Catat keluhan</button></div>`;
   return head + `
   <div class="toolbar"><div class="seg" role="group" aria-label="Saring status">${seg}</div>
     <input class="search" type="search" id="qKel" placeholder="Cari judul, lokasi, pelapor…" value="${esc(S.kelQ)}" aria-label="Cari keluhan"></div>
@@ -6430,7 +6430,7 @@ document.addEventListener('click', async e => {
   else if (a === 'mz-reset') { S.mz = null; render(); mzUpdBar(); }
   else if (a === 'mz-simpan') mzSimpan();
   else if (a === 'kelf') { S.kelFilter = b.dataset.k; render(); }
-  else if (a === 'kel-new') openKel();
+  else if (a === 'kel-new') { if (!isSatpam()) openKel(); }
   else if (a === 'kel-edit') openKel(b.dataset.id);
   else if (a === 'kel-st') {
     const k = S.keluhan.find(x => x.id === b.dataset.id); if (!k) return;

@@ -451,5 +451,5 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   hapus : warga (hanya yang belum dipakai di keluhan) atau izin keluhan = kelola
 --   jaga_dokumen: keluhan dari warga maks 2 foto & harus di folder rumahnya sendiri
 
--- Satpam tidak bisa membuat titip rumah baru (trg_jaga_titip_satpam, BEFORE INSERT koleksi titip; role peranId 'satpam').
+-- Satpam tidak bisa membuat titip rumah / keluhan baru (trg_jaga_titip_satpam, BEFORE INSERT koleksi titip & keluhan; role peranId 'satpam').
 --   Tetap bisa mencatat patroli & menandai pemilik sudah pulang (UPDATE).

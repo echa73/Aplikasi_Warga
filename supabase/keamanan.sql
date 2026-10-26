@@ -459,5 +459,5 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 
 -- Notulensi rapat (koleksi 'notulen')
 --   baca : privat.boleh_rapat() (Pemilik & pengurus, bukan satpam/pekerja); warga tidak bisa.
---   tulis: izin('surat') = 2 dan boleh_rapat() (Sekretaris / pengurus berhak kelola Surat).
+--   tulis: hanya pengurus ber-peranId 'sekretaris' (dan Pemilik). Pengurus lain: lihat, unduh/cetak, salin teks (tanpa kirim WA di aplikasi).
 --   trg_jaga_notulen: isi maks 200.000 karakter. Isi berformat disaring di aplikasi (allowlist tag: p, b, i, u, h2, h3, ul, ol, li, br, span kelas ukuran/rata).

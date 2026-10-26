@@ -55,7 +55,7 @@ const DEFAULT_ROLES = [
   {id: 'ketua', nama: 'Ketua RT', ket: 'Semua menu, termasuk pengaturan', izin: semua('kelola')},
   {id: 'pengurus', nama: 'Pengurus', ket: 'Semua menu kecuali mengubah pengaturan', izin: {...semua('kelola'), pengaturan: 'lihat'}},
   {id: 'bendahara', nama: 'Bendahara', ket: 'Iuran dan buku kas', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'lihat', iuran: 'kelola', kas: 'kelola', sumbangan: 'kelola', gaji: 'kelola', keluhan: 'tidak', info: 'lihat', surat: 'tidak', pengaturan: 'tidak'}},
-  {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat, notulensi rapat', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
+  {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat, notulensi rapat (buat & kirim)', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
   {id: 'lihat', nama: 'Lihat saja', ket: 'Hanya melihat, tanpa pengaturan', izin: {...semua('lihat'), pengaturan: 'tidak', portal: 'tidak'}},
   {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', jaga: 'lihat', warga: 'lihat', info: 'lihat'}},
   {id: 'koord_keamanan', nama: 'Koordinator Keamanan', ket: 'Mengelola keamanan & satpam, pengumuman; melihat data warga dan keluhan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keamanan: 'kelola', keluhan: 'lihat', info: 'kelola'}},
@@ -5977,7 +5977,7 @@ const RT_CSS = `.rt h2{font-size:1.25em;margin:.8em 0 .3em}.rt h3{font-size:1.08
 
 /* ---------- Notulensi rapat (dibuat sekretaris / pengurus berhak kelola Surat; dibaca pengurus) ---------- */
 const bolehRapatC = () => { if (!S.sesi || isWarga()) return false; if (S.sesi === 'pemilik') return bolehPemilik(); const p = pengurusSesi(); return !!p && !p.dariPekerja && !isSatpam(); };
-const bisaNotulen = () => bisa('surat') && bolehRapatC();
+const bisaNotulen = () => bolehRapatC() && (S.sesi === 'pemilik' || (roleSaya() || {}).id === 'sekretaris'); // hanya Sekretaris (& Pemilik) yang membuat/mengubah/mengirim
 const NT_TEMPLATE = '<h3>Agenda rapat</h3><ol><li>…</li></ol><h3>Pembahasan</h3><p>…</p><h3>Keputusan</h3><ol><li>…</li></ol><h3>Tindak lanjut</h3><ul><li>… (penanggung jawab, tenggat)</li></ul>';
 const ntPeserta = n => String(n.peserta || '').split(/\n|,/).map(x => x.trim()).filter(Boolean);
 function vNotulen() {
@@ -5997,7 +5997,7 @@ function vNotulen() {
 function openNotulen(id) {
   if (!bisaNotulen()) return;
   const n = id ? S.notulen.find(x => x.id === id) : null;
-  openDlg({title: n ? 'Ubah notulen rapat' : 'Buat notulen rapat', area: 'surat', submitLabel: 'Simpan', lebar: true,
+  openDlg({title: n ? 'Ubah notulen rapat' : 'Buat notulen rapat', submitLabel: 'Simpan', lebar: true,
     body: `<div class="fld"><label for="nt_j">Judul rapat <span class="req">*</span></label><input type="text" id="nt_j" name="judul" required maxlength="150" value="${esc(n ? n.judul : '')}" placeholder="mis. Rapat pengurus bulanan November"></div>
       <div class="grid2"><div class="fld"><label for="nt_t">Tanggal <span class="req">*</span></label><input type="date" id="nt_t" name="tanggal" required value="${esc(n ? n.tanggal : todayISO())}"></div>
         <div class="fld"><label for="nt_tp">Tempat</label><input type="text" id="nt_tp" name="tempat" maxlength="100" value="${esc(n ? n.tempat || '' : '')}" placeholder="mis. Pos jaga / rumah Ketua RT"></div></div>
@@ -6047,7 +6047,7 @@ function openNotulenLihat(id, fallback) {
   const n = S.notulen.find(x => x.id === id) || (fallback && {...fallback, id}); if (!n || !bolehRapatC()) return;
   openDlg({title: n.judul, lebar: true,
     body: `<div class="surat-wrap">${notulenDok(n)}</div>${n.diubahOleh ? `<p class="muted" style="margin:0;font-size:.8rem">Terakhir diubah ${esc(n.diubahOleh)} · ${esc(tglJam(n.diubah))} · Status ${esc(n.status || 'Draf')}</p>` : ''}`,
-    foot: `<button type="button" class="btn" data-act="salin" data-teks="${esc(teksNotulen(n))}">Salin teks</button><a class="btn wa" href="${esc(waShare(teksNotulen(n)))}" target="_blank" rel="noopener">Kirim ke grup pengurus (WA)</a><button type="button" class="btn" data-act="nt-unduh" data-id="${esc(n.id)}">Unduh / cetak</button>${bisaNotulen() ? `<button type="button" class="btn pri" data-act="nt-edit" data-id="${esc(n.id)}">Ubah</button>` : ''}`});
+    foot: `<button type="button" class="btn" data-act="salin" data-teks="${esc(teksNotulen(n))}">Salin teks</button>${bisaNotulen() ? `<a class="btn wa" href="${esc(waShare(teksNotulen(n)))}" target="_blank" rel="noopener">Kirim ke grup pengurus (WA)</a>` : '<button type="button" class="btn wa" disabled aria-disabled="true" title="Hanya Sekretaris yang dapat mengirim notulen ke grup WhatsApp">Kirim ke grup pengurus (WA)</button>'}<button type="button" class="btn" data-act="nt-unduh" data-id="${esc(n.id)}">Unduh / cetak</button>${bisaNotulen() ? `<button type="button" class="btn pri" data-act="nt-edit" data-id="${esc(n.id)}">Ubah</button>` : ''}`});
 }
 function unduhNotulen(id) {
   const n = S.notulen.find(x => x.id === id); if (!n) return;

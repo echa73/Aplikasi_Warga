@@ -483,7 +483,7 @@ function renderMode() {
     who.hidden = false; m.hidden = S.mode === 'online';
     const p = pengurusSesi(), img = S.sesi === 'pemilik' && S.me && S.me.avatarUrl ? `<img src="${esc(S.me.avatarUrl)}" alt="">` : avatarHtml(p && p.userId, namaSesi());
     who.innerHTML = `${img}<div><div class="nm">${esc(namaSesi())}</div><div class="rl">${esc(isWarga() ? 'Warga · ' + ((wargaSaya() || {}).blok || '') + (S.modeWarga ? ' (tampilan warga)' : '') : peranSaya())}</div></div>
-      <button class="btn sm ghost tema-btn" data-act="tema-tukar" title="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}" aria-label="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}">${ico(temaGelapAktif() ? 'sun' : 'moon')}</button>
+      ${isWarga() ? bhsTombol(true) : ''}<button class="btn sm ghost tema-btn" data-act="tema-tukar" title="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}" aria-label="${temaGelapAktif() ? 'Ganti ke tampilan terang' : 'Ganti ke tampilan gelap'}">${ico(temaGelapAktif() ? 'sun' : 'moon')}</button>
       <button class="btn sm ghost tema-btn" data-act="ganti-pass" title="Keamanan akun" aria-label="Keamanan akun: password, sidik jari, PIN">${ico('kunci')}</button>
       <button class="btn sm" data-act="keluar" title="Keluar">Keluar</button>`;
   } else { who.hidden = true; m.hidden = S.mode === 'online'; }
@@ -500,6 +500,7 @@ function render() {
   if (!sudahMasuk()) { main.innerHTML = vLogin(); tsPasang(); return; }
   if (S.terkunci) { main.innerHTML = vKunci(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
+  document.documentElement.lang = bhsAktif() ? 'en' : 'id';
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
   main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
@@ -1181,6 +1182,7 @@ function vPengaturan() {
     </div>
     <div class="fld"><label for="s_bayar">Info pembayaran untuk warga</label><textarea id="s_bayar" name="infoBayar" rows="3" placeholder="mis. Transfer ke BCA 1234567890 a.n. Bendahara RT 05, atau tunai ke Ibu Sri (B-02)" ${ro}>${esc(S.set.infoBayar || '')}</textarea><span class="hint">Tampil di halaman Rumah saya milik warga</span></div>
     <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="papanPublik" ${S.set.papanPublik === false ? '' : 'checked'} ${ro}> <span>Tampilkan papan info di halaman login (pengumuman terbaru & status keluhan, tanpa nama pelapor atau nomor rumah). Bisa dilihat tanpa login.</span></label>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="pilihanBahasa" ${S.set.pilihanBahasa === false ? '' : 'checked'} ${S.sesi === 'pemilik' ? '' : 'disabled'}> <span>Tampilkan pilihan bahasa <b>ID / EN</b> di halaman login dan menu warga<br><span class="muted" style="font-size:.82rem">Matikan untuk kembali selalu Bahasa Indonesia. Hanya Pemilik yang bisa mengubah.</span></span></label>
     <h3 style="margin-top:6px">Keamanan login</h3>
     <div class="fld"><label for="s_ts">Site key Cloudflare Turnstile (CAPTCHA)</label><input type="text" id="s_ts" name="turnstileKey" value="${esc(S.set.turnstileKey || '')}" maxlength="80" autocomplete="off" placeholder="0x4AAAAAAA…" ${S.sesi === 'pemilik' ? '' : 'disabled'}><span class="hint">Isi site key (bukan secret key) agar halaman login memakai verifikasi anti-bot. Secret key dipasang di dashboard Supabase → Authentication → Bot and Abuse Protection. Hanya Pemilik yang dapat mengubah.</span></div>
     <h3 style="margin-top:6px">Lokasi lingkungan</h3>
@@ -1320,6 +1322,212 @@ function bendaLangit(t, mobile) {
   if (t.benda === 'sabit') return `<circle cx="470" cy="130" r="110" fill="#F3D98B" opacity=".08"/><path d="M490 84 A50 50 0 1 0 490 176 A40 40 0 1 1 490 84Z" fill="#F3D98B"/>`;
   return '';
 }
+/* ---------- Pilihan bahasa ID / EN (halaman login + menu warga) ----------
+   Diterjemahkan saat tampil (teks antarmuka saja). Isi buatan pengguna, dokumen resmi (kwitansi, surat, notulen, PDF)
+   dan pesan WhatsApp tetap Bahasa Indonesia. Pengurus (tampilan pengurus) selalu Bahasa Indonesia. */
+const BHS_KEY = 'bahasa';
+let BHS = (() => { try { return localStorage.getItem(BHS_KEY) === 'en' ? 'en' : 'id'; } catch (e) { return 'id'; } })();
+const bhsBoleh = () => S.set.pilihanBahasa !== false;
+const bhsAktif = () => BHS === 'en' && bhsBoleh() && (!S.authUser || isWarga());
+const FLAG_ID = '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#E70011"/><rect y="10" width="30" height="10" fill="#fff"/></svg>';
+const FLAG_EN = '<svg viewBox="0 0 60 30" aria-hidden="true"><clipPath id="ukA"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="ukB"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath><g clip-path="url(#ukA)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#ukB)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg>';
+function bhsTombol(kecil) {
+  if (!bhsBoleh()) return kecil ? '' : benderaId();
+  return `<div class="lang-seg${kecil ? ' kecil' : ''}" role="group" aria-label="Bahasa / Language" data-noi18n>
+    <button type="button" data-act="bhs" data-k="id" aria-pressed="${BHS !== 'en'}" title="Bahasa Indonesia">${FLAG_ID}<span>ID</span></button><button type="button" data-act="bhs" data-k="en" aria-pressed="${BHS === 'en'}" title="English">${FLAG_EN}<span>EN</span></button></div>`;
+}
+function gantiBahasa(k) {
+  BHS = k === 'en' ? 'en' : 'id'; try { localStorage.setItem(BHS_KEY, BHS); } catch (e) {}
+  document.documentElement.lang = bhsAktif() ? 'en' : 'id';
+  if (dlg.open) dlg.close();
+  render();
+}
+const BLN_ID = {Januari: 'January', Februari: 'February', Maret: 'March', April: 'April', Mei: 'May', Juni: 'June', Juli: 'July', Agustus: 'August', September: 'September', Oktober: 'October', November: 'November', Desember: 'December',
+  Jan: 'Jan', Feb: 'Feb', Mar: 'Mar', Apr: 'Apr', Jun: 'Jun', Jul: 'Jul', Agu: 'Aug', Agt: 'Aug', Sep: 'Sep', Okt: 'Oct', Nov: 'Nov', Des: 'Dec'};
+const HARI_ID = {Senin: 'Monday', Selasa: 'Tuesday', Rabu: 'Wednesday', Kamis: 'Thursday', Jumat: 'Friday', "Jum'at": 'Friday', Sabtu: 'Saturday', Minggu: 'Sunday'};
+const RE_BLN = 'Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Jun|Jul|Agu|Agt|Sep|Okt|Nov|Des';
+const tglEN = t => t.replace(new RegExp(`(\\d{1,2}\\s)?\\b(${RE_BLN})\\b(?=\\s\\d{4}|\\s*$|\\))`, 'g'), (m, d, b) => (d || '') + (BLN_ID[b] || b))
+  .replace(/\b(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)\b(?=,)/g, h => HARI_ID[h]).replace(/(\d+) tahun\b/g, '$1 years').replace(/\bpukul\b/g, 'at').replace(/(\d+) jam (\d+) menit lagi/, '$1 h $2 min left');
+const I18N = {
+  // login & papan
+  'Lingkungan yang tertata,': 'A well-organized', 'warga yang terhubung.': 'neighborhood, a connected community.',
+  'Iuran dan kas RT yang transparan': 'Transparent dues and community funds', 'Keamanan dan pos jaga terpantau': 'Monitored security and guard post', 'Layanan warga dalam satu aplikasi': 'All resident services in one app',
+  'Selamat datang': 'Welcome', 'Masuk dengan No. HP dan password.': 'Sign in with your phone number and password.', 'No. HP': 'Phone number', 'Lihat': 'Show', 'Sembunyikan': 'Hide', 'Masuk': 'Sign in', 'Lupa password?': 'Forgot password?',
+  'Info warga': 'Resident info', 'Ilustrasi perumahan': 'Housing illustration', 'Tampilkan password': 'Show password', 'Tutup': 'Close', 'Bendera Indonesia': 'Indonesian flag',
+  '📲 Pasang aplikasi di HP': '📲 Install the app on your phone', 'Memeriksa…': 'Checking…', 'Hubungi': 'Contact', 'Pemilik aplikasi': 'the app owner', 'atau': 'or', 'pengurus RT': 'the RT committee',
+  '. Password Anda akan direset dari menu Admin, lalu password sementara dikirim lewat WhatsApp ke No. HP Anda.': '. Your password will be reset from the Admin menu and a temporary password will be sent to your phone via WhatsApp.',
+  'Kembali ke login': 'Back to sign in', 'Akun dengan email? Reset lewat email': 'Email account? Reset by email',
+  '📢 Pengumuman': '📢 Announcements', '🛠️ Keluhan warga': '🛠️ Resident complaints', 'diperbarui otomatis': 'updated automatically', 'Akan datang': 'Upcoming', 'Sudah lewat': 'Past',
+  'Ditindaklanjuti': 'In progress', 'Selesai bulan ini': 'Resolved this month', 'Masuk untuk melapor keluhan dan melihat detail.': 'Sign in to report complaints and see details.', 'Menunggu ditinjau pengurus': 'Waiting for committee review',
+  'Isi No. HP dan password.': 'Enter your phone number and password.', 'No. HP minimal 10 digit, mis. 081234567890.': 'Phone number must be at least 10 digits, e.g. 081234567890.',
+  'No. HP atau password salah.': 'Incorrect phone number or password.', 'Email atau password salah.': 'Incorrect email or password.',
+  'Silakan coba lagi. Pastikan No. HP dan password benar.': 'Please try again. Make sure your phone number and password are correct.',
+  'Sesi berakhir. Silakan masuk lagi.': 'Session ended. Please sign in again.', 'Sesi Anda diakhiri oleh Pemilik aplikasi. Silakan masuk lagi.': 'Your session was ended by the app owner. Please sign in again.',
+  'Anda keluar otomatis karena tidak aktif 15 menit.': 'You were signed out automatically after 15 minutes of inactivity.',
+  'Verifikasi anti-bot gagal atau kedaluwarsa. Tunggu kotak verifikasi selesai lalu coba lagi.': 'Anti-bot verification failed or expired. Wait for the verification box to finish, then try again.',
+  // header & menu
+  'Keluar': 'Sign out', 'Struktur Kepengurusan': 'Committee Structure', 'Struktur': 'Committee', 'Rumah saya': 'My home', 'Rumah': 'Home', 'Keamanan': 'Security', 'Aman': 'Security', 'Keluhan saya': 'My complaints', 'Lapor': 'Report',
+  'Pengumuman': 'Announcements', 'Info': 'News', 'Sumbangan': 'Donations', 'Sumbang': 'Donate', 'Kebersihan': 'Cleanliness', 'Bersih': 'Clean', 'Kerohanian': 'Religious', 'Rohani': 'Religious', 'Lapak Warga': 'Resident Market', 'Lapak': 'Market', 'Lainnya': 'More',
+  'Menu lainnya': 'More menu', 'Ganti ke tampilan gelap': 'Switch to dark mode', 'Ganti ke tampilan terang': 'Switch to light mode', 'Keamanan akun': 'Account security', 'Keamanan akun: password, sidik jari, PIN': 'Account security: password, fingerprint, PIN',
+  // rumah saya
+  'Lunas': 'Paid', 'Belum': 'Unpaid', 'Belum bayar': 'Not paid yet', 'Belum jatuh tempo': 'Not yet due', 'Tunggakan': 'Arrears', 'Tidak ada tunggakan': 'No arrears', 'Cara pembayaran': 'How to pay', 'Data rumah': 'House details', 'Ubah data': 'Edit details',
+  'Nomor rumah': 'House number', 'Kepala keluarga': 'Head of household', 'Jenis kelamin': 'Gender', 'Laki-laki': 'Male', 'Perempuan': 'Female', 'Agama': 'Religion', 'Tanggal lahir': 'Date of birth', 'No. HP / WhatsApp': 'Phone / WhatsApp',
+  'Status huni': 'Residency status', 'Pemilik': 'Owner', 'Penyewa / kontrak': 'Tenant', 'Kontrak': 'Tenant', 'Sewa': 'Tenant', 'Jumlah jiwa': 'Household members', 'Wajib iuran sejak': 'Dues required since', 'Data keluarga': 'Family members', 'Ubah data keluarga': 'Edit family members',
+  'No': 'No', 'Nama lengkap': 'Full name', 'Hubungan': 'Relationship', 'Umur': 'Age', 'Istri': 'Wife', 'Suami': 'Husband', 'Anak': 'Child', 'Orang tua': 'Parent', 'Mertua': 'Parent-in-law', 'Menantu': 'Child-in-law', 'Cucu': 'Grandchild', 'Saudara': 'Relative',
+  'Tambah, ubah atau hapus anggota keluarga lewat tombol Ubah data keluarga.': 'Add, edit or remove family members with the Edit family members button.',
+  'Riwayat iuran': 'Dues history', 'Tahun': 'Year', 'Semua tahun': 'All years', 'Bulan lunas': 'Months paid', 'Total dibayar': 'Total paid', 'Bulan': 'Month', 'Status': 'Status', 'Tanggal bayar': 'Payment date', 'Tgl': 'Date', 'Metode': 'Method', 'Jumlah': 'Amount',
+  'Tunai': 'Cash', 'Transfer': 'Transfer', 'Kwitansi': 'Receipt', 'Jumlah dibayar': 'Total paid', 'Belum ada tagihan pada tahun ini.': 'No bills this year.', 'seluruh periode': 'all periods',
+  'Alamat & peta rumah': 'Address & map', 'Tampilkan peta': 'Show map', 'Ketuk untuk memuat peta Google Maps': 'Tap to load Google Maps', 'Petunjuk arah': 'Directions', 'Buka di Google Maps': 'Open in Google Maps', 'Kirim alamat ke tamu / kurir': 'Send address to guest / courier', 'Salin alamat': 'Copy address',
+  '🧹 Kebersihan lingkungan': '🧹 Neighborhood cleanliness', 'Lihat jadwal': 'See schedule', 'Kegiatan berikutnya': 'Next activity', 'Lapor masalah kebersihan': 'Report a cleanliness problem', 'Baru di Lapak Warga': 'New in Resident Market', 'Lihat semua': 'See all',
+  'Bisa antar': 'Delivery available', 'Pre-order': 'Pre-order', 'Simpan ke favorit': 'Save to favorites', 'Pilih tahun riwayat iuran': 'Choose dues history year', 'WhatsApp': 'WhatsApp',
+  // struktur
+  'Pelindung': 'Patron', 'Ketua': 'Chair', 'Wakil ketua': 'Vice chair', 'Sekretaris & bendahara': 'Secretary & treasurer', 'Koordinator & seksi': 'Coordinators & sections', 'Koordinator blok': 'Block coordinators', 'Petugas keamanan': 'Security staff', 'Petugas kebersihan': 'Cleaning staff', 'Petugas lainnya': 'Other staff',
+  'Ketua RT': 'RT Chair', 'Wakil Ketua RT': 'RT Vice Chair', 'Sekretaris': 'Secretary', 'Bendahara': 'Treasurer', 'Satpam': 'Security guard', 'Seksi Keamanan': 'Security Section', 'Seksi Kebersihan': 'Cleanliness Section', 'Seksi Kerohanian': 'Religious Affairs Section', 'Seksi Sosial': 'Social Section', 'Seksi Pembangunan': 'Development Section', 'Humas': 'Public Relations',
+  'Koordinator Keamanan': 'Security Coordinator', 'Koordinator Kebersihan': 'Cleanliness Coordinator', 'Koordinator Kerohanian': 'Religious Affairs Coordinator', 'Anggota pengurus': 'Committee member',
+  'Bagikan ke WhatsApp': 'Share to WhatsApp', 'Unduh PDF': 'Download PDF', 'Memuat struktur kepengurusan…': 'Loading committee structure…',
+  // keamanan
+  'Panggil satpam saat darurat, titip rumah, dan cek paket Anda.': 'Call security in an emergency, register your house while away, and check your parcels.', 'Tombol darurat': 'Emergency button',
+  'Tekan bila ada kebakaran, pencurian, atau darurat medis. Panggilan langsung tampil di layar pos satpam dan pengurus.': 'Press for fire, theft or a medical emergency. The alert appears instantly at the guard post and on committee screens.',
+  'Paket untuk saya': 'My parcels', 'Ambil di pos': 'Pick up at the post', 'Sudah diambil': 'Picked up', 'Diambil': 'Picked up', 'Di pos': 'At the post', 'Titip rumah': 'House watch', '+ Titip rumah': '+ House watch',
+  'Akan bepergian? Titipkan rumah supaya satpam memeriksa saat patroli.': 'Going away? Register your house so security checks it on patrol.', 'Tamu ke rumah saya': 'Visitors to my house', 'Belum ada tamu tercatat di pos.': 'No visitors recorded at the post yet.',
+  'Belum ada paket.': 'No parcels yet.', 'Nomor darurat': 'Emergency numbers', 'Polisi': 'Police', 'Salin': 'Copy', 'Ambulans': 'Ambulance', 'Pemadam kebakaran': 'Fire brigade', 'PLN (gangguan listrik)': 'PLN (power outage)', 'Alamat untuk petugas darurat': 'Address for emergency services',
+  'Kirim alamat darurat via WhatsApp': 'Send emergency address via WhatsApp', 'Panggilan darurat terkirim': 'Emergency alert sent', 'Batalkan, situasi sudah aman': 'Cancel, the situation is safe', 'Aktif': 'Active', 'Selesai': 'Done', 'Lewat jadwal pulang': 'Past return date',
+  'Catatan patroli': 'Patrol notes', 'Belum ada catatan patroli.': 'No patrol notes yet.', 'Kirim panggilan darurat': 'Send emergency alert', 'Jenis darurat': 'Emergency type', 'Kebakaran': 'Fire', 'Pencurian / perampokan': 'Theft / robbery', 'Darurat medis': 'Medical emergency', 'Orang mencurigakan': 'Suspicious person', 'Lainnya ': 'Other',
+  'Pesan singkat (opsional)': 'Short message (optional)', 'Panggilan ini tampil di layar pos satpam dan pengurus yang sedang membuka aplikasi. Untuk keadaan sangat genting, hubungi juga nomor darurat di halaman ini.': 'This alert appears at the guard post and for committee members who have the app open. In a critical situation, also call the emergency numbers on this page.',
+  'Kirim sekarang': 'Send now', 'mis. asap dari dapur, butuh bantuan': 'e.g. smoke from the kitchen, need help', 'akan dipantau satpam saat patroli selama Anda pergi.': 'will be checked by security on patrol while you are away.', 'Pergi tanggal': 'Leaving on', 'Pulang tanggal': 'Returning on',
+  'Kontak yang bisa dihubungi': 'Contact person', 'Catatan untuk satpam': 'Notes for security', 'Titipkan': 'Register', 'mis. lampu teras dinyalakan, kunci dititip ke rumah B-02': 'e.g. porch light left on, key left at house B-02',
+  'Panggilan darurat terkirim ke pos satpam.': 'Emergency alert sent to the guard post.', 'Panggilan darurat dibatalkan.': 'Emergency alert cancelled.', 'Rumah dititipkan. Satpam akan memantau saat patroli.': 'House registered. Security will check it on patrol.',
+  // keluhan
+  'Laporkan masalah di lingkungan dan pantau tanggapan pengurus.': 'Report neighborhood problems and follow the committee response.', '+ Laporkan keluhan': '+ Report a complaint', 'Laporkan keluhan': 'Report a complaint', 'Anda belum pernah mengirim keluhan.': 'You have not sent any complaints yet.',
+  'Menunggu ditinjau pengurus.': 'Waiting for committee review.', 'Sedang ditangani.': 'Being handled.', 'Baru': 'New', 'Diproses': 'In progress', 'Judul': 'Title', 'Kategori': 'Category', 'Uraian': 'Description', 'Lokasi': 'Location',
+  'Kebersihan & sampah': 'Cleanliness & waste', 'Jalan & saluran air': 'Roads & drainage', 'Penerangan jalan': 'Street lighting', 'Air & listrik': 'Water & electricity', 'Fasilitas umum': 'Public facilities', 'Ketertiban & tetangga': 'Order & neighbors',
+  'Foto kejadian': 'Incident photos', '(opsional, maks. 2)': '(optional, max. 2)', 'Tambah foto': 'Add photo', 'Batal': 'Cancel', 'Kirim laporan': 'Send report', 'Mengunggah foto…': 'Uploading photos…',
+  'Hanya foto (JPG/PNG/WebP), bukan video. Maksimal 2 foto; foto besar otomatis dikecilkan di bawah 1 MB.': 'Photos only (JPG/PNG/WebP), no videos. Max. 2 photos; large photos are resized below 1 MB automatically.',
+  'Maksimal 2 foto per laporan.': 'Max. 2 photos per report.', 'Menyiapkan foto…': 'Preparing photo…', 'Video atau file selain foto tidak bisa diunggah. Pilih foto (JPG/PNG/WebP).': 'Videos or non-photo files cannot be uploaded. Choose a photo (JPG/PNG/WebP).',
+  'mis. Lampu jalan depan rumah mati': 'e.g. Street light in front of my house is out', 'Apa yang terjadi, sejak kapan': 'What happened, since when', 'Isi notulen masih kosong.': 'Content is empty.',
+  'Laporan terkirim. Pengurus akan menindaklanjuti.': 'Report sent. The committee will follow up.', 'Laporan terkirim.': 'Report sent.', 'Foto tidak bisa dimuat': 'Photo could not be loaded',
+  // pengumuman
+  'Kabar untuk warga. Bagikan ke grup WhatsApp dengan satu tombol.': 'News for residents.', 'Disematkan': 'Pinned', 'Waktu:': 'Time:', 'Tempat:': 'Place:', 'Saring pengumuman': 'Filter announcements', 'Belum ada pengumuman.': 'No announcements yet.',
+  'Informasi': 'Information', 'Kegiatan': 'Activity', 'Kerja bakti': 'Community clean-up', 'Rapat warga': 'Residents meeting', 'Keagamaan': 'Religious', 'Berita duka': 'Condolences', 'Kesehatan': 'Health', 'Rapat': 'Meeting', 'Penting': 'Important',
+  // sumbangan
+  'Sumbangan warga': 'Resident donations', 'Program penggalangan dana di lingkungan kita, lengkap dengan perkembangan dan penyalurannya.': 'Fundraising programs in our neighborhood, with progress and distribution.', 'Sedang berjalan': 'Ongoing', 'Tanpa batas waktu': 'No deadline',
+  'Sumbangan Anda diterima': 'Your donation was received', 'Kirim sumbangan lagi': 'Donate again', 'Cara menyumbang': 'How to donate', 'Saya sudah menyumbang': 'I have donated',
+  'Setelah transfer atau menyerahkan tunai, tekan "Saya sudah menyumbang" agar bendahara bisa memverifikasi.': 'After transferring or handing over cash, press "I have donated" so the treasurer can verify it.', 'Terima kasih! Konfirmasi terkirim ke bendahara.': 'Thank you! Your confirmation was sent to the treasurer.',
+  'Menunggu verifikasi': 'Awaiting verification', 'Diterima': 'Received', 'Ditolak': 'Rejected',
+  // kebersihan
+  'Kebersihan lingkungan': 'Neighborhood cleanliness', 'Jadwal angkut sampah, kerja bakti & fogging, pengecekan harian petugas, dan laporan kebersihan dari warga.': 'Waste collection schedule, clean-ups & fogging, daily staff checks, and cleanliness reports from residents.',
+  '+ Lapor masalah kebersihan': '+ Report a cleanliness problem', 'Beranda': 'Overview', 'Jadwal sampah': 'Waste schedule', 'Laporan saya': 'My reports', 'laporan kebersihan sedang diproses': 'cleanliness reports in progress', 'Jadwal angkut minggu ini': 'Collection schedule this week',
+  'Sen': 'Mon', 'Sel': 'Tue', 'Rab': 'Wed', 'Kam': 'Thu', 'Jum': 'Fri', 'Sab': 'Sat', 'Min': 'Sun', 'Sampah rumah tangga': 'Household waste', 'Sampah organik': 'Organic waste', 'Sampah anorganik / daur ulang': 'Inorganic / recyclable waste', 'Sampah besar / puing / ranting': 'Bulky waste / rubble / branches',
+  'Pengangkut:': 'Collector:', 'Aturan & tips kebersihan': 'Cleanliness rules & tips', 'Pilah sampah organik dan anorganik sebelum dibuang.': 'Separate organic and inorganic waste before throwing it away.',
+  'Keluarkan sampah sesuai jadwal angkut, dalam kantong tertutup.': 'Put waste out on collection days, in closed bags.', 'Dilarang membakar sampah di lingkungan perumahan.': 'Burning waste in the housing area is prohibited.',
+  'Jangan membuang sampah, minyak, atau puing ke saluran air.': 'Do not dump waste, oil or rubble into drains.', 'Lakukan 3M Plus seminggu sekali: menguras, menutup, mendaur ulang, dan cegah gigitan nyamuk.': 'Do 3M Plus once a week: drain, cover, recycle, and prevent mosquito bites.',
+  'Sampah besar (kasur, puing, ranting) dikumpulkan saat jadwal angkut sampah besar.': 'Bulky waste (mattresses, rubble, branches) is collected on bulky-waste days.', 'Lapor sampah menumpuk / saluran mampet': 'Report piled-up waste / blocked drains', 'Bagian kebersihan': 'Cleanliness section',
+  // kerohanian
+  'Agenda': 'Agenda', 'Kabar duka': 'Condolences', 'Qurban': 'Qurban', 'Imsak': 'Imsak', 'Subuh': 'Fajr', 'Terbit': 'Sunrise', 'Dzuhur': 'Dhuhr', 'Ashar': 'Asr', 'Maghrib': 'Maghrib', 'Isya': 'Isha', 'Berikutnya:': 'Next:', 'Bagikan': 'Share', 'Bagian kerohanian': 'Religious section', 'Jadwal sholat hari ini': "Today's prayer times",
+  'Pengajian rutin': 'Regular religious study', 'Kajian': 'Religious study', 'Ibadah': 'Worship', 'Santunan': 'Charity',
+  // lapak
+  '+ Jual sesuatu': '+ Sell something', 'Jual sesuatu': 'Sell something', 'Terbaru': 'Newest', 'Harga terendah': 'Lowest price', 'Harga tertinggi': 'Highest price', 'Semua': 'All',
+  '🍱 Makanan & minuman': '🍱 Food & drinks', '🧁 Kue & camilan': '🧁 Cakes & snacks', '🧺 Kebutuhan rumah': '🧺 Household needs', '👕 Fashion': '👕 Fashion', '📱 Elektronik & gadget': '📱 Electronics & gadgets', '♻️ Barang bekas (preloved)': '♻️ Preloved items', '🛠️ Jasa': '🛠️ Services', '📚 Les & kursus': '📚 Tutoring & courses', '🏠 Sewa / properti': '🏠 Rent / property', '🪴 Tanaman & hewan': '🪴 Plants & pets', '🛍️ Lainnya': '🛍️ Others',
+  'Lapak tampil 60 hari dan bisa diperpanjang penjual. Pengurus RT tidak ikut dalam transaksi; periksa barang sebelum membayar.': 'Listings stay up for 60 days and can be extended by the seller. The RT committee is not part of any transaction; check items before paying.',
+  'Tampilan lapak': 'Market view', 'Cari produk, jasa, atau nomor rumah…': 'Search products, services or house number…', 'Cari di lapak': 'Search the market', 'Urutkan': 'Sort', 'Foto produk': 'Product photos', '(maks. 5)': '(max. 5)', 'Foto pertama jadi sampul. Otomatis diperkecil agar hemat kuota.': 'The first photo is the cover. Photos are resized automatically to save data.',
+  'Nama produk / jasa': 'Product / service name', 'Kondisi': 'Condition', 'Bekas': 'Used', 'Jenis harga': 'Price type', 'Harga pas': 'Fixed price', 'Bisa nego': 'Negotiable', 'Mulai dari': 'Starting from', 'Gratis': 'Free', 'Harga (Rp)': 'Price (Rp)', 'Satuan': 'Unit', '(opsional)': '(optional)', 'Deskripsi': 'Description', 'Ambil di rumah': 'Pick up at home', 'Pasang lapak': 'Post listing',
+  'Hubungi penjual': 'Contact seller', 'Favorit': 'Favorites',
+  // form rumah
+  'Ubah data rumah saya': 'Edit my house details', 'Nomor rumah, status huni dan wajib iuran hanya bisa diubah pengurus RT.': 'House number, residency status and dues can only be changed by the RT committee.', 'Nama kepala keluarga': 'Head of household name',
+  '— Pilih agama —': '— Choose religion —', 'Kristen': 'Christian', 'Katolik': 'Catholic', 'Hindu': 'Hindu', 'Buddha': 'Buddhist', 'Konghucu': 'Confucian', 'Kepercayaan terhadap Tuhan YME': 'Traditional belief', 'Islam': 'Islam', 'Dipakai di surat pengantar': 'Used in cover letters',
+  'Anggota keluarga': 'Family members', '+ Tambah anggota': '+ Add member', 'Belum ada anggota keluarga selain kepala keluarga.': 'No family members other than the head of household yet.', 'Hapus': 'Delete', 'Sama dengan kepala keluarga': 'Same as head of household', 'Simpan perubahan': 'Save changes', 'Simpan': 'Save',
+  'Data rumah Anda tersimpan. Pengurus RT bisa melihat perubahannya.': 'Your house details were saved. The RT committee can see the changes.',
+  // keamanan akun & idle
+  'Dipakai saat masuk dengan No. HP.': 'Used when signing in with your phone number.', 'Ganti password': 'Change password', 'Sidik jari / wajah': 'Fingerprint / face', 'Perangkat / browser ini tidak mendukung.': 'This device / browser is not supported.', 'PIN aplikasi': 'App PIN',
+  '4–6 angka untuk membuka aplikasi, cadangan bila sidik jari gagal.': '4–6 digits to unlock the app, a backup if fingerprint fails.', 'Atur PIN': 'Set PIN', 'Ubah PIN': 'Change PIN', 'Aktifkan': 'Enable', 'Matikan': 'Turn off', 'terkunci otomatis': 'locks automatically',
+  'Anda akan keluar otomatis': 'You will be signed out automatically', 'detik.': 'seconds.', 'Keluar sekarang': 'Sign out now', 'Tetap masuk': 'Stay signed in', 'Teks disalin. Tempel di WhatsApp atau aplikasi lain.': 'Text copied. Paste it in WhatsApp or another app.',
+  'Password lama': 'Current password', 'Password baru': 'New password', 'Ulangi password baru': 'Repeat new password', 'Password berhasil diganti.': 'Password changed successfully.',
+  'Masukkan PIN': 'Enter PIN', 'Aplikasi terkunci': 'App locked', 'Buka dengan sidik jari': 'Unlock with fingerprint', 'Masuk dengan No. HP & password': 'Sign in with phone & password',
+  'Hari ini batas pembayaran.': 'Today is the payment deadline.',
+  // sapaan tema login
+  'Selamat Tahun Baru! Semoga lingkungan kita makin rukun.': 'Happy New Year! May our neighborhood grow ever closer.',
+  'Musim hujan — yuk cek saluran air di depan rumah.': 'Rainy season — please check the drain in front of your house.',
+  'Hari Air Sedunia (22 Maret) — hemat air, jaga sumbernya.': 'World Water Day (March 22) — save water, protect its sources.',
+  'Selamat Hari Kartini (21 April) — perempuan hebat, keluarga kuat.': 'Happy Kartini Day (April 21) — strong women, strong families.',
+  'Hari Kebangkitan Nasional (20 Mei) — bangkit dan maju bersama.': 'National Awakening Day (May 20) — rise and move forward together.',
+  'Hari Lingkungan Hidup (5 Juni) — jaga kebersihan kluster kita.': 'World Environment Day (June 5) — keep our cluster clean.',
+  'Hari Anak Nasional (23 Juli) — lingkungan aman untuk anak bermain.': 'National Children\'s Day (July 23) — a safe place for kids to play.',
+  'Musim kemarau — hemat air dan waspada kebakaran.': 'Dry season — save water and watch out for fires.',
+  'Hari Batik (2 Okt) & Sumpah Pemuda (28 Okt) — bersatu dalam keberagaman.': 'Batik Day (Oct 2) & Youth Pledge Day (Oct 28) — united in diversity.',
+  'Hari Pahlawan (10 November) — mengenang jasa para pahlawan.': 'Heroes\' Day (November 10) — honoring our national heroes.',
+  'Hari Ibu (22 Desember) — terima kasih para ibu. Sampai jumpa di tahun baru!': 'Mother\'s Day (December 22) — thank you, mothers. See you in the new year!',
+  'Marhaban ya Ramadan — selamat menunaikan ibadah puasa.': 'Marhaban ya Ramadan — wishing you a blessed fast.',
+  'Selamat Hari Raya Idul Fitri — mohon maaf lahir dan batin.': 'Happy Eid al-Fitr — please forgive us for any wrongdoing.',
+  'Selamat Hari Raya Idul Adha.': 'Happy Eid al-Adha.', 'Selamat Natal bagi warga yang merayakan — damai di lingkungan kita.': 'Merry Christmas to all who celebrate — peace in our neighborhood.',
+  'Tahun Baru': 'New Year', 'Musim hujan': 'Rainy season', 'Hari Air Sedunia': 'World Water Day', 'Hari Kartini': 'Kartini Day', 'Hari Kebangkitan Nasional': 'National Awakening Day', 'Hari Lingkungan Hidup': 'World Environment Day', 'Hari Anak Nasional': 'National Children\'s Day',
+  'HUT Republik Indonesia': 'Indonesian Independence Day', 'Senja kemarau': 'Dry-season sunset', 'Hari Batik & Sumpah Pemuda': 'Batik Day & Youth Pledge', 'Hari Pahlawan': 'Heroes\' Day', 'Akhir tahun & Hari Ibu': 'Year end & Mother\'s Day', 'Ramadan': 'Ramadan', 'Idul Fitri': 'Eid al-Fitr', 'Idul Adha': 'Eid al-Adha', 'Natal': 'Christmas',
+  'Data warga, iuran, kas, keluhan dan surat': 'Residents, dues, funds, complaints and letters', 'Hanya lihat': 'View only',
+};
+const I18N_RE = [
+  [/^Iuran (\S+ \d{4})$/, m => 'Dues ' + tglEN(m[1])],
+  [/^(\d+) bulan$/, m => m[1] + (m[1] === '1' ? ' month' : ' months')], [/^(\d+) orang$/, m => m[1] + ' people'], [/^(\d+) tahun$/, m => m[1] + ' years'], [/^(\d+) th$/, m => m[1] + ' y'], [/^(\d+) info$/, m => m[1] + ' items'],
+  [/^(\d+) di pos$/, m => m[1] + ' at the post'], [/^(\d+) terakhir$/, m => 'last ' + m[1]], [/^(\d+) hari lalu$/, m => m[1] + ' days ago'], [/^(\d+) kegiatan$/, m => m[1] + ' activities'],
+  [/^Rp ([\d.]+) per bulan( · jatuh tempo tgl (\d+))?$/, m => `Rp ${m[1]} per month${m[2] ? ' · due on day ' + m[3] : ''}`],
+  [/^(.+) bulan belum dibayar$/, m => m[1] + ' months unpaid'], [/^tahun (\d{4})$/, m => 'year ' + m[1]],
+  [/^Warga · (.+)$/, m => 'Resident · ' + m[1]], [/^Selamat datang, (.+)\.$/, m => `Welcome, ${m[1]}.`],
+  [/^Diumumkan (.+)$/, m => 'Posted ' + tglEN(m[1])], [/^Tanggapan pengurus · (.+)$/, m => 'Committee response · ' + tglEN(m[1])], [/^Tanggapan pengurus$/, () => 'Committee response'], [/^Lokasi: (.+)$/, m => 'Location: ' + m[1]],
+  [/^· dilaporkan (.+)$/, m => '· reported ' + tglEN(m[1])], [/^Sedang ditindaklanjuti pengurus sejak (.+)$/, m => 'Being handled by the committee since ' + tglEN(m[1])],
+  [/^Diterima satpam (.+)$/, m => 'Received by security ' + tglEN(m[1])], [/^Semua (\d+)$/, m => 'All ' + m[1]], [/^Acara mendatang (\d+)$/, m => 'Upcoming events ' + m[1]], [/^Favorit (\d+)$/, m => 'Favorites ' + m[1]], [/^Lapak saya (\d+)$/, m => 'My listings ' + m[1]],
+  [/^Daftar penyumbang \((\d+)\)$/, m => `Donors (${m[1]})`], [/^(\d+) penyumbang dari target (.+)$/, m => `${m[1]} donors of a ${m[2]} target`], [/^Saran (Rp [\d.]+) per rumah$/, m => `Suggested ${m[1]} per house`], [/^(\d+) penyumbang$/, m => m[1] + ' donors'],
+  [/^(Rp [\d.]+) · (.+)$/, m => m[1] + ' · ' + tglEN(m[2])], [/^Agenda (\d+) hari ke depan$/, m => `Agenda for the next ${m[1]} days`], [/^Jadwal sholat (.+) · metode Kemenag RI$/, m => `Prayer times ${m[1]} · Ministry of Religious Affairs method`],
+  [/^(Subuh|Dzuhur|Ashar|Maghrib|Isya|Imsak)( besok)? (\d\d:\d\d) · (.+)$/, m => `${I18N[m[1]]}${m[2] ? ' tomorrow' : ''} ${m[3]} · ${tglEN(m[4])}`], [/^↻ Setiap (\S+)$/, m => '↻ Every ' + (HARI_ID[m[1]] || m[1])],
+  [/^Telepon (.+)$/, m => 'Call ' + m[1]], [/^Chat (.+) di WhatsApp$/, m => `Chat with ${m[1]} on WhatsApp`], [/^Lihat NIK (.+)$/, m => `Show NIK of ${m[1]}`], [/^Kwitansi (.+)$/, m => 'Receipt ' + tglEN(m[1])], [/^Info warga \((\d+) baru\)$/, m => `Resident info (${m[1]} new)`],
+  [/^Petugas di bawah (.+)$/, m => 'Staff under ' + m[1]], [/^Periode (.+)$/, m => 'Term ' + tglEN(m[1])], [/^Tema (.+)$/, m => 'Theme ' + (I18N[m[1]] || m[1])],
+  [/^Dirgahayu Republik Indonesia ke-(\d+) — 17 Agustus\.$/, m => `Happy ${m[1]}th Independence Day of the Republic of Indonesia — August 17.`],
+  [/^(Sampah rumah tangga|Sampah organik|Sampah anorganik \/ daur ulang|Sampah besar \/ puing \/ ranting) · (\d\d:\d\d)$/, m => `${I18N[m[1]]} · ${m[2]}`],
+  [/^Susunan pengurus dan petugas lingkungan (.+)\. Hubungi pengurus langsung lewat WhatsApp\.$/, m => `Committee and staff of ${m[1]}. Contact them directly on WhatsApp.`],
+  [/^(\d+) pengurus aktif\..*$/, m => `${m[1]} active committee members. The structure follows the positions set by the committee.`],
+  [/^Jadwal ibadah, agenda kegiatan keagamaan, kabar duka, dan qurban warga (.+)\.$/, m => `Worship schedule, religious events, condolences and qurban for ${m[1]} residents.`],
+  [/^Belanja dan tawarkan produk atau jasa antar tetangga (.+)\. Transaksi langsung dengan penjual lewat WhatsApp\.$/, m => `Buy and offer products or services between neighbors in ${m[1]}. Deal directly with sellers on WhatsApp.`],
+  [/^Lokasi TPS \/ bak sampah: (.+)$/, m => 'Waste collection point: ' + m[1]], [/^mis\. Depan (.+)$/, m => 'e.g. In front of ' + m[1]], [/^(\d+) tahun$/, m => m[1] + ' years'],
+  [/^Coba lagi dalam (\d+:\d\d)$/, m => 'Try again in ' + m[1]], [/^Terlalu banyak percobaan masuk yang gagal\. Demi keamanan, coba lagi dalam (\d+:\d\d)\.$/, m => `Too many failed sign-in attempts. For security, try again in ${m[1]}.`],
+  [/^Password salah (\d+) kali\. Demi keamanan, login dikunci sementara (\d+) menit\.$/, m => `Wrong password ${m[1]} times. For security, sign-in is locked for ${m[2]} minute${m[2] === '1' ? '' : 's'}.`],
+  [/^(No\. HP|Email) atau password salah\. Sisa (\d) percobaan sebelum dikunci sementara (\d+) menit\.$/, m => `Incorrect ${m[1] === 'Email' ? 'email' : 'phone number'} or password. ${m[2]} attempt${m[2] === '1' ? '' : 's'} left before a ${m[3]}-minute lock.`],
+  [/^Akun ini sedang dipakai di perangkat lain( \((.+)\))?\. Keluar dulu dari perangkat itu, lalu coba lagi\. HP hilang\? Hubungi Pemilik aplikasi\.$/, m => `This account is in use on another device${m[1] ? ' (' + m[2] + ')' : ''}. Sign out on that device first, then try again. Lost your phone? Contact the app owner.`],
+  [/^Tidak ada aktivitas selama 14 menit\. Demi keamanan, aplikasi akan keluar dalam$/, () => 'No activity for 14 minutes. For security, the app will sign out in'],
+  [/^Iuran (.+) jatuh tempo (.+)$/, m => `Dues for ${tglEN(m[1])} are due ${tglEN(m[2])}`], [/^Iuran (.+) sudah lunas$/, m => `Dues for ${tglEN(m[1])} are paid`],
+  [/^Iuran berikutnya \((.+)\) jatuh tempo (.+)\. Jatuh tempo pembayaran setiap tanggal (\d+)\.$/, () => null],
+  [/^Belum terbayar: (.+)\.(.*)$/, m => `Unpaid: ${tglEN(m[1])}.${m[2] ? ' Please contact the RT treasurer to pay.' : ''}`],
+  [/^(\d+) hari lagi\. Besarnya (Rp [\d.]+)\. Jatuh tempo pembayaran setiap tanggal (\d+)\.$/, m => `${m[1]} days left. Amount ${m[2]}. Payment is due on day ${m[3]} each month.`],
+  [/^Hari ini batas pembayaran\. Besarnya (Rp [\d.]+)\. Jatuh tempo pembayaran setiap tanggal (\d+)\.$/, m => `Today is the payment deadline. Amount ${m[1]}. Payment is due on day ${m[2]} each month.`],
+  [/^Sudah lewat (\d+) hari dan tercatat sebagai tunggakan\. Besarnya (Rp [\d.]+)\. Jatuh tempo pembayaran setiap tanggal (\d+)\.$/, m => `${m[1]} days overdue and recorded as arrears. Amount ${m[2]}. Payment is due on day ${m[3]} each month.`],
+  [/^Koordinator (.+)$/, m => /^(Keamanan|Kebersihan|Kerohanian)$/.test(m[1]) ? null : 'Coordinator ' + m[1]], [/^Wakil: (.+)$/, m => 'Deputy: ' + m[1]],
+  [/^Foto siap \((\d+) KB\)\. (.+)$/, m => `Photo ready (${m[1]} KB). ${/lagi/.test(m[2]) ? 'You can add 1 more photo.' : 'That is 2 photos (maximum).'}`],
+];
+I18N_RE.push([/^Iuran berikutnya \((.+)\) jatuh tempo (.+)\. Jatuh tempo pembayaran setiap tanggal (\d+)\.$/, m => `Next dues (${tglEN(m[1])}) are due ${tglEN(m[2])}. Payment is due on day ${m[3]} each month.`]);
+const RE_TGL_SAJA = new RegExp(`^[📅🕒\\s]*((Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu),\\s)?\\d{1,2}\\s(${RE_BLN})\\s\\d{4}`);
+const RE_BLNTHN = new RegExp(`^(${RE_BLN})( \\d{4})?$`);
+function terjemahStr(t) {
+  const k = t.replace(/\s+/g, ' ').trim(); if (!k) return null;
+  if (Object.prototype.hasOwnProperty.call(I18N, k)) return t.replace(k, I18N[k]);
+  for (const [re, fn] of I18N_RE) { const m = k.match(re); if (m) { const r = fn(m); if (r) return t.replace(k, r); } }
+  if (RE_TGL_SAJA.test(k) || RE_BLNTHN.test(k) || /^\d{1,2} (\S+) \d{4}( · .+)?$/.test(k)) { const r = tglEN(k); if (r !== k) return t.replace(k, r); }
+  return null;
+}
+const I18N_LEWAT = 'script,style,textarea,input,[contenteditable],.kw,.surat,.rt,[data-noi18n],.kel-foto,.house,.mono';
+function terjemahNode(root) {
+  if (!bhsAktif() || !root) return;
+  if (root.nodeType === 3) { root = root.parentNode; if (!root) return; }
+  if (root.nodeType !== 1 || (root.closest && root.closest(I18N_LEWAT))) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement && n.parentElement.closest(I18N_LEWAT) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+  const ns = []; while (w.nextNode()) ns.push(w.currentNode);
+  for (const n of ns) {
+    const r = terjemahStr(n.nodeValue); if (r == null || r === n.nodeValue) continue;
+    const op = n.parentElement; if (op && op.tagName === 'OPTION' && !op.hasAttribute('value')) op.setAttribute('value', op.textContent.trim());
+    n.nodeValue = r;
+  }
+  const el = [root, ...root.querySelectorAll('[placeholder],[title],[aria-label]')];
+  for (const e of el) { if (!e.getAttribute || (e.closest && e.closest('[data-noi18n],.kw,.surat'))) continue;
+    for (const a of ['placeholder', 'title', 'aria-label']) { const v = e.getAttribute(a); if (!v) continue; const r = terjemahStr(v); if (r != null && r !== v) e.setAttribute(a, r); } }
+}
+const I18N_OBS = new MutationObserver(ms => { if (!bhsAktif()) return; for (const m of ms) for (const n of m.addedNodes) terjemahNode(n); });
+I18N_OBS.observe(document.body, {childList: true, subtree: true});
+
 function authArt() {
   const rumah = [[118, 262, 1], [168, 268, .85], [212, 258, 1.1], [268, 266, .9], [318, 260, 1]].map(([x, y, k]) => {
     const w = 34 * k, h = 24 * k, r = 18 * k;
@@ -1344,7 +1552,7 @@ function authArt() {
   </aside>`;
 }
 const benderaId = () => `<span class="bendera-id" role="img" aria-label="Bendera Indonesia" title="Indonesia"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#E70011"/><rect y="10" width="30" height="10" fill="#FFFFFF"/><rect x=".5" y=".5" width="29" height="19" rx="2" fill="none" stroke="rgba(0,0,0,.18)"/></svg></span>`;
-function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? `<div class="auth-top">${benderaId()}${papanBell()}</div>` : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : vLoginKartu()}</div></div>`; }
+function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? `<div class="auth-top">${bhsTombol()}${papanBell()}</div>` : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : vLoginKartu()}</div></div>`; }
 function vLoginKartu() {
   const brand = sub => `<div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Selamat datang</h2>
     <p class="muted" style="margin:4px 0 0">${sub}</p></div>`;
@@ -6545,6 +6753,7 @@ document.addEventListener('click', async e => {
   else if (a === 'idle-tetap') { idleAkhir = Date.now(); idleWarn(0); }
   else if (a === 'idle-keluar') idleLogout(true);
   else if (a === 'akun-pindah-off') { b.disabled = true; await nonaktifkanAkunPindah(String(b.dataset.id || '').split(',').filter(Boolean)); }
+  else if (a === 'bhs') gantiBahasa(b.dataset.k);
   else if (a === 'blok-atur') openBlok(b.dataset.id);
   else if (a === 'blok-new') openBlok();
   else if (a === 'blok-tanpa') { S.tab = 'warga'; S.fBlok = '-'; S.q = ''; render(); window.scrollTo(0, 0); }
@@ -6691,7 +6900,7 @@ document.addEventListener('submit', async e => {
   const t = k => String(d[k] || '').trim();
   const ok = await putSetting({nama: t('nama') || 'Villani 5', namaLengkap: t('namaLengkap'), iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
-    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik, ...(S.sesi === 'pemilik' ? {turnstileKey: /^[0-9A-Za-z_-]{10,80}$/.test(t('turnstileKey')) ? t('turnstileKey') : ''} : {}),
+    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik, ...(S.sesi === 'pemilik' ? {pilihanBahasa: !!d.pilihanBahasa} : {}), ...(S.sesi === 'pemilik' ? {turnstileKey: /^[0-9A-Za-z_-]{10,80}$/.test(t('turnstileKey')) ? t('turnstileKey') : ''} : {}),
     lokasi: (() => { const lat = Number(d.lat), lng = Number(d.lng), L0 = lokasiRT(); const okK = isFinite(lat) && isFinite(lng) && lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141;
       const L = {alamat: t('alamat') || L0.alamat, lat: okK ? lat : L0.lat, lng: okK ? lng : L0.lng}; if (L.lat === LOKASI_DEF.lat && L.lng === LOKASI_DEF.lng) L.placeId = LOKASI_DEF.placeId; return L; })()});
   if (ok) toast('Pengaturan disimpan.');

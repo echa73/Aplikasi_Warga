@@ -5720,8 +5720,10 @@ function kartuInfo(a, ringkas) {
     ${a.isi && !ringkas ? `<p class="isi">${esc(a.isi)}</p>` : ''}
     ${a.tanggalAcara || a.tempat ? `<div class="when">${a.tanggalAcara ? `<span><b>Waktu:</b> ${esc(tglPanjang(a.tanggalAcara))}${esc(jamLbl(a.jam))}</span>` : ''}${a.tempat ? `<span><b>Tempat:</b> ${esc(a.tempat)}</span>` : ''}</div>` : ''}
     ${ringkas || isWarga() ? '' : `<div class="racts" style="justify-content:flex-start">
-      <a class="btn sm wa" href="${esc(waShare(teksInfo(a)))}" target="_blank" rel="noopener">${infoRahasia(a) ? 'Kirim ke grup pengurus (WA)' : 'Bagikan ke WhatsApp'}</a>
-      <button class="btn sm" data-act="salin" data-teks="${esc(teksInfo(a))}">Salin teks</button>
+      ${isSatpam() ? `<button type="button" class="btn sm wa" disabled aria-disabled="true" title="Satpam hanya dapat melihat pengumuman">${infoRahasia(a) ? 'Kirim ke grup pengurus (WA)' : 'Bagikan ke WhatsApp'}</button>
+      <button type="button" class="btn sm" disabled aria-disabled="true" title="Satpam hanya dapat melihat pengumuman">Salin teks</button>`
+      : `<a class="btn sm wa" href="${esc(waShare(teksInfo(a)))}" target="_blank" rel="noopener">${infoRahasia(a) ? 'Kirim ke grup pengurus (WA)' : 'Bagikan ke WhatsApp'}</a>
+      <button class="btn sm" data-act="salin" data-teks="${esc(teksInfo(a))}">Salin teks</button>`}
       ${bisa('info') ? `<button class="btn sm ghost" data-act="info-edit" data-id="${esc(a.id)}">Ubah</button>` : ''}</div>`}
   </article>`;
 }

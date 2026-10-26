@@ -116,3 +116,6 @@ Panel ilustrasi di samping form login berganti tema otomatis tiap bulan (Tahun B
 
 ### Foto keluhan
 Warga bisa melampirkan maksimal 2 foto kejadian (hanya gambar, bukan video). Foto dari HP otomatis dikecilkan di bawah 1 MB sebelum diunggah ke Supabase Storage (bucket privat `keluhan`). Foto tampil di Keluhan saya, menu Keluhan pengurus, dan laporan Kebersihan; dibuka lewat tautan bertanda tangan yang berlaku 1 jam.
+
+### Koreksi pembayaran iuran
+Menu Iuran → tombol **Koreksi** (atau "Koreksi pembayaran" di jendela Kwitansi) untuk pengurus berhak kelola Iuran. Wajib memilih alasan & mencentang pernyataan. Status bulan itu kembali Belum; pemasukan "Iuran warga" di Kas RT, Laporan keuangan, dan saldo kas otomatis berkurang (kas iuran dihitung dari catatan pembayaran). Jejak koreksi (alasan, keterangan, petugas, data lama) tersimpan di Log aktivitas. Opsional: kirim pemberitahuan ke warga lewat WhatsApp.

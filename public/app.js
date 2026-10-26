@@ -909,10 +909,10 @@ function vIuran() {
       <td>${p ? `<span class="chip ok">Lunas</span>` : lewatTempo(S.per) ? `<span class="chip bad">Belum</span>${jtHari() ? `<div class="muted" style="font-size:.76rem;margin-top:2px">lewat tempo</div>` : ''}` : `<span class="chip mute">Belum jatuh tempo</span><div class="muted" style="font-size:.76rem;margin-top:2px">s.d. ${esc(tgl(tglTempo(S.per)))}</div>`}</td>
       <td class="num">${p ? `${esc(rp(p.jumlah))}<div class="muted" style="font-size:.78rem">${esc(tgl(p.tanggal))} · ${esc(p.metode || '')}</div>` : '<span class="muted">–</span>'}</td>
       <td>${t ? `<span class="chip ${t >= 3 ? 'bad' : 'warn'} plain">${t} bln</span>` : '<span class="muted">–</span>'}</td>
-      <td class="r"><div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat bayar</button>` : ''}`}</div></td></tr>`; }).join('');
+      <td class="r"><div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>${bisa('iuran') ? `<button class="btn sm ghost" data-act="iur-koreksi" data-id="${esc(p.id)}" title="Koreksi: kembalikan ke status Belum">Koreksi</button>` : ''}` : `${btnIngatkan(w)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat bayar</button>` : ''}`}</div></td></tr>`; }).join('');
   const rowsM = list.map(w => { const p = r.pm.get(w.id), t = tunggakan(w); return `<div class="row"><span class="house">${esc(w.blok)}</span>
       <div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${p ? `Lunas ${esc(tgl(p.tanggal))} · ${esc(rp(p.jumlah))}` : `${lewatTempo(S.per) ? 'Belum bayar' + (jtHari() ? ' · lewat tempo' : '') : 'Belum jatuh tempo · s.d. ' + esc(tgl(tglTempo(S.per)))}${t ? ` · tunggakan ${t} bln` : ''}`}</div></div>
-      <div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>` : `${btnIngatkan(w, true)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat</button>` : ''}`}</div></div>`; }).join('');
+      <div class="racts">${p ? `<button class="btn sm" data-act="kwitansi" data-id="${esc(p.id)}">Kwitansi</button>${bisa('iuran') ? `<button class="btn sm ghost" data-act="iur-koreksi" data-id="${esc(p.id)}" aria-label="Koreksi pembayaran">Koreksi</button>` : ''}` : `${btnIngatkan(w, true)}${bisa('iuran') ? `<button class="btn sm pri" data-act="bayar" data-id="${esc(w.id)}" data-per="${S.per}">Catat</button>` : ''}`}</div></div>`; }).join('');
   const jtInfo = jtHari() ? (() => { const d = sisaHariTempo(S.per), belum = r.total - r.lunas;
     const cls = d < 0 ? 'bad' : d <= 3 ? 'warn' : 'info';
     return `<div class="jt-bar ${cls}"><span class="jt-ico" aria-hidden="true">📅</span><div class="grow"><b>Jatuh tempo ${esc(perLbl(S.per, true))}: ${esc(tgl(tglTempo(S.per)))}</b>
@@ -1978,7 +1978,7 @@ function vAdminLog() {
   const ringkas = d => d ? esc(d.nama || d.judul || d.uraian || d.username || d.blok || '') : '';
   const rows = S.logAkt.map(l => { const [lbl, cls] = LOG_AKSI[l.aksi] || [l.aksi, 'mute']; return `<div class="row"><div class="grow">
     <div class="t">${esc(l.nama || 'Sistem')} <span class="muted" style="font-weight:400">· ${esc(LOG_KOL[l.koleksi] || l.koleksi)}</span></div>
-    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? ' · ' + ringkas(l.data_lama) : ''}${(l.aksi === 'reset_password' || l.aksi === 'keluarkan_sesi') && l.dok_id ? ' · untuk ' + esc(l.dok_id) : ''}${l.aksi === 'keluarkan_sesi' && l.data_lama ? (l.data_lama.perangkat === 'semua' ? ' · semua perangkat' : ' · 1 perangkat') : ''}</div></div>
+    <div class="s">${esc(new Date(l.waktu).toLocaleString('id-ID', {dateStyle: 'medium', timeStyle: 'short'}))}${l.aksi === 'delete' && l.data_lama ? (l.koleksi === 'iuran' && l.data_lama.koreksi ? ` · Koreksi iuran ${esc(perLbl(l.data_lama.periode || ''))} ${esc(rp(l.data_lama.jumlah))} (${esc((wById(l.data_lama.wargaId) || {}).blok || '')}) · ${esc(l.data_lama.koreksi.alasan)}${l.data_lama.koreksi.catatan ? ' — ' + esc(l.data_lama.koreksi.catatan) : ''}` : ' · ' + ringkas(l.data_lama)) : ''}${(l.aksi === 'reset_password' || l.aksi === 'keluarkan_sesi') && l.dok_id ? ' · untuk ' + esc(l.dok_id) : ''}${l.aksi === 'keluarkan_sesi' && l.data_lama ? (l.data_lama.perangkat === 'semua' ? ' · semua perangkat' : ' · 1 perangkat') : ''}</div></div>
     <span class="chip ${cls} plain">${esc(lbl)}</span></div>`; }).join('');
   return `<div class="panel"><h3>Log aktivitas <small>200 terakhir</small></h3>
     <div class="toolbar" style="margin:-4px 0 8px"><button class="btn sm" data-act="log-muat">Muat ulang</button></div>
@@ -2297,9 +2297,8 @@ function openKwitansi(pid) {
       <div class="kw-amt"><span>${esc(rp(p.jumlah))}</span><em>${esc(terbilang(p.jumlah))}</em></div>
     </div>
     ${bisaWa || !bisa('iuran') ? '' : '<p class="muted" style="margin:0;font-size:.82rem">No. HP warga ini belum diisi, jadi kwitansi tidak bisa dikirim langsung ke WhatsApp-nya. Gunakan Salin teks.</p>'}`,
-    foot: `${bisaWa && bisa('iuran') ? `<a class="btn wa" href="${esc(waLink(w.noHp, teks))}" target="_blank" rel="noopener">Kirim ke WhatsApp</a>` : ''}${isWarga() ? '' : `<button type="button" class="btn" data-act="salin" data-teks="${esc(teks)}">Salin teks</button>`}`,
-    onDelete: async () => { const ok = await del('iuran', pid); if (ok) toast(`Pembayaran ${perLbl(p.periode)} ${w.nama} dibatalkan.`); return ok; },
-    deleteLabel: 'Batalkan pembayaran'
+    foot: `${bisa('iuran') && !isWarga() ? `<button type="button" class="btn ghost" data-act="iur-koreksi" data-id="${esc(p.id)}" style="color:var(--bad);margin-right:auto">Koreksi pembayaran</button>` : ''}${bisaWa && bisa('iuran') ? `<a class="btn wa" href="${esc(waLink(w.noHp, teks))}" target="_blank" rel="noopener">Kirim ke WhatsApp</a>` : ''}${isWarga() ? '' : `<button type="button" class="btn" data-act="salin" data-teks="${esc(teks)}">Salin teks</button>`}`,
+    onDelete: null
   });
 }
 
@@ -6118,6 +6117,42 @@ function openBayar(id, per) {
     }
   });
 }
+/* --- Koreksi pembayaran iuran: Lunas → Belum (laporan & saldo kas ikut berkurang otomatis) --- */
+const ALASAN_KOREKSI = ['Salah catat rumah / warga', 'Salah catat bulan', 'Tercatat dua kali', 'Pembayaran batal / uang dikembalikan', 'Nominal salah (akan dicatat ulang)', 'Lainnya'];
+function openKoreksiIuran(pid) {
+  if (!bisa('iuran')) return;
+  const p = S.iuran.find(x => x.id === pid); if (!p) return;
+  const w = wById(p.wargaId) || {nama: '?', blok: ''}, jml = Number(p.jumlah) || 0, co = saldoCutoff();
+  const sebelumSaldo = co.tanggal && p.tanggal < co.tanggal;
+  const lewat = lewatTempo(p.periode);
+  openDlg({title: 'Koreksi pembayaran iuran', area: 'iuran', submitLabel: 'Koreksi ke Belum',
+    body: `<div class="kw" style="padding:12px 14px"><dl class="kw-d" style="margin:0">
+        <dt>Rumah</dt><dd>${esc(w.blok)} · ${esc(w.nama)}</dd><dt>Bulan iuran</dt><dd>${esc(perLbl(p.periode, true))}</dd>
+        <dt>Dicatat lunas</dt><dd>${esc(tgl(p.tanggal))} · ${esc(p.metode || 'Tunai')}</dd><dt>Jumlah</dt><dd><b>${esc(rp(jml))}</b></dd></dl></div>
+      <div class="notice" style="margin:0;background:var(--warn-soft,#fdf3e1);color:inherit"><b>Dampak koreksi:</b><ul style="margin:6px 0 0;padding-left:18px;line-height:1.55">
+        <li>Status iuran ${esc(perLbl(p.periode, true))} rumah ini kembali <b>Belum</b>${lewat ? ' dan masuk <b>tunggakan</b>' : ' (belum jatuh tempo)'}.</li>
+        ${sebelumSaldo ? `<li>Tanggal bayar sebelum saldo awal kas (${esc(tgl(co.tanggal))}), jadi buku kas & laporan <b>tidak berubah</b>.</li>`
+          : `<li>Pemasukan "Iuran warga" tanggal ${esc(tgl(p.tanggal))} di <b>Kas RT</b> dan <b>Laporan keuangan ${esc(perLbl(p.tanggal.slice(0, 7), true))}</b> berkurang <b>${esc(rp(jml))}</b>.</li>
+             <li>Saldo kas berkurang ${esc(rp(jml))}.</li>`}
+        <li>Kwitansi pembayaran ini tidak berlaku lagi.</li></ul></div>
+      <div class="fld"><label for="ko_a">Alasan koreksi <span class="req">*</span></label><select id="ko_a" name="alasan" required><option value="">— pilih alasan —</option>${ALASAN_KOREKSI.map(a => `<option>${esc(a)}</option>`).join('')}</select></div>
+      <div class="fld"><label for="ko_c">Keterangan</label><input type="text" id="ko_c" name="catatan" maxlength="200" placeholder="mis. seharusnya untuk SB1/03, bukan SB1/02"></div>
+      ${w.noHp && waNomor(w.noHp).length >= 10 ? '<label class="ck" style="font-weight:500"><input type="checkbox" name="kabari"> Beri tahu warga lewat WhatsApp setelah koreksi</label>' : ''}
+      <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="paham" required> <span>Saya paham status pembayaran dan laporan keuangan akan berubah.</span></label>`,
+    onSubmit: async d => {
+      if (!d.alasan) { pesanDlg('Pilih alasan koreksi.', 'ko_a'); return false; }
+      if (!d.paham) { pesanDlg('Centang pernyataan bahwa Anda paham dampak koreksi.'); return false; }
+      if (d.alasan === 'Lainnya' && !String(d.catatan || '').trim()) { pesanDlg('Isi keterangan untuk alasan "Lainnya".', 'ko_c'); return false; }
+      const jejak = {...p, koreksi: {alasan: d.alasan, catatan: String(d.catatan || '').trim(), oleh: namaSesi(), waktu: nowDT()}};
+      if (!await put('iuran', pid, jejak)) return false;          // jejak alasan ikut tersimpan di Log aktivitas saat dihapus
+      const ok = await del('iuran', pid); if (!ok) return false;
+      toast(`Pembayaran ${perLbl(p.periode)} ${w.blok} dikoreksi menjadi Belum. Laporan keuangan diperbarui.`);
+      if (d.kabari) setTimeout(() => openDlg({title: 'Beri tahu warga', submitLabel: 'Tutup', onSubmit: async () => true,
+        body: `<p style="margin:0">Kirim pemberitahuan koreksi ke ${esc(w.nama)} (${esc(w.blok)}).</p>
+          <a class="btn wa" style="justify-self:start" href="${esc(waLink(w.noHp, `Yth. Bapak/Ibu ${w.nama} (${w.blok}),\n\nKami informasikan ada koreksi pencatatan iuran ${perLbl(p.periode, true)} sebesar ${rp(jml)} (dicatat ${tgl(p.tanggal)}). Status iuran bulan tersebut kami kembalikan menjadi belum dibayar.\nAlasan: ${d.alasan}${d.catatan ? ' — ' + d.catatan : ''}.\n\nMohon maaf atas ketidaknyamanannya. Bila ada pertanyaan, silakan hubungi bendahara.\n\n${pengirim()}`))}" target="_blank" rel="noopener">Kirim ke WhatsApp</a>`}), 120);
+      return true;
+    }});
+}
 function openBayarDel(pid) {
   const p = S.iuran.find(x => x.id === pid); if (!p) return;
   const w = wById(p.wargaId) || {nama: '?', blok: ''};
@@ -6382,6 +6417,7 @@ document.addEventListener('click', async e => {
   else if (a === 'warga-new') openWarga();
   else if (a === 'warga-edit') openWarga(b.dataset.id);
   else if (a === 'bayar') openBayar(b.dataset.id, b.dataset.per);
+  else if (a === 'iur-koreksi') openKoreksiIuran(b.dataset.id);
   else if (a === 'bayar-del') openBayarDel(b.dataset.id);
   else if (a === 'per') { const n = Number(b.dataset.n); S.per = n === 0 ? nowPer() : addM(S.per, n); render(); }
   else if (a === 'iurf') { S.iurFilter = b.dataset.k; render(); }

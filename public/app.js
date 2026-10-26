@@ -73,6 +73,7 @@ const pengurusAktif = () => S.pengurus.filter(p => p.aktif !== false).sort((a, b
 function pengurusSaya() { return S.profil && S.profil.peran === 'pengurus' ? S.pengurus.find(p => p.id === S.profil.pengurus_id && p.aktif !== false) || null : null; }
 function pengurusSesi() { return S.sesi && S.sesi !== 'pemilik' && S.sesi !== 'akses' && !S.sesi.startsWith('w:') ? S.pengurus.find(p => p.id === S.sesi && p.aktif !== false) || null : null; }
 function aksesLama() { return null; }
+const isSatpam = () => { const r = roleSaya(); return !!r && r.id === 'satpam'; };
 function roleSaya() {
   if (!S.sesi) return null;
   if (S.sesi === 'pemilik') return bolehPemilik() ? {id: 'pemilik', nama: 'Pemilik', izin: semua('kelola')} : null;
@@ -5515,7 +5516,7 @@ function openPaketAmbil(id) {
 }
 function kmTitip() {
   const l = [...S.titip].sort((a, b) => (a.status === 'Selesai') - (b.status === 'Selesai') || String(a.dari).localeCompare(String(b.dari)));
-  return `<div class="toolbar" style="justify-content:space-between"><p class="muted" style="margin:0;font-size:.88rem">Rumah kosong yang dititipkan warga untuk dipantau saat patroli.</p>${bisa('keamanan') ? '<button class="btn pri" data-act="titip-new">+ Titip rumah</button>' : ''}</div>
+  return `<div class="toolbar" style="justify-content:space-between"><p class="muted" style="margin:0;font-size:.88rem">Rumah kosong yang dititipkan warga untuk dipantau saat patroli.</p>${bisa('keamanan') ? (isSatpam() ? '<button class="btn pri" disabled title="Titip rumah diajukan oleh warga atau dicatat pengurus" aria-disabled="true">+ Titip rumah</button>' : '<button class="btn pri" data-act="titip-new">+ Titip rumah</button>') : ''}</div>
   ${l.length ? `<div class="kel-list">${l.map(t => titipKartu(t, bisa('keamanan'))).join('')}</div>` : '<div class="empty">Tidak ada rumah yang dititipkan.</div>'}`;
 }
 function titipKartu(t, petugas) {
@@ -6204,7 +6205,7 @@ document.addEventListener('click', async e => {
   else if (a === 'paket-new') openPaket();
   else if (a === 'paket-edit') openPaket(b.dataset.id);
   else if (a === 'paket-ambil') openPaketAmbil(b.dataset.id);
-  else if (a === 'titip-new') openTitip(false);
+  else if (a === 'titip-new') { if (!isSatpam()) openTitip(false); }
   else if (a === 'titip-warga') openTitip(true);
   else if (a === 'titip-cek') openTitipCek(b.dataset.id);
   else if (a === 'titip-selesai') { const t = S.titip.find(x => x.id === b.dataset.id); if (t && await put('titip', t.id, {...t, status: 'Selesai', selesai: nowDT()})) toast('Titip rumah selesai.'); }

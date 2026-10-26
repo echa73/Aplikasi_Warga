@@ -158,6 +158,16 @@ const DBShim = {
   collection: kol => ({doc: id => docRef(kol, id)}),
   doc: path => { const [kol, id] = String(path).split('/'); return docRef(kol, id); }
 };
+/* Satpam: data warga ringkas (rumah, kepala keluarga, No. HP) lewat RPC; tabel warga tertutup untuk satpam */
+async function muatWargaSatpam() {
+  try { const {data, error} = await SB.rpc('warga_satpam'); if (error) throw error;
+    const baru = new Set((data || []).map(r => r.id));
+    S.warga.filter(w => !baru.has(w.id)).forEach(w => buang('warga', w.id));
+    (data || []).forEach(r => taruh('warga', r.id, {blok: r.blok || '', nama: r.nama || '', noHp: r.noHp || '', status: r.status || 'Aktif', ringkas: true}));
+    sinkron('warga');
+  } catch (e) {}
+}
+setInterval(() => { if (SB && S.authUser && isSatpam() && document.visibilityState === 'visible') muatWargaSatpam().then(() => { if (S.tab === 'warga' && !dlg.open) render(); }); }, 3 * 60 * 1000);
 async function muatSemua() {
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   const n = 1000;
@@ -264,6 +274,7 @@ async function masukSesi(user) {
   S.tab = prof.peran === 'warga' ? 'portal' : 'ringkasan';
   S.sesiAsli = S.sesi; S.modeWarga = false;
   if (bisaModeWarga() && modeTersimpan()) { S.modeWarga = true; S.sesi = 'w:' + user.id; S.tab = 'portal'; }
+  if (isSatpam()) await muatWargaSatpam();
   S.terkunci = !!(S.dariPulih && sudahMasuk() && kunciAda()); S.dariPulih = false;
   S.loaded = true; render(); window.scrollTo(0, 0);
   if (S.terkunci) setTimeout(kunciAutoBio, 300);
@@ -739,7 +750,20 @@ function pratinjauImpor(siap, timpa, namaFile) {
       return true;
     }});
 }
+function vWargaSatpam() {
+  const q = S.q.trim().toLowerCase();
+  const list = wargaAktif().filter(w => !q || [w.nama, w.blok, w.noHp].some(v => String(v || '').toLowerCase().includes(q)));
+  const hp = w => w.noHp ? `<a class="mono" style="color:var(--accent);text-decoration:none" href="tel:${esc(String(w.noHp).replace(/[^\d+]/g, ''))}">📞 ${esc(w.noHp)}</a>` : '<span class="muted">—</span>';
+  return `<div class="sec-head"><div><h2>Data warga</h2><p>Cari rumah, nama kepala keluarga, atau No. HP.</p></div></div>
+  <div class="toolbar"><input class="search" type="search" id="qWarga" value="${esc(S.q)}" placeholder="Cari nomor rumah, nama, atau No. HP…" aria-label="Cari warga" style="flex:1;min-width:220px"></div>
+  ${list.length ? `<div class="tbl-wrap hide-m"><table><thead><tr><th>Rumah</th><th>Kepala keluarga</th><th>No. HP</th></tr></thead><tbody>
+    ${list.map(w => `<tr><td><span class="house">${esc(w.blok)}</span></td><td style="font-weight:600">${esc(w.nama)}</td><td>${hp(w)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="list-mobile">${list.map(w => `<div class="row"><span class="house">${esc(w.blok)}</span><div class="grow"><div class="t">${esc(w.nama)}</div><div class="s">${hp(w)}</div></div></div>`).join('')}</div>
+    <p class="muted" style="margin:8px 0 0;font-size:.82rem">${list.length} rumah${q ? ' cocok dengan pencarian' : ''}.</p>`
+    : `<div class="empty">${q ? 'Tidak ada rumah yang cocok dengan pencarian.' : 'Belum ada data warga.'}</div>`}`;
+}
 function vWarga() {
+  if (isSatpam()) return vWargaSatpam();
   const head = `<div class="sec-head"><div><h2>Data warga</h2><p>Satu baris per rumah / kepala keluarga.</p></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${bisa('warga') ? '<button class="btn" data-act="impor-warga">Impor Excel</button>' : ''}<button class="btn pri" data-act="warga-new" ${dis('warga')}>+ Tambah warga</button></div></div>`;
   if (!S.warga.length) return head + emptyWarga();
@@ -6001,6 +6025,7 @@ $('#dlgForm').addEventListener('submit', async e => {
 
 /* ---------- actions ---------- */
 function openWarga(id) {
+  if (isSatpam()) return;
   const w = id ? wById(id) : null;
   openDlg({
     title: w ? (bisa('warga') ? 'Ubah data warga' : 'Data warga') : 'Tambah warga', body: formWarga(w), area: 'warga',

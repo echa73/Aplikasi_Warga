@@ -453,3 +453,6 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 
 -- Satpam tidak bisa membuat titip rumah / keluhan baru (trg_jaga_titip_satpam, BEFORE INSERT koleksi titip & keluhan; role peranId 'satpam').
 --   Tetap bisa mencatat patroli & menandai pemilik sudah pulang (UPDATE).
+
+-- Satpam & data warga: boleh_baca('warga') = false untuk pengurus ber-peranId 'satpam'.
+--   Satpam memakai RPC warga_satpam() → hanya id, blok, nama kepala keluarga, noHp, status (warga aktif).

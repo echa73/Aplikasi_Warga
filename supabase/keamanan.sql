@@ -456,3 +456,8 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 
 -- Satpam & data warga: boleh_baca('warga') = false untuk pengurus ber-peranId 'satpam'.
 --   Satpam memakai RPC warga_satpam() → hanya id, blok, nama kepala keluarga, noHp, status (warga aktif).
+
+-- Notulensi rapat (koleksi 'notulen')
+--   baca : privat.boleh_rapat() (Pemilik & pengurus, bukan satpam/pekerja); warga tidak bisa.
+--   tulis: izin('surat') = 2 dan boleh_rapat() (Sekretaris / pengurus berhak kelola Surat).
+--   trg_jaga_notulen: isi maks 200.000 karakter. Isi berformat disaring di aplikasi (allowlist tag: p, b, i, u, h2, h3, ul, ol, li, br, span kelas ukuran/rata).

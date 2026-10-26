@@ -35,7 +35,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [],
+  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [], notulen: [], ntQ: '',
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -55,7 +55,7 @@ const DEFAULT_ROLES = [
   {id: 'ketua', nama: 'Ketua RT', ket: 'Semua menu, termasuk pengaturan', izin: semua('kelola')},
   {id: 'pengurus', nama: 'Pengurus', ket: 'Semua menu kecuali mengubah pengaturan', izin: {...semua('kelola'), pengaturan: 'lihat'}},
   {id: 'bendahara', nama: 'Bendahara', ket: 'Iuran dan buku kas', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'lihat', iuran: 'kelola', kas: 'kelola', sumbangan: 'kelola', gaji: 'kelola', keluhan: 'tidak', info: 'lihat', surat: 'tidak', pengaturan: 'tidak'}},
-  {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
+  {id: 'sekretaris', nama: 'Sekretaris', ket: 'Data warga, keluhan, pengumuman, surat, notulensi rapat', izin: {keamanan: 'tidak', portal: 'tidak', ringkasan: 'lihat', warga: 'kelola', iuran: 'lihat', kas: 'tidak', keluhan: 'kelola', info: 'kelola', surat: 'kelola', pengaturan: 'tidak'}},
   {id: 'lihat', nama: 'Lihat saja', ket: 'Hanya melihat, tanpa pengaturan', izin: {...semua('lihat'), pengaturan: 'tidak', portal: 'tidak'}},
   {id: 'satpam', nama: 'Satpam', ket: 'Pos jaga: tamu, paket, titip rumah, kejadian, jadwal jaga', izin: {...semua('tidak'), keamanan: 'kelola', jaga: 'lihat', warga: 'lihat', info: 'lihat'}},
   {id: 'koord_keamanan', nama: 'Koordinator Keamanan', ket: 'Mengelola keamanan & satpam, pengumuman; melihat data warga dan keluhan', izin: {...semua('tidak'), ringkasan: 'lihat', portal: 'lihat', warga: 'lihat', keamanan: 'kelola', keluhan: 'lihat', info: 'kelola'}},
@@ -65,7 +65,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {notulen: 'surat', blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -116,7 +116,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'notulen', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -398,9 +398,9 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['notulen','Notulensi rapat','Notulen'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'notulen' ? bolehRapatC() : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat', 'notulen']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
@@ -433,6 +433,7 @@ const ICON = {
   turun: '<path d="M4 8l5 5 4-4 7 7"/><path d="M15 16h5v-5"/>',
   kas: '<path d="M5 3.5h11a3 3 0 0 1 3 3v14H8a3 3 0 0 1-3-3z"/><path d="M5 17.5a3 3 0 0 1 3-3h11M9 8h6M9 11h4"/>',
   info: '<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/>',
+  notulen: '<rect x="5" y="3.5" width="14" height="18" rx="2"/><path d="M9 3.5V2h6v1.5M8.5 9h7M8.5 12.5h7M8.5 16h4.5"/>',
   surat: '<path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4h4M8.5 12h7M8.5 15.5h7M8.5 8.5h3"/>',
   portal: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/><circle cx="12" cy="10.5" r="1.3"/>',
   lapor: '<path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8 10h8M8 13h5"/>',
@@ -500,7 +501,7 @@ function render() {
   if (S.terkunci) { main.innerHTML = vKunci(); return; }
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -1905,7 +1906,7 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_KOL = {notulen: 'Notulensi rapat', sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn'], keluarkan_sesi: ['Akhiri sesi', 'bad']};
 /* ---------- Pengguna online (detak tiap 1 menit; dilihat Pemilik di Admin) ---------- */
 const ON = {last: 0, menu: '', data: null, err: '', memuat: false, tmr: null};
@@ -5905,6 +5906,155 @@ function openSuratBaru() {
     }
   });
 }
+/* ---------- Editor teks sederhana (ukuran, tebal, miring, garis bawah, rata, daftar) ---------- */
+const RT_TAG = {P: 'p', DIV: 'p', BR: 'br', B: 'b', STRONG: 'b', I: 'i', EM: 'i', U: 'u', UL: 'ul', OL: 'ol', LI: 'li', H1: 'h2', H2: 'h2', H3: 'h3', H4: 'h3', SPAN: 'span', FONT: 'span', BLOCKQUOTE: 'blockquote'};
+const RT_BLOK = /^(p|h2|h3|li|blockquote)$/;
+function rtBersih(html) {
+  const doc = new DOMParser().parseFromString('<!doctype html><body>' + String(html || '') + '</body>', 'text/html');
+  const out = document.createElement('div');
+  const walk = (src, dst) => { for (const n of [...src.childNodes]) {
+    if (n.nodeType === 3) { dst.appendChild(document.createTextNode(n.nodeValue)); continue; }
+    if (n.nodeType !== 1) continue;
+    const tag = RT_TAG[n.tagName];
+    if (!tag) { if (!/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|TEMPLATE|SVG|MATH|NOSCRIPT|TITLE|HEAD|LINK|META|IMG|VIDEO|AUDIO|CANVAS|FORM|INPUT|BUTTON|SELECT|TEXTAREA)$/.test(n.tagName)) walk(n, dst); continue; }
+    const el = document.createElement(tag), cls = [], kc = String(n.getAttribute('class') || '');
+    if (RT_BLOK.test(tag)) { const al = String((n.style && n.style.textAlign) || n.getAttribute('align') || (kc.match(/rt-al-(left|center|right|justify)/) || [])[1] || '').toLowerCase(); if (/^(center|right|justify)$/.test(al)) cls.push('rt-al-' + al); }
+    let fs = 0; if (n.tagName === 'FONT') { const z = Number(n.getAttribute('size')); fs = z <= 2 ? 1 : z === 3 ? 0 : z <= 5 ? 3 : 4; } else { const m = kc.match(/rt-fs-([134])/); if (m) fs = Number(m[1]); }
+    if (fs && tag === 'span') cls.push('rt-fs-' + fs);
+    if (cls.length) el.className = cls.join(' ');
+    // gaya dari span (Chrome/Word): tebal, miring, garis bawah → tag sederhana
+    let isi = el;
+    if (n.style && (tag === 'span' || tag === 'p')) {
+      const st = n.style, w = [];
+      if (/^(bold|[6-9]00)$/.test(st.fontWeight)) w.push('b');
+      if (st.fontStyle === 'italic') w.push('i');
+      if (/underline/.test(st.textDecorationLine || st.textDecoration || '')) w.push('u');
+      w.forEach(t => { const x = document.createElement(t); isi.appendChild(x); isi = x; });
+    }
+    if (tag !== 'br') walk(n, isi);
+    if (tag === 'span' && !cls.length) { while (el.firstChild) dst.appendChild(el.firstChild); continue; }
+    dst.appendChild(el);
+  } };
+  walk(doc.body, out);
+  return out.innerHTML.replace(/<p><\/p>/g, '');
+}
+function rtTeks(html) {
+  const doc = new DOMParser().parseFromString('<!doctype html><body>' + rtBersih(html) + '</body>', 'text/html');
+  doc.querySelectorAll('ol').forEach(ol => [...ol.children].forEach((li, i) => li.prepend((i + 1) + '. ')));
+  doc.querySelectorAll('ul > li').forEach(li => li.prepend('• '));
+  doc.querySelectorAll('br').forEach(b => b.replaceWith('\n'));
+  doc.querySelectorAll('h2,h3').forEach(h => { h.prepend('*'); h.append('*'); });
+  doc.querySelectorAll('p,h2,h3,li,blockquote').forEach(b => b.append('\n'));
+  return doc.body.textContent.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+function rtEditorHtml(id, html, ph) {
+  const b = (c, label, t) => `<button type="button" class="rt-b" data-rt="${c}" title="${t}" aria-label="${t}">${label}</button>`;
+  const ik = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+  return `<div class="rt-wrap"><div class="rt-bar" role="toolbar" aria-label="Format teks">
+      <select class="rt-sel" data-rtsel="blok" aria-label="Gaya paragraf" title="Gaya paragraf"><option value="P">Paragraf</option><option value="H2">Judul</option><option value="H3">Subjudul</option></select>
+      <select class="rt-sel" data-rtsel="ukuran" aria-label="Ukuran huruf" title="Ukuran huruf"><option value="">Ukuran huruf</option><option value="2">Kecil</option><option value="3">Normal</option><option value="5">Besar</option><option value="6">Sangat besar</option></select>
+      <span class="rt-sep"></span>${b('bold', '<b>B</b>', 'Tebal (Ctrl+B)')}${b('italic', '<i>I</i>', 'Miring (Ctrl+I)')}${b('underline', '<u>U</u>', 'Garis bawah (Ctrl+U)')}
+      <span class="rt-sep"></span>${b('justifyLeft', ik('M4 6h16M4 10h10M4 14h16M4 18h10'), 'Rata kiri')}${b('justifyCenter', ik('M4 6h16M7 10h10M4 14h16M7 18h10'), 'Rata tengah')}${b('justifyRight', ik('M4 6h16M10 10h10M4 14h16M10 18h10'), 'Rata kanan')}${b('justifyFull', ik('M4 6h16M4 10h16M4 14h16M4 18h16'), 'Rata kiri-kanan')}
+      <span class="rt-sep"></span>${b('insertUnorderedList', ik('M9 7h11M9 12h11M9 17h11M4.5 7h.5M4.5 12h.5M4.5 17h.5'), 'Daftar berpoin')}${b('insertOrderedList', '<span class="rt-num">1.</span>' + ik('M10 7h10M10 12h10M10 17h10'), 'Daftar bernomor')}
+      <span class="rt-sep"></span>${b('undo', '↶', 'Urungkan (Ctrl+Z)')}${b('redo', '↷', 'Ulangi (Ctrl+Y)')}${b('removeFormat', '<span style="text-decoration:line-through">T</span>', 'Hapus format')}
+    </div><div class="rt-isi rt" id="${id}" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Isi" spellcheck="true" data-ph="${esc(ph || '')}">${rtBersih(html)}</div></div>`;
+}
+function rtPasang(id) {
+  const ed = document.getElementById(id); if (!ed) return;
+  const wrap = ed.closest('.rt-wrap'), bar = wrap.querySelector('.rt-bar');
+  try { document.execCommand('styleWithCSS', false, false); document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
+  const status = () => bar.querySelectorAll('[data-rt]').forEach(b => { let on = false; try { on = /^(bold|italic|underline|justify|insert)/.test(b.dataset.rt) && document.queryCommandState(b.dataset.rt); } catch (e) {} b.classList.toggle('on', !!on); });
+  bar.addEventListener('mousedown', e => { if (e.target.closest('[data-rt]')) e.preventDefault(); });
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-rt]'); if (!b) return; ed.focus(); document.execCommand(b.dataset.rt, false, null); status(); });
+  bar.querySelectorAll('[data-rtsel]').forEach(sel => sel.addEventListener('change', () => { const v = sel.value; if (!v) return; ed.focus();
+    if (sel.dataset.rtsel === 'blok') document.execCommand('formatBlock', false, '<' + v + '>'); else { document.execCommand('fontSize', false, v); sel.value = ''; } status(); }));
+  ed.addEventListener('keyup', status); ed.addEventListener('mouseup', status);
+  ed.addEventListener('paste', e => { const cd = e.clipboardData; if (!cd) return; const h = cd.getData('text/html'), t = cd.getData('text/plain');
+    e.preventDefault(); document.execCommand('insertHTML', false, h ? rtBersih(h) : esc(t || '').replace(/\n/g, '<br>')); });
+  if (!ed.innerHTML.trim()) ed.innerHTML = '<p><br></p>';
+}
+const RT_CSS = `.rt h2{font-size:1.25em;margin:.8em 0 .3em}.rt h3{font-size:1.08em;margin:.8em 0 .3em}.rt p{margin:.35em 0}.rt ul,.rt ol{margin:.3em 0 .3em 1.4em;padding:0}.rt li{margin:.15em 0}.rt .rt-al-center{text-align:center}.rt .rt-al-right{text-align:right}.rt .rt-al-justify{text-align:justify}.rt .rt-fs-1{font-size:.85em}.rt .rt-fs-3{font-size:1.25em}.rt .rt-fs-4{font-size:1.6em}.rt blockquote{margin:.4em 0 .4em 1em;padding-left:.8em;border-left:3px solid #ccc}`;
+
+/* ---------- Notulensi rapat (dibuat sekretaris / pengurus berhak kelola Surat; dibaca pengurus) ---------- */
+const bolehRapatC = () => { if (!S.sesi || isWarga()) return false; if (S.sesi === 'pemilik') return bolehPemilik(); const p = pengurusSesi(); return !!p && !p.dariPekerja && !isSatpam(); };
+const bisaNotulen = () => bisa('surat') && bolehRapatC();
+const NT_TEMPLATE = '<h3>Agenda rapat</h3><ol><li>…</li></ol><h3>Pembahasan</h3><p>…</p><h3>Keputusan</h3><ol><li>…</li></ol><h3>Tindak lanjut</h3><ul><li>… (penanggung jawab, tenggat)</li></ul>';
+const ntPeserta = n => String(n.peserta || '').split(/\n|,/).map(x => x.trim()).filter(Boolean);
+function vNotulen() {
+  const head = `<div class="sec-head"><div><h2>Notulensi rapat</h2><p>Catatan hasil rapat pengurus dan warga. Hanya dapat dilihat pengurus.</p></div>
+    ${bisaNotulen() ? '<button class="btn pri" data-act="nt-new">+ Buat notulen</button>' : ''}</div>`;
+  if (!S.notulen.length) return head + `<div class="empty"><h3>Belum ada notulen</h3><p style="margin:0">Catat jalannya rapat: agenda, pembahasan, keputusan, dan tindak lanjut.</p>${bisaNotulen() ? '<button class="btn pri" data-act="nt-new">+ Buat notulen</button>' : ''}</div>`;
+  const q = S.ntQ.trim().toLowerCase();
+  const list = [...S.notulen].sort((a, b) => String(b.tanggal).localeCompare(String(a.tanggal)) || String(b.dibuat || '').localeCompare(String(a.dibuat || '')))
+    .filter(n => !q || [n.judul, n.tempat, n.pimpinan, n.notulis, rtTeks(n.isi)].some(v => String(v || '').toLowerCase().includes(q)));
+  return head + `<div class="toolbar"><input class="search" type="search" id="qNotulen" placeholder="Cari judul, tempat, isi notulen…" value="${esc(S.ntQ)}" aria-label="Cari notulen"></div>
+    <div class="kel-list">${list.map(n => { const ringkas = rtTeks(n.isi).replace(/\*/g, '').replace(/\s+/g, ' ');
+      return `<article class="kel ${n.status === 'Final' ? '' : 'p-Sedang'}"><div class="meta">${n.status === 'Final' ? '<span class="chip ok">Final</span>' : '<span class="chip warn">Draf</span>'}<span>${esc(tglPanjang(n.tanggal))}${n.jamMulai ? ' · ' + esc(n.jamMulai) + (n.jamSelesai ? '–' + esc(n.jamSelesai) : '') : ''}</span>${n.tempat ? `<span>· ${esc(n.tempat)}</span>` : ''}</div>
+      <h4>${esc(n.judul)}</h4><p class="muted" style="margin:0;font-size:.86rem">${ntPeserta(n).length} peserta${n.pimpinan ? ' · Pimpinan: ' + esc(n.pimpinan) : ''}${n.notulis ? ' · Notulis: ' + esc(n.notulis) : ''}</p>
+      <p style="margin:6px 0 0;font-size:.9rem;color:var(--muted)">${esc(ringkas.slice(0, 160))}${ringkas.length > 160 ? '…' : ''}</p>
+      <div class="acts"><button class="btn sm pri" data-act="nt-lihat" data-id="${esc(n.id)}">Lihat</button>${bisaNotulen() ? `<button class="btn sm" data-act="nt-edit" data-id="${esc(n.id)}">Ubah</button>` : ''}</div></article>`; }).join('') || '<div class="empty">Tidak ada notulen yang cocok.</div>'}</div>`;
+}
+function openNotulen(id) {
+  if (!bisaNotulen()) return;
+  const n = id ? S.notulen.find(x => x.id === id) : null;
+  openDlg({title: n ? 'Ubah notulen rapat' : 'Buat notulen rapat', area: 'surat', submitLabel: 'Simpan', lebar: true,
+    body: `<div class="fld"><label for="nt_j">Judul rapat <span class="req">*</span></label><input type="text" id="nt_j" name="judul" required maxlength="150" value="${esc(n ? n.judul : '')}" placeholder="mis. Rapat pengurus bulanan November"></div>
+      <div class="grid2"><div class="fld"><label for="nt_t">Tanggal <span class="req">*</span></label><input type="date" id="nt_t" name="tanggal" required value="${esc(n ? n.tanggal : todayISO())}"></div>
+        <div class="fld"><label for="nt_tp">Tempat</label><input type="text" id="nt_tp" name="tempat" maxlength="100" value="${esc(n ? n.tempat || '' : '')}" placeholder="mis. Pos jaga / rumah Ketua RT"></div></div>
+      <div class="grid2"><div class="fld"><label for="nt_m">Jam mulai</label><input type="time" id="nt_m" name="jamMulai" value="${esc(n ? n.jamMulai || '' : '')}"></div>
+        <div class="fld"><label for="nt_s">Jam selesai</label><input type="time" id="nt_s" name="jamSelesai" value="${esc(n ? n.jamSelesai || '' : '')}"></div></div>
+      <div class="grid2"><div class="fld"><label for="nt_pm">Pimpinan rapat</label><input type="text" id="nt_pm" name="pimpinan" maxlength="80" value="${esc(n ? n.pimpinan || '' : namaKetua() || '')}"></div>
+        <div class="fld"><label for="nt_nt">Notulis</label><input type="text" id="nt_nt" name="notulis" maxlength="80" value="${esc(n ? n.notulis || '' : namaSesi())}"></div></div>
+      <div class="fld"><label for="nt_ps">Peserta / yang hadir</label><textarea id="nt_ps" name="peserta" rows="3" maxlength="3000" placeholder="Satu nama per baris, atau pisahkan dengan koma">${esc(n ? n.peserta || '' : '')}</textarea></div>
+      <div class="fld"><span class="lbl-f">Isi notulen <span class="req">*</span></span>${rtEditorHtml('ntIsi', n ? n.isi : NT_TEMPLATE, 'Tulis hasil rapat…')}</div>
+      <div class="fld"><label for="nt_st">Status</label><select id="nt_st" name="status"><option ${!n || n.status !== 'Final' ? 'selected' : ''}>Draf</option><option ${n && n.status === 'Final' ? 'selected' : ''}>Final</option></select><span class="hint">Draf masih bisa dilengkapi. Pilih Final bila sudah disetujui pimpinan rapat.</span></div>`,
+    onSubmit: async d => {
+      const isi = rtBersih(($('#ntIsi') || {}).innerHTML || '');
+      if (!rtTeks(isi).replace(/[…*•\d.\s]/g, '').trim()) { pesanDlg('Isi notulen masih kosong.'); return false; }
+      if (d.jamMulai && d.jamSelesai && d.jamSelesai < d.jamMulai) { pesanDlg('Jam selesai tidak boleh sebelum jam mulai.', 'nt_s'); return false; }
+      const row = {...(n || {}), judul: d.judul.trim(), tanggal: d.tanggal, tempat: String(d.tempat || '').trim(), jamMulai: d.jamMulai || '', jamSelesai: d.jamSelesai || '',
+        pimpinan: String(d.pimpinan || '').trim(), notulis: String(d.notulis || '').trim(), peserta: String(d.peserta || '').trim(), isi, status: d.status === 'Final' ? 'Final' : 'Draf',
+        diubah: nowDT(), diubahOleh: namaSesi()};
+      if (!n) { row.dibuat = nowDT(); row.dibuatOleh = namaSesi(); }
+      const nid = n ? n.id : uid(), ok = await put('notulen', nid, row);
+      if (ok) { toast(n ? 'Notulen diperbarui.' : 'Notulen tersimpan.'); setTimeout(() => openNotulenLihat(nid, row), 60); }
+      return ok;
+    },
+    onDelete: n ? async () => { const ok = await del('notulen', n.id); if (ok) toast('Notulen dihapus.'); return ok; } : null, deleteLabel: 'Hapus notulen'});
+  rtPasang('ntIsi');
+}
+function notulenDok(n) {
+  const st = S.set, ps = ntPeserta(n);
+  const wil = [st.kelurahan && 'Kelurahan ' + st.kelurahan, st.kecamatan && 'Kecamatan ' + st.kecamatan, st.kota].filter(Boolean).join(', ');
+  return `<div class="surat notulen">
+    <div class="kop"><b>RUKUN TETANGGA ${esc((st.rt || '…').toUpperCase())} / RUKUN WARGA ${esc((st.rw || '…').toUpperCase())}</b><span>${esc(lingk())}</span>${wil ? `<span>${esc(wil)}</span>` : ''}</div>
+    <h1>NOTULEN RAPAT</h1><p class="no">${esc(n.judul)}</p>
+    <table>
+      <tr><td>Hari, tanggal</td><td>:</td><td>${esc(tglPanjang(n.tanggal))}</td></tr>
+      ${n.jamMulai ? `<tr><td>Waktu</td><td>:</td><td>${esc(n.jamMulai)}${n.jamSelesai ? ' – ' + esc(n.jamSelesai) : ''} WIB</td></tr>` : ''}
+      ${n.tempat ? `<tr><td>Tempat</td><td>:</td><td>${esc(n.tempat)}</td></tr>` : ''}
+      ${n.pimpinan ? `<tr><td>Pimpinan rapat</td><td>:</td><td>${esc(n.pimpinan)}</td></tr>` : ''}
+      ${n.notulis ? `<tr><td>Notulis</td><td>:</td><td>${esc(n.notulis)}</td></tr>` : ''}
+      ${ps.length ? `<tr><td>Peserta</td><td>:</td><td>${ps.length} orang: ${esc(ps.join(', '))}</td></tr>` : ''}
+    </table>
+    <div class="rt nt-isi">${rtBersih(n.isi)}</div>
+    <div class="ttd"><div><br>Pimpinan rapat<div class="sp"></div><u>${esc(n.pimpinan || '(..............................)')}</u></div>
+      <div>${esc(st.kota || lingk())}, ${esc(tglSurat(n.tanggal))}<br>Notulis<div class="sp"></div><u>${esc(n.notulis || '(..............................)')}</u></div></div>
+  </div>`;
+}
+const teksNotulen = n => `*NOTULEN RAPAT*\n*${n.judul}*\n${tglPanjang(n.tanggal)}${n.jamMulai ? ', ' + n.jamMulai + (n.jamSelesai ? '–' + n.jamSelesai : '') + ' WIB' : ''}${n.tempat ? '\nTempat: ' + n.tempat : ''}${n.pimpinan ? '\nPimpinan: ' + n.pimpinan : ''}${n.notulis ? '\nNotulis: ' + n.notulis : ''}${ntPeserta(n).length ? '\nPeserta: ' + ntPeserta(n).length + ' orang' : ''}\n\n${rtTeks(n.isi)}\n\n${pengirim()}`;
+function openNotulenLihat(id, fallback) {
+  const n = S.notulen.find(x => x.id === id) || (fallback && {...fallback, id}); if (!n || !bolehRapatC()) return;
+  openDlg({title: n.judul, lebar: true,
+    body: `<div class="surat-wrap">${notulenDok(n)}</div>${n.diubahOleh ? `<p class="muted" style="margin:0;font-size:.8rem">Terakhir diubah ${esc(n.diubahOleh)} · ${esc(tglJam(n.diubah))} · Status ${esc(n.status || 'Draf')}</p>` : ''}`,
+    foot: `<button type="button" class="btn" data-act="salin" data-teks="${esc(teksNotulen(n))}">Salin teks</button><a class="btn wa" href="${esc(waShare(teksNotulen(n)))}" target="_blank" rel="noopener">Kirim ke grup pengurus (WA)</a><button type="button" class="btn" data-act="nt-unduh" data-id="${esc(n.id)}">Unduh / cetak</button>${bisaNotulen() ? `<button type="button" class="btn pri" data-act="nt-edit" data-id="${esc(n.id)}">Ubah</button>` : ''}`});
+}
+function unduhNotulen(id) {
+  const n = S.notulen.find(x => x.id === id); if (!n) return;
+  const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Notulen - ${esc(n.judul)}</title><style>${SURAT_CSS}${RT_CSS}
+@page{size:A4;margin:2cm}body{margin:0;background:#fff}.surat{padding:0;max-width:none}@media screen{body{padding:24px}.surat{max-width:720px}}</style></head><body>${notulenDok(n)}</body></html>`;
+  unduh(fname(`Notulen - ${n.judul} - ${n.tanggal}.html`), html);
+}
 function openSuratLihat(id, fallback) {
   const x = S.surat.find(s => s.id === id) || (fallback && {...fallback, id}); if (!x) return;
   openDlg({
@@ -5952,8 +6102,9 @@ function ekspor(k, per) {
 /* ---------- dialog ---------- */
 const dlg = $('#dlg');
 let dlgSubmit = null, dlgDelete = null;
-function openDlg({title, body, submitLabel = 'Simpan', onSubmit, onDelete, deleteLabel = 'Hapus', area, foot = ''}) {
+function openDlg({title, body, submitLabel = 'Simpan', onSubmit, onDelete, deleteLabel = 'Hapus', area, foot = '', lebar = false}) {
   const boleh = area ? bisa(area) : true;
+  dlg.classList.toggle('lebar', !!lebar);
   $('#dlgTitle').textContent = title;
   $('#dlgBody').innerHTML = body;
   pesanDlg('');
@@ -6361,6 +6512,10 @@ document.addEventListener('click', async e => {
   else if (a === 'info-edit') openInfo(b.dataset.id);
   else if (a === 'inff') { S.infoFilter = b.dataset.k; render(); }
   else if (a === 'surat-new') openSuratBaru();
+  else if (a === 'nt-new') openNotulen();
+  else if (a === 'nt-edit') openNotulen(b.dataset.id);
+  else if (a === 'nt-lihat') openNotulenLihat(b.dataset.id);
+  else if (a === 'nt-unduh') unduhNotulen(b.dataset.id);
   else if (a === 'surat-view') openSuratLihat(b.dataset.id);
   else if (a === 'surat-dl') unduhSurat(b.dataset.id);
   else if (a === 'ekspor') ekspor(b.dataset.k);
@@ -6490,6 +6645,7 @@ document.addEventListener('input', e => {
   if (e.target.id === 'qKm') { S.kmQ = e.target.value; render(); }
   if (e.target.id === 'qSurat') { S.suratQ = e.target.value; render(); }
   if (e.target.id === 'qWarga') { S.q = e.target.value; render(); }
+  if (e.target.id === 'qNotulen') { S.ntQ = e.target.value; render(); }
   if (e.target.id === 'qKel') { S.kelQ = e.target.value; render(); }
 });
 document.addEventListener('change', async e => {

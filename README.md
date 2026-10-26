@@ -119,3 +119,6 @@ Warga bisa melampirkan maksimal 2 foto kejadian (hanya gambar, bukan video). Fot
 
 ### Koreksi pembayaran iuran
 Menu Iuran → tombol **Koreksi** (atau "Koreksi pembayaran" di jendela Kwitansi) untuk pengurus berhak kelola Iuran. Wajib memilih alasan & mencentang pernyataan. Status bulan itu kembali Belum; pemasukan "Iuran warga" di Kas RT, Laporan keuangan, dan saldo kas otomatis berkurang (kas iuran dihitung dari catatan pembayaran). Jejak koreksi (alasan, keterangan, petugas, data lama) tersimpan di Log aktivitas. Opsional: kirim pemberitahuan ke warga lewat WhatsApp.
+
+### Notulensi rapat
+Menu **Notulensi rapat** (grup Warga). Dibuat oleh Sekretaris (pengurus berhak kelola Surat) dan dibaca seluruh pengurus (bukan satpam/warga). Isian: judul, tanggal, jam, tempat, pimpinan, notulis, peserta, status Draf/Final, dan isi dengan editor sederhana: gaya paragraf (Judul/Subjudul), ukuran huruf, tebal, miring, garis bawah, rata kiri/tengah/kanan/kiri-kanan, daftar berpoin & bernomor, urungkan/ulangi, hapus format. Bisa dilihat berformat kop RT dengan tanda tangan pimpinan & notulis, diunduh/dicetak, disalin, atau dikirim ke grup WA pengurus.

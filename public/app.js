@@ -6278,7 +6278,7 @@ function notulenDok(n) {
   const st = S.set, ps = ntPeserta(n);
   const wil = [st.kelurahan && 'Kelurahan ' + st.kelurahan, st.kecamatan && 'Kecamatan ' + st.kecamatan, st.kota].filter(Boolean).join(', ');
   return `<div class="surat notulen">
-    <div class="kop"><b>RUKUN TETANGGA ${esc((st.rt || '…').toUpperCase())} / RUKUN WARGA ${esc((st.rw || '…').toUpperCase())}</b><span>${esc(lingk())}</span>${wil ? `<span>${esc(wil)}</span>` : ''}</div>
+    <div class="kop logo"><img src="${LOGO}" alt="Logo Vila Nusa Indah 5"><div><b>RUKUN TETANGGA ${esc((st.rt || '…').toUpperCase())} / RUKUN WARGA ${esc((st.rw || '…').toUpperCase())}</b><span>${esc(lingk())}</span>${wil ? `<span>${esc(wil)}</span>` : ''}</div><span></span></div>
     <h1>NOTULEN RAPAT</h1><p class="no">${esc(n.judul)}</p>
     <table>
       <tr><td>Hari, tanggal</td><td>:</td><td>${esc(tglPanjang(n.tanggal))}</td></tr>

@@ -6058,6 +6058,8 @@ const ISI_SURAT = {
 };
 const SURAT_CSS = `.surat{background:#fff;color:#111;font-family:'Times New Roman',Times,serif;font-size:12pt;line-height:1.5;padding:28px 36px;max-width:720px;margin:0 auto}
 .surat .kop{text-align:center;border-bottom:3px double #111;padding-bottom:8px;margin-bottom:18px}
+.surat .kop.logo{display:grid;grid-template-columns:78px 1fr 78px;align-items:center;gap:12px}
+.surat .kop.logo img{width:78px;height:auto;display:block}
 .surat .kop b{display:block;font-size:14pt;letter-spacing:.04em}
 .surat .kop span{display:block;font-size:11pt}
 .surat h1{font-family:inherit;font-size:13pt;text-align:center;text-decoration:underline;margin:0;letter-spacing:.03em;color:#111}
@@ -6081,7 +6083,7 @@ function suratIsi(x) {
   const st = S.set, p = x.pemohon || {};
   const wil = [st.kelurahan && 'Kelurahan ' + st.kelurahan, st.kecamatan && 'Kecamatan ' + st.kecamatan, st.kota].filter(Boolean).join(', ');
   return `<div class="surat">
-    <div class="kop"><b>RUKUN TETANGGA ${esc((st.rt || '…').toUpperCase())} / RUKUN WARGA ${esc((st.rw || '…').toUpperCase())}</b><span>${esc(lingk())}</span>${wil ? `<span>${esc(wil)}</span>` : ''}</div>
+    <div class="kop logo"><img src="${LOGO}" alt="Logo Vila Nusa Indah 5"><div><b>RUKUN TETANGGA ${esc((st.rt || '…').toUpperCase())} / RUKUN WARGA ${esc((st.rw || '…').toUpperCase())}</b><span>${esc(lingk())}</span>${wil ? `<span>${esc(wil)}</span>` : ''}</div><span></span></div>
     <h1>${esc(String(x.jenis).toUpperCase())}</h1>
     <p class="no">Nomor: ${esc(x.nomor)}</p>
     <p>Yang bertanda tangan di bawah ini, Ketua ${esc(rtrw())} ${esc(lingk())}${wil ? ', ' + esc(wil) : ''}, menerangkan bahwa:</p>

@@ -1531,6 +1531,9 @@ const I18N_OBS = new MutationObserver(ms => { if (!bhsAktif()) return; for (cons
 I18N_OBS.observe(document.body, {childList: true, subtree: true});
 
 const MATA_BUKA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+/* Tombol ikon mata untuk menampilkan/menyembunyikan NIK (menu Rumah saya) */
+const tombolNik = (i, nama) => { const buka = S.nikBuka.has(i), lbl = (buka ? 'Sembunyikan NIK' : 'Tampilkan NIK') + (nama ? ' ' + nama : '');
+  return `<button type="button" class="btn sm ghost mata-btn" data-act="nik-lihat" data-i="${i}" aria-pressed="${buka}" aria-label="${esc(lbl)}" title="${esc(lbl)}">${buka ? MATA_TUTUP : MATA_BUKA}</button>`; };
 const MATA_TUTUP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10.6 10.6 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
 function authArt() {
   const rumah = [[118, 262, 1], [168, 268, .85], [212, 258, 1.1], [268, 266, .9], [318, 260, 1]].map(([x, y, k]) => {
@@ -1947,7 +1950,7 @@ function vPortal() {
     <dl class="data-rumah">
       <div><dt>Nomor rumah</dt><dd><span class="house">${esc(w.blok)}</span></dd></div>
       <div><dt>Kepala keluarga</dt><dd>${esc(w.nama)}</dd></div>
-      <div><dt>NIK</dt><dd><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(0) ? fmtNik(w.nik) : maskNik(w.nik))}</span>${w.nik ? `<button type="button" class="btn sm ghost" data-act="nik-lihat" data-i="0">${S.nikBuka.has(0) ? 'Sembunyikan' : 'Lihat'}</button>` : ''}</span></dd></div>
+      <div><dt>NIK</dt><dd><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(0) ? fmtNik(w.nik) : maskNik(w.nik))}</span>${w.nik ? `${tombolNik(0, '')}` : ''}</span></dd></div>
       <div><dt>Jenis kelamin</dt><dd>${w.jk === 'P' ? 'Perempuan' : w.jk === 'L' ? 'Laki-laki' : '—'}</dd></div>
       <div><dt>Agama</dt><dd>${esc(agamaLbl(w.agama) || '—')}</dd></div>
       <div><dt>Tanggal lahir</dt><dd>${w.lahir ? esc(tgl(w.lahir)) + ' · ' + esc(umur(w.lahir)) : '—'}</dd></div>
@@ -1963,7 +1966,7 @@ function vPortal() {
     ${[{nama: w.nama, hubungan: 'Kepala keluarga', jk: w.jk, agama: w.agama, lahir: w.lahir, nik: w.nik}, ...ang].map((a, i) => `<tr>
       <td class="r num">${i + 1}</td><td style="font-weight:600">${esc(a.nama)}</td><td>${esc(a.hubungan || '—')}</td>
       <td>${a.jk === 'P' ? 'Perempuan' : a.jk === 'L' ? 'Laki-laki' : '—'}</td><td>${esc(agamaLbl(a.agama || w.agama) || '—')}</td><td class="num">${a.lahir ? esc(tgl(a.lahir)) : '—'}</td>
-      <td class="r num">${a.lahir ? esc(umur(a.lahir).replace(' tahun', ' th')) : '—'}</td><td><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(i) ? fmtNik(a.nik) : maskNik(a.nik))}</span>${a.nik ? `<button type="button" class="btn sm ghost" data-act="nik-lihat" data-i="${i}" aria-pressed="${S.nikBuka.has(i)}" aria-label="${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'} NIK ${esc(a.nama)}">${S.nikBuka.has(i) ? 'Sembunyikan' : 'Lihat'}</button>` : ''}</span></td></tr>`).join('')}
+      <td class="r num">${a.lahir ? esc(umur(a.lahir).replace(' tahun', ' th')) : '—'}</td><td><span class="nik-cell"><span class="mono">${esc(S.nikBuka.has(i) ? fmtNik(a.nik) : maskNik(a.nik))}</span>${a.nik ? `${tombolNik(i, a.nama)}` : ''}</span></td></tr>`).join('')}
     </tbody></table></div>
   <p class="muted" style="margin:10px 0 0;font-size:.82rem">${isWarga() ? 'Tambah, ubah atau hapus anggota keluarga lewat tombol Ubah data keluarga.' : bisa('warga') ? `Data ini diambil dari menu Data warga. <a href="#warga" data-act="warga-edit" data-id="${esc(w.id)}" style="color:var(--accent)">Ubah data rumah ini</a>` : 'Data ini diambil dari menu Data warga.'}</p></div>
   ${riwayatIuran(w, pm)}

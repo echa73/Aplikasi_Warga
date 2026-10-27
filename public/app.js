@@ -1530,6 +1530,8 @@ function terjemahNode(root) {
 const I18N_OBS = new MutationObserver(ms => { if (!bhsAktif()) return; for (const m of ms) for (const n of m.addedNodes) terjemahNode(n); });
 I18N_OBS.observe(document.body, {childList: true, subtree: true});
 
+const MATA_BUKA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const MATA_TUTUP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10.6 10.6 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
 function authArt() {
   const rumah = [[118, 262, 1], [168, 268, .85], [212, 258, 1.1], [268, 266, .9], [318, 260, 1]].map(([x, y, k]) => {
     const w = 34 * k, h = 24 * k, r = 18 * k;
@@ -1561,8 +1563,8 @@ function vLoginKartu() {
   if (S.sbGagal) return `<div class="login">${brand('Aplikasi warga Kluster Kasuari')}<div class="notice">Tidak bisa memuat koneksi ke server. Periksa internet Anda, lalu muat ulang halaman.</div></div>`;
   if (S.pulih) return `<div class="login">${brand('Buat password baru untuk akun Anda.')}
     <form id="pulihForm" class="login-pin" style="border-top:0;padding-top:0">
-      <div class="fld"><label for="pBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="pBaru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="pBaru" aria-label="Tampilkan password">Lihat</button></div></div>
-      <div class="fld"><label for="pUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="pUlang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="pUlang" aria-label="Tampilkan password">Lihat</button></div>
+      <div class="fld"><label for="pBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="pBaru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="pBaru" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div></div>
+      <div class="fld"><label for="pUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="pUlang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="pUlang" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div>
         <span class="hint" id="pPesan" style="color:var(--bad)"></span></div>
       <button type="submit" class="btn pri">Simpan password</button>
       <button type="button" class="btn ghost" data-act="pulih-batal">Batal</button></form></div>`;
@@ -1570,8 +1572,8 @@ function vLoginKartu() {
     ${S.lupaTerkirim ? `<div class="notice" style="background:var(--ok-soft);color:var(--ok)">Email reset dikirim ke <b>${esc(S.lupaTerkirim)}</b> (cek juga folder spam). Klik tautan di email <b>paling baru</b>, atau ketik kode dari email di bawah ini.</div>
       <form id="kodeForm" class="login-pin" style="border-top:0;padding-top:0">
         <div class="fld"><label for="kKode">Kode dari email</label><input type="text" id="kKode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="6 angka" style="letter-spacing:.2em;text-align:center;font-size:1.1rem"></div>
-        <div class="fld"><label for="kBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="kBaru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="kBaru" aria-label="Tampilkan password">Lihat</button></div></div>
-        <div class="fld"><label for="kUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="kUlang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="kUlang" aria-label="Tampilkan password">Lihat</button></div>
+        <div class="fld"><label for="kBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="kBaru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="kBaru" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div></div>
+        <div class="fld"><label for="kUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="kUlang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="kUlang" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div>
           <span class="hint" id="kPesan" style="color:var(--bad)"></span></div>
         ${tsSlot()}<button type="submit" class="btn pri">Simpan password baru</button>
         <button type="button" class="btn ghost" data-act="lupa-tutup">Kembali ke login</button>
@@ -1585,9 +1587,9 @@ function vLoginKartu() {
   if (S.authUser && wajibGanti() && roleSaya()) return `<div class="login">${brand('Halo ' + esc(namaSesi().split(' ')[0]) + ', demi keamanan buat password baru dulu.')}
     <div class="notice" style="background:var(--info-soft);color:var(--info)">Password Anda dibuat atau direset oleh Pemilik. Ganti dengan password pribadi sebelum memakai aplikasi.</div>
     <form id="wajibForm" class="login-pin" style="border-top:0;padding-top:0">
-      <div class="fld"><label for="wgLama">Password saat ini</label><div style="display:flex;gap:6px"><input type="password" id="wgLama" name="lama" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="wgLama" aria-label="Tampilkan password">Lihat</button></div></div>
-        <div class="fld"><label for="wgBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="wgBaru" name="baru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="wgBaru" aria-label="Tampilkan password">Lihat</button></div><span class="hint">Minimal 8 karakter. Gunakan campuran huruf dan angka.</span></div>
-        <div class="fld"><label for="wgUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="wgUlang" name="ulang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="wgUlang" aria-label="Tampilkan password">Lihat</button></div></div>
+      <div class="fld"><label for="wgLama">Password saat ini</label><div style="display:flex;gap:6px"><input type="password" id="wgLama" name="lama" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="wgLama" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div></div>
+        <div class="fld"><label for="wgBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="wgBaru" name="baru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="wgBaru" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div><span class="hint">Minimal 8 karakter. Gunakan campuran huruf dan angka.</span></div>
+        <div class="fld"><label for="wgUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="wgUlang" name="ulang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="wgUlang" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div></div>
       <span class="hint" id="wgPesan" style="color:var(--bad)"></span>
       <button type="submit" class="btn pri">Simpan password baru</button>
       <button type="button" class="btn ghost" data-act="keluar">Keluar</button></form></div>`;
@@ -1607,7 +1609,7 @@ function vLoginKartu() {
     <form id="loginForm" class="login-pin" style="border-top:0;padding-top:0">
       <div class="fld"><label for="lEmail">No. HP</label><input type="text" id="lEmail" inputmode="tel" autocomplete="username" autocapitalize="none" placeholder="08xxxxxxxxxx" value="${esc(S.lEmailDraft || '')}"></div>
       <div class="fld"><label for="lPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="lPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem">
-        <button type="button" class="btn sm" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password">Lihat</button></div>
+        <button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="lPass" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div>
         <span class="hint" id="lPesan" style="color:var(--bad)">${esc(S.loginPesan || '')}</span></div>
       ${tsSlot()}${lgSisa() > 0 ? `<button type="submit" class="btn pri" data-lg="1" disabled>Coba lagi dalam ${lgFmt(lgSisa())}</button>` : '<button type="submit" class="btn pri">Masuk</button>'}
       <button type="button" class="linkbtn" data-act="lupa-hp">Lupa password?</button></form>
@@ -1677,9 +1679,9 @@ async function gantiPassword(lama, baru, ulang) {
 function openGantiPass() {
   openDlg({
     title: 'Ganti password', submitLabel: 'Simpan password',
-    body: `<div class="fld"><label for="gpLama">Password saat ini</label><div style="display:flex;gap:6px"><input type="password" id="gpLama" name="lama" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="gpLama" aria-label="Tampilkan password">Lihat</button></div></div>
-        <div class="fld"><label for="gpBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="gpBaru" name="baru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="gpBaru" aria-label="Tampilkan password">Lihat</button></div><span class="hint">Minimal 8 karakter. Gunakan campuran huruf dan angka.</span></div>
-        <div class="fld"><label for="gpUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="gpUlang" name="ulang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm" data-act="lihat-pass" data-for="gpUlang" aria-label="Tampilkan password">Lihat</button></div></div>
+    body: `<div class="fld"><label for="gpLama">Password saat ini</label><div style="display:flex;gap:6px"><input type="password" id="gpLama" name="lama" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="gpLama" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div></div>
+        <div class="fld"><label for="gpBaru">Password baru</label><div style="display:flex;gap:6px"><input type="password" id="gpBaru" name="baru" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="gpBaru" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div><span class="hint">Minimal 8 karakter. Gunakan campuran huruf dan angka.</span></div>
+        <div class="fld"><label for="gpUlang">Ulangi password baru</label><div style="display:flex;gap:6px"><input type="password" id="gpUlang" name="ulang" autocomplete="new-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem"><button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="gpUlang" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div></div>
       <p class="muted" style="margin:0;font-size:.84rem">Setelah diganti, login Anda di perangkat lain otomatis keluar.</p>`,
     onSubmit: async d => {
       const err = await gantiPassword(d.lama || '', d.baru || '', d.ulang || '');
@@ -1886,7 +1888,7 @@ function loginWargaHtml() {
   return `<form id="loginWargaForm" class="login-pin" style="border-top:0;padding-top:0">
     <div class="fld"><label for="wUser">Username</label><input type="text" id="wUser" autocomplete="username" autocapitalize="none" value="${esc(S.wUserDraft || '')}" ${kunci ? 'disabled' : ''}></div>
     <div class="fld"><label for="wPass">Password</label><div style="display:flex;gap:6px"><input type="password" id="wPass" autocomplete="current-password" style="flex:1;letter-spacing:normal;text-align:left;font-size:1rem" ${kunci ? 'disabled' : ''}>
-      <button type="button" class="btn sm" data-act="lihat-pass" data-for="wPass" aria-label="Tampilkan password">Lihat</button></div>
+      <button type="button" class="btn sm mata-btn" data-act="lihat-pass" data-for="wPass" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password">${MATA_BUKA}</button></div>
       <span class="hint" id="wPesan" style="color:var(--bad)">${kunci ? 'Terlalu banyak percobaan. Coba lagi sebentar.' : ''}</span></div>
     ${tsSlot()}<button type="submit" class="btn pri" ${kunci ? 'disabled' : ''}>Masuk</button>
     <p class="muted" style="margin:0;font-size:.82rem">Lupa password atau belum punya akun? Hubungi pengurus RT, password Anda bisa direset dari menu Admin.</p></form>`;
@@ -6740,7 +6742,8 @@ document.addEventListener('click', async e => {
   else if (a === 'pin-pemilik') openPinPemilik();
   else if (a === 'pemilik-hp') openPemilikHp();
   else if (a === 'loginmode') { S.loginMode = b.dataset.k; S.pilih = null; S.pinGagal = 0; render(); const f = $(S.loginMode === 'warga' ? '#wUser' : '.user-opt'); if (f) f.focus(); }
-  else if (a === 'lihat-pass') { const i = $('#' + (b.dataset.for || 'wPass')); if (i) { i.type = i.type === 'password' ? 'text' : 'password'; b.textContent = i.type === 'password' ? 'Lihat' : 'Sembunyikan'; } }
+  else if (a === 'lihat-pass') { const i = $('#' + (b.dataset.for || 'wPass')); if (i) { const lihat = i.type === 'password'; i.type = lihat ? 'text' : 'password'; b.innerHTML = lihat ? MATA_TUTUP : MATA_BUKA; b.setAttribute('aria-pressed', String(lihat));
+    const lbl = lihat ? 'Sembunyikan password' : 'Tampilkan password'; b.setAttribute('aria-label', lbl); b.title = lbl; if (bhsAktif()) terjemahNode(b); i.focus({preventScroll: true}); } }
   else if (a === 'akun-new') openAkun();
   else if (a === 'akun-edit') openAkun(b.dataset.id);
   else if (a === 'akun-acak') { const i = $('#ak_p') || $('#ak_pr'); if (i) i.value = passAcak(); }

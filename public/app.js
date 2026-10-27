@@ -1538,7 +1538,7 @@ function authArt() {
   const t = temaLoginKini(), sapa = typeof t.sapa === 'function' ? t.sapa() : t.sapa;
   const mob = t.benda === 'matahari' ? `--m-bg:${t.mWarna || '#F5C842'};--m-sh:0 0 0 10px rgb(245 200 66 / .18),0 0 0 22px rgb(245 200 66 / .08)` : t.benda === 'bulan' ? '--m-bg:#F4F1DE;--m-sh:0 0 0 10px rgb(244 241 222 / .12)' : t.benda === 'sabit' ? '--m-bg:transparent;--m-sh:inset -11px 4px 0 0 #F3D98B' : '--m-bg:transparent;--m-sh:none';
   return `<aside class="auth-art" data-tema="${esc(t.kode)}" style="--art-bg:radial-gradient(700px 400px at 85% 15%,${t.glow},transparent 60%),linear-gradient(160deg,${t.langit[0]} 0%,${t.langit[1]} 60%,${t.langit[2]} 100%);${mob}" aria-hidden="false">
-    <div class="auth-brand"><img src="${LOGO}" alt="Logo Vila Nusa Indah 5"><div><b>Warga Kasuari</b><span>Vila Nusa Indah 5 · Kluster Kasuari</span></div></div>
+    <div class="auth-brand"><img src="${LOGO}" alt="Logo Vila Nusa Indah 5"><div><b>Warga Kasuari</b><span class="ab-sub"><span class="nw">Vila Nusa Indah 5</span><span class="ab-dot"> · </span><span class="nw">Kluster Kasuari</span></span></div></div>
     <div class="auth-copy"><h1>Lingkungan yang tertata,<br>warga yang terhubung.</h1>
       <ul><li>Iuran dan kas RT yang transparan</li><li>Keamanan dan pos jaga terpantau</li><li>Layanan warga dalam satu aplikasi</li></ul>
       ${sapa ? `<p class="tema-sapa" title="Tema ${esc(t.nama)}">${esc(sapa)}</p>` : ''}</div>

@@ -1326,7 +1326,9 @@ function bendaLangit(t, mobile) {
    Diterjemahkan saat tampil (teks antarmuka saja). Isi buatan pengguna, dokumen resmi (kwitansi, surat, notulen, PDF)
    dan pesan WhatsApp tetap Bahasa Indonesia. Pengurus (tampilan pengurus) selalu Bahasa Indonesia. */
 const BHS_KEY = 'bahasa';
-let BHS = (() => { try { return localStorage.getItem(BHS_KEY) === 'en' ? 'en' : 'id'; } catch (e) { return 'id'; } })();
+// default selalu ID setiap aplikasi dibuka; pilihan EN hanya berlaku selama aplikasi/tab masih terbuka
+try { localStorage.removeItem(BHS_KEY); } catch (e) {}
+let BHS = (() => { try { return sessionStorage.getItem(BHS_KEY) === 'en' ? 'en' : 'id'; } catch (e) { return 'id'; } })();
 const bhsBoleh = () => S.set.pilihanBahasa !== false;
 const bhsAktif = () => BHS === 'en' && bhsBoleh() && (!S.authUser || isWarga());
 const FLAG_ID = '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#E70011"/><rect y="10" width="30" height="10" fill="#fff"/></svg>';
@@ -1337,7 +1339,7 @@ function bhsTombol(kecil) {
     <button type="button" data-act="bhs" data-k="id" aria-pressed="${BHS !== 'en'}" title="Bahasa Indonesia">${FLAG_ID}<span>ID</span></button><button type="button" data-act="bhs" data-k="en" aria-pressed="${BHS === 'en'}" title="English">${FLAG_EN}<span>EN</span></button></div>`;
 }
 function gantiBahasa(k) {
-  BHS = k === 'en' ? 'en' : 'id'; try { localStorage.setItem(BHS_KEY, BHS); } catch (e) {}
+  BHS = k === 'en' ? 'en' : 'id'; try { sessionStorage.setItem(BHS_KEY, BHS); } catch (e) {}
   document.documentElement.lang = bhsAktif() ? 'en' : 'id';
   if (dlg.open) dlg.close();
   render();

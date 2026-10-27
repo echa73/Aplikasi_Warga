@@ -4666,10 +4666,10 @@ function openSbDonasi(pid, did, wid) {
   openDlg({
     title: x ? (bisa('sumbangan') ? 'Ubah sumbangan' : 'Sumbangan') : 'Catat sumbangan', area: 'sumbangan', submitLabel: x ? 'Simpan' : 'Catat sumbangan',
     body: `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>${esc(p.nama)}</b><div class="muted" style="font-size:.84rem">${p.sifat === 'rumah' ? 'Saran ' + esc(rp(p.nominal)) + ' per rumah · ' : ''}terkumpul ${esc(rp(H.terkumpul))}</div></div>
-    <div class="fld"><label for="sbd_w">Dari</label><select id="sbd_w" name="wargaId" ${ro}><option value="">— Donatur dari luar / lainnya —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${w.id === v.wargaId ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}${H.rumah.has(w.id) && w.id !== v.wargaId ? ' ✓ sudah' : ''}</option>`).join('')}</select></div>
+    <div class="fld"><label for="sbd_w">Dari</label><select id="sbd_w" name="wargaId" ${ro}><option value="">— Donatur dari luar / lainnya —</option>${wargaAktif().map(w => `<option value="${esc(w.id)}" ${w.id === v.wargaId ? 'selected' : ''}>${esc(w.blok)} · ${esc(w.nama)}${H.rumah.has(w.id) && w.id !== v.wargaId ? ' ✓ sudah' : ''}${!x && H.tunggu.some(t => t.wargaId === w.id) ? ' · ada konfirmasi' : ''}</option>`).join('')}</select></div>
     <div class="fld" id="sbdNamaWrap"${v.wargaId ? ' hidden' : ''}><label for="sbd_n">Nama donatur <span class="req">*</span></label><input type="text" id="sbd_n" name="nama" maxlength="80" value="${esc(v.wargaId ? '' : v.nama || '')}" placeholder="mis. PT Maju Jaya / Bpk. Hasan (Kluster Merak)" ${ro}></div>
     <div class="grid2">
-      <div class="fld"><label for="sbd_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="sbd_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah)}" ${ro}><span class="hint" id="sbdRp">${v.jumlah ? esc(terbilang(Number(v.jumlah))) : ''}</span></div>
+      <div class="fld"><label for="sbd_j">Jumlah (Rp) <span class="req">*</span></label><input type="number" id="sbd_j" name="jumlah" min="1" step="500" required inputmode="numeric" value="${esc(v.jumlah)}" ${ro}><span class="hint" id="sbdRp">${v.jumlah ? esc(terbilang(Number(v.jumlah))) : ''}</span><span class="hint" id="sbdKonf" hidden style="color:var(--info)"></span></div>
       <div class="fld"><label for="sbd_t">Tanggal terima <span class="req">*</span></label><input type="date" id="sbd_t" name="tanggal" required value="${esc(v.tanggal)}" ${ro}></div>
     </div>
     <div class="fld"><label for="sbd_m">Metode</label><select id="sbd_m" name="metode" ${ro}>${METODE.map(m => `<option ${m === v.metode ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
@@ -4682,17 +4682,44 @@ function openSbDonasi(pid, did, wid) {
       if (!nama) { pesanDlg('Isi nama donatur.', 'sbd_n'); return false; }
       if (jumlah <= 0) { pesanDlg('Jumlah harus lebih dari 0.', 'sbd_j'); return false; }
       if (!d.tanggal) { pesanDlg('Isi tanggal terima.', 'sbd_t'); return false; }
-      const row = {...(x || {}), programId: p.id, wargaId: w ? w.id : '', nama, blok: w ? w.blok : '', jumlah, tanggal: d.tanggal, metode: d.metode, anonim: !!d.anonim, catatan: String(d.catatan || '').trim(),
-        status: 'Diterima', sumber: (x && x.sumber) || 'bendahara', dicatat: (x && x.dicatat) || todayISO(), dicatatOleh: (x && x.dicatatOleh) || namaSesi()};
-      const ok = await put('donasi', x ? x.id : p.id + '_' + (w ? w.id : 'luar') + '_' + uid().slice(-5), row);
+      const kf = !x && w ? sbKonfWarga(p.id, w.id) : null, dasar = x || kf || {};
+      const row = {...dasar, programId: p.id, wargaId: w ? w.id : '', nama, blok: w ? w.blok : '', jumlah, tanggal: d.tanggal, metode: d.metode, anonim: !!d.anonim, catatan: String(d.catatan || '').trim(),
+        status: 'Diterima', sumber: dasar.sumber || 'bendahara', dicatat: (x && x.dicatat) || todayISO(), dicatatOleh: (x && x.dicatatOleh) || namaSesi()};
+      if (kf) row.verif = {oleh: namaSesi(), waktu: nowDT()};
+      const ok = await put('donasi', x ? x.id : kf ? kf.id : p.id + '_' + (w ? w.id : 'luar') + '_' + uid().slice(-5), row);
       if (ok) toast(x ? 'Sumbangan diperbarui.' : `Sumbangan ${rp(jumlah)} dari ${nama} tercatat.`);
       return ok;
     },
     onDelete: x ? async () => { const ok = await del('donasi', x.id); if (ok) toast('Catatan sumbangan dihapus.'); return ok; } : null, deleteLabel: 'Hapus catatan'
   });
   const sw = $('#sbd_w'), jj = $('#sbd_j');
-  if (sw) sw.addEventListener('change', () => { $('#sbdNamaWrap').hidden = !!sw.value; });
-  if (jj) jj.addEventListener('input', () => { const el = $('#sbdRp'); if (el) el.textContent = jj.value ? terbilang(Number(jj.value)) : ''; });
+  const tRp = () => { const el = $('#sbdRp'); if (el) el.textContent = jj.value ? terbilang(Number(jj.value)) : ''; };
+  let dariKonf = false;
+  const isiDariKonf = () => {
+    if (x || !sw || !jj) return;
+    const kf = sw.value ? sbKonfWarga(p.id, sw.value) : null, info = $('#sbdKonf'), form = jj.form;
+    if (kf) {
+      jj.value = Math.round(Number(kf.jumlah) || 0) || '';
+      if (kf.tanggal && form.tanggal) form.tanggal.value = kf.tanggal;
+      if (kf.metode && form.metode && METODE.includes(kf.metode)) form.metode.value = kf.metode;
+      if (form.anonim) form.anonim.checked = !!kf.anonim;
+      if (form.catatan && kf.catatan && !form.catatan.value) form.catatan.value = kf.catatan;
+      dariKonf = true;
+      if (info) { info.hidden = false; info.textContent = `Diisi dari konfirmasi warga (${kf.metode || 'Tunai'}${kf.tanggal ? ', ' + tgl(kf.tanggal) : ''}). Ubah bila uang yang diterima berbeda. Menyimpan akan memverifikasi konfirmasi itu.`; }
+    } else {
+      if (dariKonf) { jj.value = p.sifat === 'rumah' && Number(p.nominal) ? p.nominal : ''; dariKonf = false; }
+      if (info) { info.hidden = true; info.textContent = ''; }
+    }
+    tRp();
+  };
+  if (sw) sw.addEventListener('change', () => { $('#sbdNamaWrap').hidden = !!sw.value; isiDariKonf(); });
+  if (jj) jj.addEventListener('input', () => { dariKonf = false; tRp(); });
+  isiDariKonf();
+}
+/* Konfirmasi sumbangan terbaru dari warga yang masih menunggu verifikasi untuk program ini */
+function sbKonfWarga(pid, wid) {
+  return S.donasi.filter(d => d.programId === pid && d.wargaId === wid && d.status === 'Menunggu')
+    .sort((a, b) => String(b.dikirim || b.tanggal || '').localeCompare(String(a.dikirim || a.tanggal || '')))[0] || null;
 }
 function openSbSalur(pid, sid) {
   const p = sbProg(pid); if (!p) return;

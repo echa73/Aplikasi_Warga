@@ -461,3 +461,14 @@ create or replace trigger trg_sinkron_login_hp after update on public.dokumen fo
 --   baca : privat.boleh_rapat() (Pemilik & pengurus, bukan satpam/pekerja); warga tidak bisa.
 --   tulis: hanya pengurus ber-peranId 'sekretaris' (dan Pemilik). Pengurus lain: lihat, unduh/cetak, salin teks (tanpa kirim WA di aplikasi).
 --   trg_jaga_notulen: isi maks 200.000 karakter. Isi berformat disaring di aplikasi (allowlist tag: p, b, i, u, h2, h3, ul, ol, li, br, span kelas ukuran/rata).
+
+-- Warga bisa melihat program sumbangan yang ditandai tampil untuk warga
+-- (sebelumnya program di koleksi 'sumbangan' tidak terbaca warga sehingga tidak bisa dikonfirmasi).
+drop policy if exists "warga lihat program sumbangan" on public.dokumen;
+create policy "warga lihat program sumbangan" on public.dokumen
+  for select to authenticated
+  using (
+    privat.sebagai_warga()
+    and koleksi = 'sumbangan'
+    and coalesce((data->>'tampilWarga')::boolean, true)
+  );

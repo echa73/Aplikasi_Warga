@@ -1413,8 +1413,8 @@ const I18N = {
   'Informasi': 'Information', 'Kegiatan': 'Activity', 'Kerja bakti': 'Community clean-up', 'Rapat warga': 'Residents meeting', 'Keagamaan': 'Religious', 'Berita duka': 'Condolences', 'Kesehatan': 'Health', 'Rapat': 'Meeting', 'Penting': 'Important',
   // sumbangan
   'Sumbangan warga': 'Resident donations', 'Program penggalangan dana di lingkungan kita, lengkap dengan perkembangan dan penyalurannya.': 'Fundraising programs in our neighborhood, with progress and distribution.', 'Sedang berjalan': 'Ongoing', 'Tanpa batas waktu': 'No deadline',
-  'Sumbangan Anda diterima': 'Your donation was received', 'Kirim sumbangan lagi': 'Donate again', 'Cara menyumbang': 'How to donate', 'Saya sudah menyumbang': 'I have donated',
-  'Setelah transfer atau menyerahkan tunai, tekan "Saya sudah menyumbang" agar bendahara bisa memverifikasi.': 'After transferring or handing over cash, press "I have donated" so the treasurer can verify it.', 'Terima kasih! Konfirmasi terkirim ke bendahara.': 'Thank you! Your confirmation was sent to the treasurer.',
+  'Sumbangan Anda diterima': 'Your donation was received', 'Kirim sumbangan lagi': 'Donate again', 'Cara menyumbang': 'How to donate', 'Lanjut menyumbang': 'Continue to donate',
+  'Tekan "Lanjut menyumbang", lalu isi jumlah dan cara menyumbang agar bendahara bisa memverifikasi.': 'Press "Continue to donate", then fill in the amount and payment method so the treasurer can verify it.', 'Terima kasih! Konfirmasi terkirim ke bendahara.': 'Thank you! Your confirmation was sent to the treasurer.',
   'Menunggu verifikasi': 'Awaiting verification', 'Diterima': 'Received', 'Ditolak': 'Rejected',
   // kebersihan
   'Kebersihan lingkungan': 'Neighborhood cleanliness', 'Jadwal angkut sampah, kerja bakti & fogging, pengecekan harian petugas, dan laporan kebersihan dari warga.': 'Waste collection schedule, clean-ups & fogging, daily staff checks, and cleanliness reports from residents.',
@@ -4825,13 +4825,13 @@ function vSumbanganWarga() {
       ${target ? `<div class="meter"><i style="width:${pct}%"></i></div>` : ''}
       <div class="sb-st">${p.sifat === 'rumah' && Number(p.nominal) ? `<span>Saran ${esc(rp(p.nominal))} per rumah</span>` : '<span>Sukarela</span>'}${Number(p.disalurkan) ? `<span>Sudah disalurkan ${esc(rp(p.disalurkan))}</span>` : ''}<span>${esc(sbBatas(p))}</span></div>
       ${milik.length ? `<div style="display:grid;gap:4px">${milik.map(d => `<div style="font-size:.86rem"><span class="chip ${CH[d.status] || 'mute'}">${d.status === 'Diterima' ? 'Sumbangan Anda diterima' : d.status === 'Menunggu' ? 'Menunggu verifikasi bendahara' : 'Konfirmasi ditolak'}</span> ${esc(rp(d.jumlah))} · ${esc(tgl(d.tanggal))}${d.status === 'Ditolak' && (d.verif && d.verif.catatan || d.alasan) ? `<div class="muted" style="font-size:.8rem;margin-top:2px">${esc((d.verif && d.verif.catatan) || d.alasan)}</div>` : ''}</div>`).join('')}</div>` : ''}
-      ${buka && p.konfirmasiWarga ? `<button type="button" class="btn ${diterima.length ? '' : 'pri'} sm go" data-act="sbw-konf" data-id="${esc(p.id)}">${diterima.length ? 'Kirim sumbangan lagi' : 'Saya sudah menyumbang'}</button>` : ''}
+      ${buka && p.konfirmasiWarga ? `<button type="button" class="btn ${diterima.length ? '' : 'pri'} sm go" data-act="sbw-konf" data-id="${esc(p.id)}">${diterima.length ? 'Kirim sumbangan lagi' : 'Lanjut menyumbang'}</button>` : ''}
       ${don.length ? `<details><summary style="cursor:pointer;font-size:.86rem;font-weight:600">Daftar penyumbang (${don.length})</summary><div class="sb-don">${don.map(d => `<div><span>${esc(d.nama)}${d.blok ? ' · ' + esc(d.blok) : ''}</span>${d.jumlah != null ? `<span class="num">${esc(rp(d.jumlah))}</span>` : ''}</div>`).join('')}</div></details>` : ''}
     </article>`;
   };
   return head + (S.sbPub.gagal ? '<div class="notice">Data sumbangan belum bisa dimuat. <button class="btn sm" data-act="sbw-muat">Coba lagi</button></div>' : '')
     + (P.length ? `<div class="sb-grid">${P.map(kartu).join('')}</div>` : '<div class="empty">Belum ada program sumbangan saat ini.</div>')
-    + (S.set.infoBayar && P.some(p => p.status === 'Aktif') ? `<div class="panel"><h3>Cara menyumbang</h3><p style="margin:0;white-space:pre-wrap">${esc(S.set.infoBayar)}</p><p class="muted" style="margin:8px 0 0;font-size:.84rem">Setelah transfer atau menyerahkan tunai, tekan "Saya sudah menyumbang" agar bendahara bisa memverifikasi.</p></div>` : '');
+    + (S.set.infoBayar && P.some(p => p.status === 'Aktif') ? `<div class="panel"><h3>Cara menyumbang</h3><p style="margin:0;white-space:pre-wrap">${esc(S.set.infoBayar)}</p><p class="muted" style="margin:8px 0 0;font-size:.84rem">Tekan "Lanjut menyumbang", lalu isi jumlah dan cara menyumbang agar bendahara bisa memverifikasi.</p></div>` : '');
 }
 function openSbKonfirmasi(pid) {
   const p = ((S.sbPub && S.sbPub.program) || []).find(x => x.id === pid), w = wargaSaya();

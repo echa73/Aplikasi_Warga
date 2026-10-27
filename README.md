@@ -10,9 +10,10 @@ Satu file `index.html` (tanpa build), data di Supabase, hosting di Cloudflare Pa
 - `wrangler.jsonc`: konfigurasi Cloudflare Worker (menyajikan folder `public/`).
 - `supabase/schema.sql`: tabel `dokumen` & `profil`, realtime, fungsi reset/ubah akun.
 - `supabase/keamanan.sql`: hak akses per role di server, skema `privat`, log aktivitas (jalankan setelah schema.sql).
+- `supabase/minta_surat.sql`: permohonan surat oleh warga (jalankan setelah keamanan.sql).
 
 ## Setup
-1. Supabase → SQL Editor → jalankan `supabase/schema.sql`, lalu `supabase/keamanan.sql`.
+1. Supabase → SQL Editor → jalankan `supabase/schema.sql`, lalu `supabase/keamanan.sql`, lalu `supabase/minta_surat.sql`.
 2. Authentication → Providers → Email → matikan **Confirm email**.
 3. Buat user pemilik di Authentication → Users, lalu:
    ```sql

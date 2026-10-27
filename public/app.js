@@ -35,7 +35,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [], notulen: [], ntQ: '',
+  infoPub: null, mintaSurat: [], warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [], notulen: [], ntQ: '',
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -65,7 +65,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {notulen: 'surat', blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {notulen: 'surat', mintaSurat: 'surat', blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -116,7 +116,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'notulen', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['mintaSurat', 'warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'notulen', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -399,12 +399,12 @@ const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
 const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['notulen','Notulensi rapat','Notulen'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'notulen' ? bolehRapatC() : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
+const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'notulen' ? bolehRapatC() : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : k === 'surat' ? (isWarga() || lihat('surat')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
 const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat', 'notulen']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
-const URUT_W = ['struktur', 'portal', 'aman', 'lapor', 'info', 'sumbangan', 'bersih', 'rohani', 'lapak'];
+const URUT_W = ['struktur', 'portal', 'aman', 'lapor', 'surat', 'info', 'sumbangan', 'bersih', 'rohani', 'lapak'];
 let PRIMER = PRIMER_P;
 const ICON = {
   bersih: '<path d="M14.5 3.5 10 12"/><path d="M6.5 12.5h7l1.5 3-1 5H6l-1-5z"/><path d="M8.5 16v4.5M11 16v4.5"/><path d="M17.5 7.5l1-1M19.5 10.5h1.5M17 4V2.5"/>',
@@ -462,6 +462,7 @@ function renderTabs() {
     if (k === 'warga' && S.warga.length) ct = `<span class="ct">${wargaAktif().length}</span>`;
     if (k === 'lapak' && bolehIzinLapak()) { const n = lpMinta().length; if (n) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
     if (k === 'sumbangan') { const n = S.donasi.filter(x => x.status === 'Menunggu').length; if (n && bisa('sumbangan')) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
+    if (k === 'surat') { const n = isWarga() ? 0 : S.mintaSurat.filter(x => x.status === 'Menunggu').length; if (n) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
     if (k === 'pengajuan') { const n = S.pengajuan.filter(x => x.status === 'Menunggu').length; if (n && bisa('pengeluaran')) ct = `<span class="ct" style="background:var(--sun);color:#3a2a00">${n}</span>`; }
     if (k === 'lapor') { const w = wargaSaya(), n = w ? S.keluhan.filter(x => x.wargaId === w.id && x.status !== 'Selesai').length : 0; if (n) ct = `<span class="ct">${n}</span>`; }
     if (k === 'keluhan' && open) ct = `<span class="ct hot">${open}</span>`;
@@ -502,7 +503,7 @@ function render() {
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.documentElement.lang = bhsAktif() ? 'en' : 'id';
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: vSurat, notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -1810,7 +1811,7 @@ function vAdminAkun() {
   <div class="panel"><h3>Akun login warga <small>${list.length} akun · ${tanpa} KK belum punya akun</small></h3>
     ${list.length ? `<div class="rows">${rows}</div>` : '<p class="muted" style="margin:0">Belum ada akun warga. Buat akun supaya warga bisa melihat status iurannya sendiri dan melaporkan keluhan.</p>'}</div>
     <div class="panel" style="display:grid;gap:6px"><h3>Yang bisa dilakukan warga</h3>
-    <p class="muted" style="margin:0">Setelah masuk dengan No. HP dan password, warga hanya melihat menu <b>Rumah saya</b> (data keluarga, status dan riwayat iuran, kwitansi), <b>Keluhan saya</b> (melapor dan memantau tanggapan), dan <b>Pengumuman</b>. Warga tidak melihat data warga lain, buku kas, surat, atau menu pengurus.</p>
+    <p class="muted" style="margin:0">Setelah masuk dengan No. HP dan password, warga hanya melihat menu <b>Rumah saya</b> (data keluarga, status dan riwayat iuran, kwitansi), <b>Keluhan saya</b> (melapor dan memantau tanggapan), <b>Surat</b> (mengajukan surat pengantar dan mengunduh surat yang sudah dibuat), dan <b>Pengumuman</b>. Warga tidak melihat data warga lain, buku kas, surat warga lain, atau menu pengurus.</p>
     <p class="muted" style="margin:0">Login warga memakai No. HP kepala keluarga di Data warga. Bila No. HP diubah, login otomatis ikut berubah. Warga lupa password? Buka Ubah pada akunnya lalu isi Reset password.</p></div>`;
 }
 function openAkun(id) {
@@ -2121,7 +2122,7 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {notulen: 'Notulensi rapat', sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_KOL = {notulen: 'Notulensi rapat', mintaSurat: 'Permohonan surat', sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn'], keluarkan_sesi: ['Akhiri sesi', 'bad']};
 /* ---------- Pengguna online (detak tiap 1 menit; dilihat Pemilik di Admin) ---------- */
 const ON = {last: 0, menu: '', data: null, err: '', memuat: false, tmr: null};
@@ -6109,7 +6110,8 @@ function vSurat() {
   const head = `<div class="sec-head"><div><h2>Surat pengantar</h2><p>Buat surat bernomor otomatis, lalu unduh untuk dicetak dan ditandatangani.</p></div>
     <button class="btn pri" data-act="surat-new" ${dis('surat')}>+ Buat surat</button></div>`;
   const kurang = !S.set.rt || !S.set.kelurahan || !namaKetua();
-  const note = kurang ? `<div class="notice">Kop surat belum lengkap (nomor RT, kelurahan atau nama Ketua RT). ${bisa('pengaturan') ? '<a href="#pengaturan" data-act="tab" data-k="pengaturan" style="color:inherit;font-weight:600">Lengkapi di Pengaturan</a>.' : 'Minta Ketua RT melengkapinya di Pengaturan.'}</div>` : '';
+  const minta = srmPanel();
+  const note = minta + (kurang ? `<div class="notice">Kop surat belum lengkap (nomor RT, kelurahan atau nama Ketua RT). ${bisa('pengaturan') ? '<a href="#pengaturan" data-act="tab" data-k="pengaturan" style="color:inherit;font-weight:600">Lengkapi di Pengaturan</a>.' : 'Minta Ketua RT melengkapinya di Pengaturan.'}</div>` : '');
   if (!S.surat.length) return head + note + `<div class="empty"><h3>Belum ada surat</h3><p style="margin:0">Pilih jenis surat dan warga pemohon; nomor surat dan isinya terisi otomatis.</p>
     <button class="btn pri" data-act="surat-new" ${dis('surat')}>+ Buat surat</button></div>`;
   const q = S.suratQ.trim().toLowerCase();
@@ -6125,15 +6127,19 @@ function vSurat() {
     <div class="tbl-wrap hide-m"><table><thead><tr><th>Nomor</th><th>Tanggal</th><th>Jenis</th><th>Pemohon</th><th></th></tr></thead><tbody>${rowsT}</tbody></table></div>
     <div class="list-mobile">${rowsM}</div>`;
 }
-function openSuratBaru() {
+function openSuratBaru(mid) {
   if (!wargaAktif().length) { toast('Tambahkan data warga dulu sebelum membuat surat.', 'bad'); return; }
+  const m = mid ? S.mintaSurat.find(x => x.id === mid && x.status === 'Menunggu') : null;
+  if (mid && !m) { toast('Permohonan ini sudah diproses atau dibatalkan.', 'bad'); return; }
+  const pv = m ? srmPemohonVal(m) : '', jenis = m && m.jenis;
   openDlg({
-    title: 'Buat surat pengantar', area: 'surat', submitLabel: 'Buat surat',
-    body: `<div class="fld"><label for="sr_j">Jenis surat</label><select id="sr_j" name="jenis">${JENIS_SURAT.map(j => `<option>${j}</option>`).join('')}</select></div>
-    <div class="fld"><label for="sr_p">Pemohon <span class="req">*</span></label><select id="sr_p" name="pemohon" required><option value="">— pilih warga —</option>${pemohonOpts('')}</select><span class="hint">Kepala keluarga dan anggota keluarga yang sudah dicatat</span></div>
-    <div class="fld"><label for="sr_k">Keperluan <span class="req">*</span></label><input type="text" id="sr_k" name="keperluan" required placeholder="mis. Melamar pekerjaan"></div>
+    title: m ? 'Buat surat dari permohonan' : 'Buat surat pengantar', area: 'surat', submitLabel: 'Buat surat',
+    body: `${m ? `<div class="panel" style="padding:10px 14px;background:var(--sunk);border:0"><b>Permohonan dari ${esc(m.pemohonNama || '—')}${m.blok ? ' · ' + esc(m.blok) : ''}</b><div class="muted" style="font-size:.84rem">Dikirim ${esc(tglJam(m.dikirim))}. Periksa lalu buat surat; warga dapat melihat dan mengunduh suratnya.</div></div>` : ''}
+    <div class="fld"><label for="sr_j">Jenis surat</label><select id="sr_j" name="jenis">${[...JENIS_SURAT, ...(jenis && !JENIS_SURAT.includes(jenis) ? [jenis] : [])].map(j => `<option ${j === jenis ? 'selected' : ''}>${esc(j)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="sr_p">Pemohon <span class="req">*</span></label><select id="sr_p" name="pemohon" required><option value="">— pilih warga —</option>${pemohonOpts(pv)}</select><span class="hint">${m && !pv ? 'Nama pemohon tidak lagi cocok dengan data keluarga; pilih ulang.' : 'Kepala keluarga dan anggota keluarga yang sudah dicatat'}</span></div>
+    <div class="fld"><label for="sr_k">Keperluan <span class="req">*</span></label><input type="text" id="sr_k" name="keperluan" required placeholder="mis. Melamar pekerjaan" value="${esc(m ? m.keperluan : '')}"></div>
     <div class="fld"><label for="sr_t">Tanggal surat</label><input type="date" id="sr_t" name="tanggal" value="${todayISO()}" required></div>
-    <div class="fld"><label for="sr_ket">Keterangan tambahan</label><textarea id="sr_ket" name="keterangan" rows="2" placeholder="Opsional, mis. nama usaha atau alamat tujuan pindah"></textarea></div>`,
+    <div class="fld"><label for="sr_ket">Keterangan tambahan</label><textarea id="sr_ket" name="keterangan" rows="2" placeholder="Opsional, mis. nama usaha atau alamat tujuan pindah">${esc(m ? m.keterangan || '' : '')}</textarea></div>`,
     onSubmit: async d => {
       const [wid, idx] = String(d.pemohon).split('|'), w = wById(wid);
       if (!w) { pesanDlg('Pilih warga pemohon.', 'sr_p'); return false; }
@@ -6143,6 +6149,7 @@ function openSuratBaru() {
         : {nama: w.nama, nik: w.nik || '', jk: w.jk || '', agama: w.agama || '', lahir: w.lahir || '', alamat, wargaId: w.id};
       const row = {jenis: d.jenis, pemohon, keperluan: d.keperluan.trim(), keterangan: String(d.keterangan || '').trim(), tanggal: d.tanggal, nomor: nomorSurat(d.tanggal), dibuat: todayISO()};
       const id = uid(), ok = await put('surat', id, row);
+      if (ok && m) await put('mintaSurat', m.id, {...m, status: 'Selesai', suratId: id, nomor: row.nomor, diproses: nowDT(), diprosesOleh: namaSesi()});
       if (ok) { toast(`Surat ${row.nomor} dibuat.`); setTimeout(() => openSuratLihat(id, row), 50); }
       return ok;
     }
@@ -6296,6 +6303,84 @@ function unduhNotulen(id) {
   const html = `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Notulen - ${esc(n.judul)}</title><style>${SURAT_CSS}${RT_CSS}
 @page{size:A4;margin:2cm}body{margin:0;background:#fff}.surat{padding:0;max-width:none}@media screen{body{padding:24px}.surat{max-width:720px}}</style></head><body>${notulenDok(n)}</body></html>`;
   unduh(fname(`Notulen - ${n.judul} - ${n.tanggal}.html`), html);
+}
+/* ---------- permohonan surat dari warga ---------- */
+const chipSrm = st => `<span class="chip ${st === 'Selesai' ? 'ok' : st === 'Ditolak' ? 'bad' : st === 'Dibatalkan' ? 'mute' : 'warn'}">${esc(st === 'Selesai' ? 'Surat jadi' : st || 'Menunggu')}</span>`;
+function srmPemohonVal(m) {
+  const w = wById(m.wargaId); if (!w) return '';
+  const nm = String(m.pemohonNama || '').trim().toLowerCase(), ang = w.anggota || [], i = Number(m.pemohonIdx);
+  if (i === -1 && String(w.nama || '').trim().toLowerCase() === nm) return w.id + '|-1';
+  if (i >= 0 && ang[i] && String(ang[i].nama || '').trim().toLowerCase() === nm) return w.id + '|' + i;
+  if (String(w.nama || '').trim().toLowerCase() === nm) return w.id + '|-1';
+  const j = ang.findIndex(a => String(a.nama || '').trim().toLowerCase() === nm);
+  return j >= 0 ? w.id + '|' + j : '';
+}
+function srmPanel() {
+  const list = S.mintaSurat.filter(x => x.status === 'Menunggu').sort((a, b) => String(a.dikirim).localeCompare(String(b.dikirim)));
+  if (!list.length) return '';
+  const ok = bisa('surat');
+  return `<div class="panel"><h3 style="margin-bottom:4px">Permohonan dari warga <span class="chip warn plain">${list.length} menunggu</span></h3>
+    <p class="muted" style="margin:0 0 6px;font-size:.84rem">${ok ? 'Tekan Buat surat: isi permohonan langsung terisi di formulir. Warga bisa melihat dan mengunduh suratnya setelah dibuat.' : 'Hanya pengurus dengan izin mengelola surat yang bisa memproses permohonan.'}</p>
+    ${list.map(m => `<div class="row" style="padding:10px 0;border-top:1px solid var(--line)"><div class="grow"><div class="t">${esc(m.pemohonNama || '—')}${m.blok ? ` <span class="muted" style="font-weight:400">· ${esc(m.blok)}</span>` : ''}</div>
+      <div class="s">${esc(String(m.jenis || '').replace(/^Surat /, ''))} · ${esc(m.keperluan || '')}</div>${m.keterangan ? `<div class="s">${esc(m.keterangan)}</div>` : ''}<div class="s">Dikirim ${esc(tglJam(m.dikirim))}</div></div>
+      ${ok ? `<div class="racts"><button class="btn sm" data-act="srm-tolak" data-id="${esc(m.id)}" style="color:var(--bad)">Tolak</button><button class="btn pri sm" data-act="srm-buat" data-id="${esc(m.id)}">Buat surat</button></div>` : ''}</div>`).join('')}</div>`;
+}
+function openSrmTolak(mid) {
+  const m = S.mintaSurat.find(x => x.id === mid && x.status === 'Menunggu'); if (!m) return;
+  openDlg({title: 'Tolak permohonan surat', area: 'surat', submitLabel: 'Tolak permohonan',
+    body: `<p style="margin:0"><b>${esc(m.pemohonNama || '—')}</b> · ${esc(m.jenis)}<br><span class="muted">${esc(m.keperluan)}</span></p>
+      <div class="fld"><label for="srm_a">Alasan (terlihat oleh warga) <span class="req">*</span></label><textarea id="srm_a" name="alasan" rows="2" required maxlength="200" placeholder="mis. Data NIK belum lengkap, mohon lengkapi di menu Rumah saya lalu ajukan lagi"></textarea></div>`,
+    onSubmit: async d => {
+      const a = String(d.alasan || '').trim(); if (!a) { pesanDlg('Isi alasan penolakan.', 'srm_a'); return false; }
+      const ok = await put('mintaSurat', m.id, {...m, status: 'Ditolak', alasan: a, diproses: nowDT(), diprosesOleh: namaSesi()});
+      if (ok) toast('Permohonan ditolak.'); return ok;
+    }});
+}
+function vSuratWarga() {
+  const w = wargaSaya(); if (!w) return '<div class="empty">Data rumah Anda tidak ditemukan.</div>';
+  const list = S.mintaSurat.filter(x => x.wargaId === w.id).sort((a, b) => String(b.dikirim).localeCompare(String(a.dikirim)));
+  const head = `<div class="sec-head"><div><h2>Surat pengantar</h2><p>Ajukan surat pengantar RT, pantau prosesnya, lalu unduh suratnya setelah dibuat pengurus.</p></div>
+    <button class="btn pri" data-act="srw-new">+ Ajukan surat</button></div>`;
+  if (!list.length) return head + `<div class="empty"><h3>Belum ada permohonan surat</h3><p style="margin:0">Pilih jenis surat dan anggota keluarga yang memerlukan, lalu tulis keperluannya. Pengurus RT akan membuatkan suratnya.</p>
+    <button class="btn pri" data-act="srw-new">+ Ajukan surat</button></div>`;
+  return head + `<div class="kel-list">${list.map(m => { const sr = m.suratId && S.surat.find(x => x.id === m.suratId);
+    return `<article class="kel">
+      <div class="meta">${chipSrm(m.status)}<span>Dikirim ${esc(tglJam(m.dikirim))}</span></div>
+      <h4>${esc(m.jenis)}</h4><p>Untuk <b>${esc(m.pemohonNama || '—')}</b> · ${esc(m.keperluan)}${m.keterangan ? '<br>' + esc(m.keterangan) : ''}</p>
+      ${m.status === 'Selesai' ? `<div class="resp"><b>Surat sudah dibuat${m.nomor ? ' · Nomor ' + esc(m.nomor) : ''}</b>Unduh untuk dicetak, lalu mintakan tanda tangan dan stempel ke Ketua RT.${sr ? `<div class="racts" style="margin-top:8px;justify-content:flex-start"><button class="btn sm" data-act="surat-view" data-id="${esc(sr.id)}">Lihat surat</button><button class="btn pri sm" data-act="surat-dl" data-id="${esc(sr.id)}">Unduh</button></div>` : ''}</div>`
+        : m.status === 'Ditolak' ? `<div class="resp"><b>Permohonan ditolak${m.diproses ? ' · ' + esc(tgl(String(m.diproses).slice(0, 10))) : ''}</b>${esc(m.alasan || '')}</div>`
+        : m.status === 'Dibatalkan' ? '<div class="muted" style="font-size:.84rem">Anda membatalkan permohonan ini.</div>'
+        : `<div class="muted" style="font-size:.84rem;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">Menunggu diproses pengurus RT.<button class="btn sm ghost" data-act="srw-batal" data-id="${esc(m.id)}" style="color:var(--bad)">Batalkan</button></div>`}
+    </article>`; }).join('')}</div>`;
+}
+function openSuratAjukan() {
+  const w = wargaSaya(); if (!w) return;
+  const opsi = [[-1, w.nama, 'kepala keluarga', w.nik], ...(w.anggota || []).map((a, i) => [i, a.nama, a.hubungan || 'anggota keluarga', a.nik])].filter(x => String(x[1] || '').trim());
+  openDlg({
+    title: 'Ajukan surat pengantar', submitLabel: 'Kirim permohonan',
+    body: `<div class="fld"><label for="srw_j">Jenis surat</label><select id="srw_j" name="jenis">${JENIS_SURAT.map(j => `<option>${esc(j)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="srw_p">Untuk siapa <span class="req">*</span></label><select id="srw_p" name="pemohon" required>${opsi.map(([i, n, h]) => `<option value="${i}">${esc(n)} (${esc(h)})</option>`).join('')}</select><span class="hint" id="srwNik"></span></div>
+    <div class="fld"><label for="srw_k">Keperluan <span class="req">*</span></label><input type="text" id="srw_k" name="keperluan" required minlength="3" maxlength="150" placeholder="mis. Melamar pekerjaan, mengurus KTP"></div>
+    <div class="fld"><label for="srw_ket">Keterangan tambahan</label><textarea id="srw_ket" name="keterangan" rows="2" maxlength="300" placeholder="Opsional, mis. nama usaha atau alamat tujuan pindah"></textarea></div>
+    <p class="muted" style="margin:0;font-size:.84rem">Data diri (NIK, tanggal lahir, alamat) diambil dari menu Rumah saya. Pastikan sudah benar sebelum mengajukan.</p>`,
+    onSubmit: async d => {
+      const idx = Number(d.pemohon), o = opsi.find(x => x[0] === idx);
+      if (!o) { pesanDlg('Pilih untuk siapa surat ini.', 'srw_p'); return false; }
+      const kep = String(d.keperluan || '').trim(); if (kep.length < 3) { pesanDlg('Tulis keperluan surat.', 'srw_k'); return false; }
+      const row = {wargaId: w.id, pemohonIdx: idx, pemohonNama: o[1], jenis: d.jenis, keperluan: kep, keterangan: String(d.keterangan || '').trim(), status: 'Menunggu', dikirim: nowDT(), olehSesi: S.sesi};
+      try { await DB.collection('mintaSurat').doc(uid()).set(row); toast('Permohonan terkirim. Pengurus RT akan membuatkan suratnya.'); return true; }
+      catch (e) { return fail(e); }
+    }
+  });
+  const sp = $('#srw_p'), nik = () => { const o = opsi.find(x => String(x[0]) === sp.value), h = $('#srwNik'); if (h) h.textContent = o && !o[3] ? 'NIK belum tercatat. Lengkapi di menu Rumah saya agar surat bisa langsung dibuat.' : ''; };
+  if (sp) { sp.addEventListener('change', nik); nik(); }
+}
+async function srwBatal(b) {
+  const m = S.mintaSurat.find(x => x.id === b.dataset.id); if (!m || m.status !== 'Menunggu') return;
+  if (!b.dataset.confirm) { b.dataset.confirm = '1'; b.textContent = 'Tekan lagi untuk membatalkan'; return; }
+  b.disabled = true;
+  try { await DB.collection('mintaSurat').doc(m.id).set({...m, status: 'Dibatalkan'}); toast('Permohonan dibatalkan.'); }
+  catch (e) { b.disabled = false; fail(e); }
 }
 function openSuratLihat(id, fallback) {
   const x = S.surat.find(s => s.id === id) || (fallback && {...fallback, id}); if (!x) return;
@@ -6754,6 +6839,10 @@ document.addEventListener('click', async e => {
   else if (a === 'info-edit') openInfo(b.dataset.id);
   else if (a === 'inff') { S.infoFilter = b.dataset.k; render(); }
   else if (a === 'surat-new') openSuratBaru();
+  else if (a === 'srm-buat') openSuratBaru(b.dataset.id);
+  else if (a === 'srm-tolak') openSrmTolak(b.dataset.id);
+  else if (a === 'srw-new') openSuratAjukan();
+  else if (a === 'srw-batal') srwBatal(b);
   else if (a === 'nt-new') openNotulen();
   else if (a === 'nt-edit') openNotulen(b.dataset.id);
   else if (a === 'nt-lihat') openNotulenLihat(b.dataset.id);

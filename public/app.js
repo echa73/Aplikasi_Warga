@@ -1185,6 +1185,7 @@ function vPengaturan() {
     <div class="fld"><label for="s_bayar">Info pembayaran untuk warga</label><textarea id="s_bayar" name="infoBayar" rows="3" placeholder="mis. Transfer ke BCA 1234567890 a.n. Bendahara RT 05, atau tunai ke Ibu Sri (B-02)" ${ro}>${esc(S.set.infoBayar || '')}</textarea><span class="hint">Tampil di halaman Rumah saya milik warga</span></div>
     <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="papanPublik" ${S.set.papanPublik === false ? '' : 'checked'} ${ro}> <span>Tampilkan papan info di halaman login (pengumuman terbaru & status keluhan, tanpa nama pelapor atau nomor rumah). Bisa dilihat tanpa login.</span></label>
     <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="pilihanBahasa" ${S.set.pilihanBahasa === false ? '' : 'checked'} ${S.sesi === 'pemilik' ? '' : 'disabled'}> <span>Tampilkan pilihan bahasa <b>ID / EN</b> di halaman login dan menu warga<br><span class="muted" style="font-size:.82rem">Matikan untuk kembali selalu Bahasa Indonesia. Hanya Pemilik yang bisa mengubah.</span></span></label>
+    <label class="ck" style="font-weight:500;align-items:flex-start"><input type="checkbox" name="sosUjiPemilik" ${S.set.sosUjiPemilik ? 'checked' : ''} ${S.sesi === 'pemilik' ? '' : 'disabled'}> <span><b>Mode uji SOS:</b> hanya Pemilik yang menerima alarm & notifikasi SOS<br><span class="muted" style="font-size:.82rem">Untuk mencoba tombol SOS tanpa membunyikan HP pengurus dan satpam. Matikan lagi setelah selesai menguji.</span></span></label>
     <h3 style="margin-top:6px">Keamanan login</h3>
     <div class="fld"><label for="s_ts">Site key Cloudflare Turnstile (CAPTCHA)</label><input type="text" id="s_ts" name="turnstileKey" value="${esc(S.set.turnstileKey || '')}" maxlength="80" autocomplete="off" placeholder="0x4AAAAAAA…" ${S.sesi === 'pemilik' ? '' : 'disabled'}><span class="hint">Isi site key (bukan secret key) agar halaman login memakai verifikasi anti-bot. Secret key dipasang di dashboard Supabase → Authentication → Bot and Abuse Protection. Hanya Pemilik yang dapat mengubah.</span></div>
     <h3 style="margin-top:6px">Lokasi lingkungan</h3>
@@ -3775,7 +3776,7 @@ function panelNotif(untuk) {
     : st === 'ios' ? '<span class="muted" style="font-size:.84rem">Di iPhone: buka menu Bagikan → "Tambahkan ke Layar Utama", lalu buka aplikasi dari ikon tersebut untuk mengaktifkan notifikasi (iOS 16.4+).</span>'
     : '<span class="muted" style="font-size:.84rem">Browser ini belum mendukung notifikasi. Gunakan Chrome di Android atau aplikasi yang sudah diinstal.</span>';
   if (st === 'aktif' && !warga && S.kmTab !== 'pos') return '';
-  return `<div class="panel" style="display:grid;gap:8px;${st === 'belum' && !warga ? 'border-color:var(--sun);background:var(--sun-soft)' : ''}"><h3 style="margin:0">${judul}</h3><p class="muted" style="margin:0;font-size:.86rem">${ket}</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${isi}</div></div>`;
+  return `<div class="panel" style="display:grid;gap:8px;${st === 'belum' && !warga ? 'border-color:var(--sun);background:var(--sun-soft)' : ''}"><h3 style="margin:0">${judul}</h3><p class="muted" style="margin:0;font-size:.86rem">${ket}</p>${!warga && S.set.sosUjiPemilik ? `<p style="margin:0;font-size:.86rem;color:var(--warn);font-weight:600">⚠ Mode uji SOS aktif: saat ini hanya Pemilik yang menerima alarm & notifikasi SOS${S.sesi === 'pemilik' ? ' (matikan di Pengaturan setelah selesai menguji)' : ''}.</p>` : ''}<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${isi}</div></div>`;
 }
 
 /* ---------- Lokasi lingkungan (peta) ---------- */
@@ -5715,7 +5716,7 @@ function alarmMulai(x) {
     navigator.serviceWorker.ready.then(r => r.showNotification('🚨 DARURAT · ' + (x.jenis || 'SOS'), {body: (rumahLbl(x.wargaId) || '') + (x.pesan ? ' · ' + x.pesan : ''), tag: 'sos-' + x.id, renotify: true, requireInteraction: true, vibrate: [600, 250, 600, 250, 900], icon: './icons/icon-192.png'})); } catch (e) {}
 }
 function alarmCek() {
-  if (!sudahMasuk() || S.terkunci || isWarga() || !lihat('keamanan')) { if (ALARM.aktif) alarmStop(); ALARM.awal = true; return; }
+  if (!sudahMasuk() || S.terkunci || isWarga() || !lihat('keamanan') || (S.set.sosUjiPemilik && S.sesi !== 'pemilik')) { if (ALARM.aktif) alarmStop(); ALARM.awal = true; return; }
   const aktif = daruratAktif(), ids = new Set(aktif.map(x => x.id));
   if (ALARM.aktif && !ids.has(ALARM.aktif)) alarmStop();
   // saat pertama dibuka: SOS aktif yang masih baru (≤ 30 menit) tetap dibunyikan
@@ -7078,7 +7079,7 @@ document.addEventListener('submit', async e => {
   const t = k => String(d[k] || '').trim();
   const ok = await putSetting({nama: t('nama') || 'Villani 5', namaLengkap: t('namaLengkap'), iuranBulanan: Math.max(0, Number(d.iuranBulanan) || 0),
     rt: t('rt'), rw: t('rw'), kelurahan: t('kelurahan'), kecamatan: t('kecamatan'), kota: t('kota'), ketua: t('ketua'), ketuaRw: t('ketuaRw'),
-    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik, ...(S.sesi === 'pemilik' ? {pilihanBahasa: !!d.pilihanBahasa} : {}), ...(S.sesi === 'pemilik' ? {turnstileKey: /^[0-9A-Za-z_-]{10,80}$/.test(t('turnstileKey')) ? t('turnstileKey') : ''} : {}),
+    infoBayar: String(d.infoBayar || '').trim(), papanPublik: !!d.papanPublik, ...(S.sesi === 'pemilik' ? {pilihanBahasa: !!d.pilihanBahasa, sosUjiPemilik: !!d.sosUjiPemilik} : {}), ...(S.sesi === 'pemilik' ? {turnstileKey: /^[0-9A-Za-z_-]{10,80}$/.test(t('turnstileKey')) ? t('turnstileKey') : ''} : {}),
     lokasi: (() => { const lat = Number(d.lat), lng = Number(d.lng), L0 = lokasiRT(); const okK = isFinite(lat) && isFinite(lng) && lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141;
       const L = {alamat: t('alamat') || L0.alamat, lat: okK ? lat : L0.lat, lng: okK ? lng : L0.lng}; if (L.lat === LOKASI_DEF.lat && L.lng === LOKASI_DEF.lng) L.placeId = LOKASI_DEF.placeId; return L; })()});
   if (ok) toast('Pengaturan disimpan.');

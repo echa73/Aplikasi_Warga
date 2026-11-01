@@ -472,3 +472,5 @@ create policy "warga lihat program sumbangan" on public.dokumen
     and koleksi = 'sumbangan'
     and coalesce((data->>'tampilWarga')::boolean, true)
   );
+
+-- Mode uji SOS: pengaturan.umum.sosUjiPemilik = true → push_penerima('darurat') hanya Pemilik; alarm dalam aplikasi juga hanya Pemilik.

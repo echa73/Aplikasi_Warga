@@ -126,3 +126,6 @@ Menu **Notulensi rapat** (grup Warga). Dibuat, diubah, dan dikirim ke grup WA ha
 
 ### Pilihan bahasa ID / EN
 Tombol 🇮🇩 ID | 🇬🇧 EN di halaman login dan di header akun warga. Default selalu ID setiap aplikasi dibuka; pilihan EN berlaku selama aplikasi/tab masih terbuka. Yang diterjemahkan: halaman login (termasuk pesan error & kunci login), papan Info warga, dan menu warga (Struktur, Rumah saya, Keamanan, Keluhan saya, Pengumuman, Sumbangan, Kebersihan, Kerohanian, Lapak) — teks antarmuka saja. Tetap Bahasa Indonesia: isi buatan pengguna, dokumen resmi (kwitansi, surat, notulen, PDF), pesan WhatsApp, dan seluruh tampilan pengurus. Pemilik bisa mematikan pilihan bahasa di Pengaturan ("Tampilkan pilihan bahasa ID / EN"). Implementasi: kamus I18N + aturan pola di app.js, diterapkan saat tampil (MutationObserver) — tidak mengubah data.
+
+### Alarm SOS di dalam aplikasi
+Pengurus/Pemilik/Satpam yang sedang membuka aplikasi mendapat layar merah berkedip + bunyi sirene + getar saat warga menekan SOS (sampai ditekan "Matikan alarm"/"Tangani" atau SOS ditangani/dibatalkan). Bila suara diblokir browser, muncul tombol "Nyalakan suara". Saat aplikasi ditutup, peringatan datang lewat notifikasi push — setiap HP penerima harus menekan **Aktifkan notifikasi** (kini juga tampil di Ringkasan).

@@ -494,6 +494,7 @@ function sudahMasuk() { return !!roleSaya() && !wajibGanti(); }
 
 function render() {
   setTimeout(() => { if (S.tab === 'iuran' && S.iurMode === 'massal') mzUpdBar(); }, 0);
+  setTimeout(alarmCek, 0);
   const ae = document.activeElement, aid = ae && ae.id, sel = ae && 'selectionStart' in ae ? [ae.selectionStart, ae.selectionEnd] : null;
   renderMode(); renderTabs();
   const main = $('#main');
@@ -503,7 +504,7 @@ function render() {
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.documentElement.lang = bhsAktif() ? 'en' : 'id';
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + (S.tab === 'ringkasan' && !isWarga() && lihat('keamanan') ? panelNotif('pengurus') : '') + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -5674,6 +5675,54 @@ function nomorPanel(edit) {
       <button class="btn sm" data-act="salin" data-teks="${esc(n.nomor)}">Salin</button>${edit && !n.bawaan ? `<button class="btn sm ghost" data-act="nomor-edit" data-id="${esc(n.id)}">Ubah</button>` : ''}</div>`).join('')}
   </div>${edit && !S.nomorDarurat.length ? '<p class="muted" style="margin:8px 0 0;font-size:.8rem">Nomor nasional bawaan. Tambahkan nomor pos satpam, ketua RT atau puskesmas terdekat.</p>' : ''}</div>`;
 }
+/* ---------- Alarm SOS di dalam aplikasi (bunyi sirene + getar) untuk pengurus/pemilik/satpam yang sedang membuka aplikasi ---------- */
+const ALARM = {ctx: null, osc: null, gain: null, tmr: null, getar: null, aktif: null, dikenal: new Set(), awal: true};
+function alarmAudio() {
+  try { if (!ALARM.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ALARM.ctx = new AC(); }
+    if (ALARM.ctx.state === 'suspended') ALARM.ctx.resume(); return ALARM.ctx; } catch (e) { return null; }
+}
+// buka kunci audio pada sentuhan pertama (aturan autoplay browser)
+['pointerdown', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, () => { if (sudahMasuk() && lihat('keamanan') && !isWarga()) alarmAudio(); if (ALARM.aktif && ALARM.ctx && ALARM.ctx.state === 'running' && !ALARM.osc) alarmBunyi(); }, {passive: true}));
+function alarmBunyi() {
+  const ctx = alarmAudio(); if (!ctx || ctx.state !== 'running' || ALARM.osc) return false;
+  const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sawtooth'; g.gain.value = 0.0001; o.connect(g); g.connect(ctx.destination); o.start();
+  ALARM.osc = o; ALARM.gain = g;
+  const siklus = () => { if (!ALARM.osc) return; const t = ctx.currentTime;
+    o.frequency.cancelScheduledValues(t); o.frequency.setValueAtTime(650, t); o.frequency.linearRampToValueAtTime(1350, t + 0.45); o.frequency.linearRampToValueAtTime(650, t + 0.9);
+    g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.18, t); };
+  siklus(); ALARM.tmr = setInterval(siklus, 900);
+  return true;
+}
+function alarmDiam() {
+  clearInterval(ALARM.tmr); ALARM.tmr = null; clearInterval(ALARM.getar); ALARM.getar = null;
+  if (ALARM.osc) { try { ALARM.gain.gain.setValueAtTime(0.0001, ALARM.ctx.currentTime); ALARM.osc.stop(); } catch (e) {} ALARM.osc = null; }
+  try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
+}
+function alarmStop() { alarmDiam(); ALARM.aktif = null; const el = document.getElementById('sosAlarm'); if (el) el.remove(); }
+function alarmMulai(x) {
+  ALARM.aktif = x.id;
+  const berbunyi = alarmBunyi();
+  try { if (navigator.vibrate) { navigator.vibrate([600, 250, 600, 250, 900]); ALARM.getar = setInterval(() => navigator.vibrate([600, 250, 600, 250, 900]), 3500); } } catch (e) {}
+  let el = document.getElementById('sosAlarm');
+  if (!el) { el = document.createElement('div'); el.id = 'sosAlarm'; el.className = 'sos-alarm'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-live', 'assertive'); }
+  el.innerHTML = `<div class="sos-alarm-box"><div class="sos-alarm-ico" aria-hidden="true">🚨</div><b>SOS · ${esc(x.jenis || 'Darurat')}</b>
+    <p>${esc(rumahLbl(x.wargaId) || 'Rumah tidak diketahui')} · ${esc(tglJam(x.waktu))}${x.pesan ? '<br>"' + esc(x.pesan) + '"' : ''}</p>
+    ${berbunyi ? '' : '<p class="sos-alarm-tip">🔇 Suara belum aktif. Ketuk tombol di bawah untuk menyalakan sirene.</p>'}
+    <div class="sos-alarm-acts">${berbunyi ? '' : '<button type="button" class="btn" data-act="sos-alarm-bunyi">🔊 Nyalakan suara</button>'}<button type="button" class="btn" data-act="sos-alarm-diam">Matikan alarm</button>${bisa('keamanan') ? `<button type="button" class="btn pri" data-act="sos-alarm-tangani" data-id="${esc(x.id)}">Tangani</button>` : ''}</div></div>`;
+  const induk = dlg.open ? dlg : document.body; if (el.parentNode !== induk) induk.appendChild(el);
+  // bila aplikasi di latar belakang, tampilkan juga notifikasi sistem
+  try { if (document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker)
+    navigator.serviceWorker.ready.then(r => r.showNotification('🚨 DARURAT · ' + (x.jenis || 'SOS'), {body: (rumahLbl(x.wargaId) || '') + (x.pesan ? ' · ' + x.pesan : ''), tag: 'sos-' + x.id, renotify: true, requireInteraction: true, vibrate: [600, 250, 600, 250, 900], icon: './icons/icon-192.png'})); } catch (e) {}
+}
+function alarmCek() {
+  if (!sudahMasuk() || S.terkunci || isWarga() || !lihat('keamanan')) { if (ALARM.aktif) alarmStop(); ALARM.awal = true; return; }
+  const aktif = daruratAktif(), ids = new Set(aktif.map(x => x.id));
+  if (ALARM.aktif && !ids.has(ALARM.aktif)) alarmStop();
+  // saat pertama dibuka: SOS aktif yang masih baru (≤ 30 menit) tetap dibunyikan
+  const baru = aktif.filter(x => !ALARM.dikenal.has(x.id) && (!ALARM.awal || Date.now() - new Date(x.waktu).getTime() < 30 * 60e3));
+  aktif.forEach(x => ALARM.dikenal.add(x.id)); ALARM.awal = false;
+  if (baru.length) alarmMulai(baru[0]);
+}
 function daruratBanner() {
   if (!lihat('keamanan')) return '';
   const l = daruratAktif(); if (!l.length) return '';
@@ -6725,6 +6774,9 @@ document.addEventListener('click', async e => {
   else if (a === 'nomor-edit') openNomor(b.dataset.id);
   else if (a === 'sos-new') openSos();
   else if (a === 'sos-tangani') openSosTangani(b.dataset.id);
+  else if (a === 'sos-alarm-diam') alarmStop();
+  else if (a === 'sos-alarm-bunyi') { alarmAudio(); setTimeout(() => { if (alarmBunyi()) { const t = document.querySelector('#sosAlarm .sos-alarm-tip'); if (t) t.remove(); b.remove(); } }, 60); }
+  else if (a === 'sos-alarm-tangani') { const id = b.dataset.id; alarmStop(); openSosTangani(id); }
   else if (a === 'sos-impor') { b.disabled = true; let n = 0; for (const x of sosTanpaKejadian()) if (await sosKeKejadian(x)) n++; toast(`${n} panggilan SOS dicatat ke Kejadian.`); }
   else if (a === 'sos-batal') { const x = S.darurat.find(d => d.id === b.dataset.id); if (x && await put('darurat', x.id, {...x, status: 'Dibatalkan', ditangani: {oleh: namaSesi(), waktu: nowDT(), catatan: 'Dibatalkan warga'}})) toast('Panggilan darurat dibatalkan.'); }
   else if (a === 'km-csv') ekspKm(b.dataset.k);

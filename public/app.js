@@ -6953,7 +6953,7 @@ document.addEventListener('click', async e => {
     if (dlgDelete) { b.disabled = true; const ok = await dlgDelete(); if (ok !== false) dlg.close(); }
   }
   else if (a === 'pilih-user') { S.pilih = S.pilih === b.dataset.id ? null : b.dataset.id; S.pinGagal = 0; render(); const f = $('#pinMasuk') || $('#loginForm button'); if (f) f.focus(); }
-  else if (a === 'keluar') { b.disabled = true; try { if (pushSub) { const ep = pushSub.endpoint; await pushSub.unsubscribe(); await SB.rpc('push_lepas', {p_endpoint: ep}); pushSub = null; } } catch (err) {} await onlineKeluar(); try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
+  else if (a === 'keluar') { b.disabled = true; /* notifikasi SOS tetap aktif di HP ini walau keluar; matikan lewat tombol Matikan di panel Alarm SOS */ pushSub = null; await onlineKeluar(); try { await SB.auth.signOut(); } catch (err) {} resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik(); }
   else if (a === 'pin-pemilik') openPinPemilik();
   else if (a === 'pemilik-hp') openPemilikHp();
   else if (a === 'loginmode') { S.loginMode = b.dataset.k; S.pilih = null; S.pinGagal = 0; render(); const f = $(S.loginMode === 'warga' ? '#wUser' : '.user-opt'); if (f) f.focus(); }

@@ -1631,7 +1631,7 @@ const papanKunci = d => [...papanAktif(d).map(a => 'p:' + a.judul + '|' + a.dibu
 function papanSudahLihat() { try { return new Set(JSON.parse(localStorage.getItem('papan-dilihat') || '[]')); } catch (e) { return new Set(); } }
 function papanBell() {
   const d = S.infoPub; if (!d || d.aktif === false) return '';
-  const semua = papanKunci(d); if (!semua.length && !(d.ringkas && d.ringkas.selesaiBulanIni)) return '';
+  const semua = papanKunci(d); // lonceng selalu tampil walau belum ada info baru
   const lihat = papanSudahLihat(), baru = semua.filter(k => !lihat.has(k)).length;
   return `<button type="button" class="papan-bell${baru ? ' ada' : ''}" data-act="papan-buka" aria-label="Info warga${baru ? ` (${baru} baru)` : ''}">${ico('bell')}<span class="lb">Info warga</span>${baru ? `<span class="bd">${baru > 9 ? '9+' : baru}</span>` : ''}</button>`;
 }
@@ -1644,7 +1644,7 @@ function bukaPapan() {
 function papanInfo() {
   const d = S.infoPub; if (!d || d.aktif === false) return '';
   const P = papanAktif(d), K = d.keluhan || [], R = d.ringkas || {};
-  if (!P.length && !K.length && !(R.selesaiBulanIni)) return '';
+  if (!P.length && !K.length && !(R.selesaiBulanIni)) return `<div class="empty" style="margin:0"><div style="font-size:2rem" aria-hidden="true">🔔</div><b>Belum ada info baru</b><p class="muted" style="margin:4px 0 0">Pengumuman dan perkembangan keluhan warga akan tampil di sini.</p></div>`;
   const hari = todayISO();
   const acara = a => a.tanggalAcara ? `${a.tanggalAcara === hari ? '<span class="papan-tag">Hari ini</span>' : a.tanggalAcara > hari ? '<span class="papan-tag">Akan datang</span>' : ''} 📅 ${esc(tglPanjang(a.tanggalAcara))}${a.jam ? ' · ' + esc(a.jam) : ''}${a.tempat ? ' · ' + esc(a.tempat) : ''}` : '';
   const pg = P.map(a => `<div class="papan-i"><div class="m">${a.sematkan ? '<span>📌</span>' : ''}<span class="chip mute plain">${esc(a.kategori || 'Info')}</span><span>${esc(tgl(a.dibuat))}</span></div>

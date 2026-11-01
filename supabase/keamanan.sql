@@ -474,3 +474,10 @@ create policy "warga lihat program sumbangan" on public.dokumen
   );
 
 -- Mode uji SOS: pengaturan.umum.sosUjiPemilik = true → push_penerima('darurat') hanya Pemilik; alarm dalam aplikasi juga hanya Pemilik.
+
+-- Login paksa (migrasi klaim_sesi_paksa)
+--   klaim_sesi(p_paksa boolean default false): bila akun masih aktif di perangkat lain, sesi baru TIDAK dihapus
+--   (tetap terkunci RLS lewat privat.sesi_valid). Aplikasi menawarkan "Ya, keluarkan & masuk di sini" →
+--   klaim_sesi(true) menghapus sesi lain; akun dengan 2 langkah (TOTP) wajib aal2 dulu ('perlu_mfa').
+--   "Batal" → signOut sesi baru. privat.sesi_berakhir mencatat sesi yang dikeluarkan (7 hari);
+--   alasan_sesi_berakhir() dipakai perangkat lama untuk menampilkan pesan yang tepat.

@@ -238,6 +238,11 @@ function resetSesi() {
 }
 /* 1 akun 1 perangkat: sesi baru ditolak selama akun masih login di perangkat lain */
 async function tolakSesi(k, user) {
+  if (k && k.alasan === 'dipakai') {
+    /* No. HP + password sudah benar: tawarkan keluarkan perangkat lain (sesi ini tetap terkunci RLS sampai dipilih) */
+    resetSesi(); S.sesiTolak = {k, user}; S.paksaErr = ''; S.loginPesan = '';
+    S.loaded = true; render(); window.scrollTo(0, 0); return;
+  }
   try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
   resetSesi();
   S.lEmailDraft = (user && (hpDariEmail(user.email || '') || user.email)) || S.lEmailDraft || '';
@@ -246,9 +251,9 @@ async function tolakSesi(k, user) {
     : 'Sesi berakhir. Silakan masuk lagi.';
   S.loaded = true; render(); window.scrollTo(0, 0); muatInfoPublik();
 }
-async function masukSesi(user) {
-  S.loaded = false; render();
-  try { const {data: k, error: ke} = await SB.rpc('klaim_sesi'); if (!ke && k && k.ok === false) { await tolakSesi(k, user); return; } } catch (e) {}
+async function masukSesi(user, paksa) {
+  S.loaded = false; S.sesiTolak = null; render();
+  try { const {data: k, error: ke} = await SB.rpc('klaim_sesi', paksa ? {p_paksa: true} : {}); if (!ke && k && k.ok === false) { await tolakSesi(k, user); return; } } catch (e) {}
   S.authUser = user; S.loginPesan = '';
   const {data: prof, error} = await SB.from('profil').select('*').eq('user_id', user.id).maybeSingle();
   if (error) { S.loaded = true; S.loginError = 'Gagal membaca profil: ' + error.message; render(); return; }
@@ -1355,6 +1360,9 @@ const tglEN = t => t.replace(new RegExp(`(\\d{1,2}\\s)?\\b(${RE_BLN})\\b(?=\\s\\
   .replace(/\b(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)\b(?=,)/g, h => HARI_ID[h]).replace(/(\d+) tahun\b/g, '$1 years').replace(/\bpukul\b/g, 'at').replace(/(\d+) jam (\d+) menit lagi/, '$1 h $2 min left');
 const I18N = {
   // login & papan
+  'Akun sedang dipakai': 'Account in use', 'Keluarkan perangkat itu dan masuk di sini?': 'Sign that device out and sign in here?',
+  'Perangkat lain akan otomatis keluar. Kalau itu bukan Anda, segera ganti password setelah masuk.': 'The other device will be signed out automatically. If that was not you, change your password right after signing in.',
+  'Ya, keluarkan & masuk di sini': 'Yes, sign it out & sign in here', 'Memproses…': 'Processing…',
   'Lingkungan yang tertata,': 'A well-organized', 'warga yang terhubung.': 'neighborhood, a connected community.',
   'Iuran dan kas RT yang transparan': 'Transparent dues and community funds', 'Keamanan dan pos jaga terpantau': 'Monitored security and guard post', 'Layanan warga dalam satu aplikasi': 'All resident services in one app',
   'Selamat datang': 'Welcome', 'Masuk dengan No. HP dan password.': 'Sign in with your phone number and password.', 'No. HP': 'Phone number', 'Lihat': 'Show', 'Sembunyikan': 'Hide', 'Masuk': 'Sign in', 'Lupa password?': 'Forgot password?',
@@ -1562,7 +1570,7 @@ function authArt() {
   </aside>`;
 }
 const benderaId = () => `<span class="bendera-id" role="img" aria-label="Bendera Indonesia" title="Indonesia"><svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#E70011"/><rect y="10" width="30" height="10" fill="#FFFFFF"/><rect x=".5" y=".5" width="29" height="19" rx="2" fill="none" stroke="rgba(0,0,0,.18)"/></svg></span>`;
-function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? `<div class="auth-top">${bhsTombol()}${papanBell()}</div>` : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : vLoginKartu()}</div></div>`; }
+function vLogin() { return `<div class="auth">${!S.authUser && !S.pulih ? `<div class="auth-top">${bhsTombol()}${papanBell()}</div>` : ''}${authArt()}<div class="auth-main">${S.mfaPerlu ? vMfaKartu() : S.sesiTolak ? vPaksaKartu() : vLoginKartu()}</div></div>`; }
 function vLoginKartu() {
   const brand = sub => `<div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Selamat datang</h2>
     <p class="muted" style="margin:4px 0 0">${sub}</p></div>`;
@@ -2150,10 +2158,13 @@ async function onlineDetak(paksa) {
 }
 async function sesiDiakhiri() {
   if (!S.authUser) return;
+  let info = null; try { const {data} = await SB.rpc('alasan_sesi_berakhir'); info = data; } catch (e) {}
   try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
   ON.last = 0; ON.data = null; if (dlg.open) dlg.close();
   resetSesi(); S.loginError = ''; render(); window.scrollTo(0, 0); muatInfoPublik();
-  S.loginPesan = 'Sesi Anda diakhiri oleh Pemilik aplikasi. Silakan masuk lagi.'; render();
+  S.loginPesan = info && info.alasan === 'paksa'
+    ? `Akun Anda baru saja masuk di perangkat lain${info.perangkat ? ' (' + info.perangkat + ')' : ''}, jadi sesi di sini diakhiri. Bukan Anda? Masuk lagi lalu segera ganti password.`
+    : 'Sesi Anda diakhiri oleh Pemilik aplikasi. Silakan masuk lagi.'; render();
 }
 async function onlineKeluar() { try { if (SB && S.authUser) await SB.rpc('keluar_online', {p_perangkat_id: perangkatId()}); } catch (e) {} ON.last = 0; ON.data = null; }
 setInterval(() => onlineDetak(false), 15e3);
@@ -3692,6 +3703,40 @@ function openMfaMatikan() {
       toast('Verifikasi dua langkah dimatikan.'); await mfaMuat(); return true;
     }});
 }
+function vPaksaKartu() {
+  const T = S.sesiTolak || {}, k = T.k || {}, dev = k.perangkat ? String(k.perangkat).split(' · ')[0] : '';
+  let kapan = '';
+  if (k.terakhir) { const m = Math.max(0, Math.round((Date.now() - new Date(k.terakhir).getTime()) / 60000)); kapan = m < 1 ? 'baru saja' : m < 60 ? m + ' menit lalu' : m < 1440 ? Math.round(m / 60) + ' jam lalu' : ''; }
+  return `<div class="login"><div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Akun sedang dipakai</h2>
+      <p class="muted" style="margin:4px 0 0">Akun ini masih masuk di perangkat lain${dev ? ` (<b>${esc(dev)}</b>)` : ''}${kapan ? `, aktif terakhir ${esc(kapan)}` : ''}.</p></div>
+    <div class="login-pin" style="border-top:0;padding-top:0;display:grid;gap:10px">
+      <p style="margin:0">Keluarkan perangkat itu dan masuk di sini?</p>
+      <p class="muted" style="margin:0;font-size:.84rem">Perangkat lain akan otomatis keluar. Kalau itu bukan Anda, segera ganti password setelah masuk.</p>
+      ${S.paksaErr ? `<div class="notice" role="alert" style="font-size:.86rem">${esc(S.paksaErr)}</div>` : ''}
+      <button type="button" class="btn pri" data-act="paksa-ya" style="width:100%;justify-content:center">Ya, keluarkan & masuk di sini</button>
+      <button type="button" class="btn ghost" data-act="paksa-batal" style="width:100%;justify-content:center">Batal</button></div></div>`;
+}
+async function paksaMasuk() {
+  const T = S.sesiTolak; if (!T) return;
+  const b = document.querySelector('[data-act="paksa-ya"]'); if (b) { b.disabled = true; b.textContent = 'Memproses…'; }
+  let k = null, err = null;
+  try { const r = await SB.rpc('klaim_sesi', {p_paksa: true}); k = r.data; err = r.error; } catch (e) { err = e; }
+  if (err || !k) { S.paksaErr = 'Gagal memproses. Periksa koneksi lalu coba lagi.'; render(); return; }
+  if (k.ok) { S.sesiTolak = null; await masukSesi(T.user); return; }
+  if (k.alasan === 'perlu_mfa') {
+    try {
+      const {data: lf} = await SB.auth.mfa.listFactors();
+      const f = ((lf && lf.totp) || []).find(x => x.status === 'verified');
+      if (f) { S.sesiTolak = null; S.mfaPerlu = {factorId: f.id, user: T.user, paksa: true}; S.mfaErr = ''; render(); setTimeout(() => { const el = $('#mfaKode'); if (el) el.focus(); }, 50); return; }
+    } catch (e) {}
+  }
+  if (k.alasan === 'berakhir') { S.sesiTolak = null; await tolakSesi(k, T.user); return; }
+  S.paksaErr = 'Belum bisa mengeluarkan perangkat lain. Coba lagi atau hubungi Pemilik aplikasi.'; render();
+}
+async function paksaBatal() {
+  try { await SB.auth.signOut({scope: 'local'}); } catch (e) {}
+  resetSesi(); S.sesiTolak = null; S.loaded = true; render(); muatInfoPublik();
+}
 function vMfaKartu() {
   return `<div class="login"><div class="login-head"><img class="logo-login" src="${LOGO}" alt="Logo Vila Nusa Indah 5"><h2>Verifikasi dua langkah</h2>
       <p class="muted" style="margin:4px 0 0">Buka aplikasi authenticator di HP Anda, lalu masukkan kode 6 digit untuk akun Warga Kasuari.</p></div>
@@ -3715,7 +3760,7 @@ async function prosesMfa() {
     render(); return;
   }
   mfaGagal = 0; S.mfaErr = ''; S.mfaPerlu = null;
-  await masukSesi(M.user);
+  await masukSesi(M.user, !!M.paksa);
 }
 
 /* ---------- Notifikasi HP (Web Push) ---------- */
@@ -6870,6 +6915,8 @@ document.addEventListener('click', async e => {
   else if (a === 'gj-row-del') { const r = b.closest('.gj-row'); if (r) { r.remove(); gjHitungForm(); } }
   else if (a === 'mfa-on') openMfaDaftar();
   else if (a === 'mfa-off') openMfaMatikan();
+  else if (a === 'paksa-ya') paksaMasuk();
+  else if (a === 'paksa-batal') paksaBatal();
   else if (a === 'mfa-batal') { try { await SB.auth.signOut(); } catch (err) {} resetSesi(); render(); }
   else if (a === 'push-on') pushAktifkan(b);
   else if (a === 'push-off') pushMatikan(b);

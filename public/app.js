@@ -3728,9 +3728,28 @@ async function pushSegarkan() {
   if (!pushDidukung() || !SB || !S.authUser) return;
   try {
     const reg = await navigator.serviceWorker.getRegistration(); pushSub = reg ? await reg.pushManager.getSubscription() : null;
+    // izin sudah pernah diberikan tetapi langganan hilang (data dibersihkan / ganti akun) → daftarkan ulang otomatis tanpa bertanya
+    if (!pushSub && reg && Notification.permission === 'granted') {
+      const {data: kunci} = await SB.rpc('push_kunci_publik');
+      if (kunci) pushSub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64uKeArr(kunci)});
+    }
     if (pushSub && Notification.permission === 'granted') { const j = pushSub.toJSON(); await SB.rpc('push_daftar', {p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_perangkat: namaPerangkat()}); }
   } catch (e) {}
   pushCek = true; sbSched();
+  setTimeout(sosTawarNotif, 1200);
+}
+/* setelah login: ajak pengurus/pemilik/satpam mengaktifkan alarm SOS di HP ini (izin wajib diberikan pengguna sekali per perangkat) */
+function sosTawarNotif() {
+  if (!sudahMasuk() || isWarga() || !lihat('keamanan') || S.terkunci || dlg.open) return;
+  if (S.set.sosUjiPemilik && S.sesi !== 'pemilik') return;
+  if (pushStatus() !== 'belum') return;
+  let nanti = 0; try { nanti = Number(localStorage.getItem('sos-tawar-nanti')) || 0; } catch (e) {}
+  if (Date.now() < nanti) return;
+  openDlg({title: 'Aktifkan alarm SOS di HP ini', submitLabel: '🔔 Aktifkan sekarang',
+    body: `<p style="margin:0">Supaya HP ini <b>berbunyi dan bergetar saat warga menekan SOS</b>, walaupun aplikasi sedang ditutup atau layar terkunci, izinkan notifikasi untuk aplikasi ini.</p>
+      <p class="muted" style="margin:0;font-size:.86rem">Cukup sekali di HP ini. Setelah diizinkan, alarm tetap aktif seterusnya, termasuk setelah keluar-masuk aplikasi. Setelah menekan tombol, pilih <b>Izinkan</b> pada jendela yang muncul.</p>`,
+    onSubmit: async () => { await pushAktifkan(); return true; }});
+  const f = $('#dlgFoot .btn[data-act="dlg-close"]'); if (f) { f.textContent = 'Nanti saja'; f.addEventListener('click', () => { try { localStorage.setItem('sos-tawar-nanti', String(Date.now() + 12 * 3600e3)); } catch (e) {} }, {once: true}); }
 }
 function pushStatus() {
   if (!pushDidukung()) return iosBelumInstal() ? 'ios' : 'tidak';
@@ -3748,7 +3767,7 @@ async function pushAktifkan(b) {
     const j = pushSub.toJSON();
     const r = await SB.rpc('push_daftar', {p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_perangkat: namaPerangkat()}); if (r.error) throw r.error;
     toast('Notifikasi aktif di perangkat ini. Coba tekan "Kirim tes".');
-  } catch (e) { toast('Notifikasi gagal diaktifkan. Pastikan aplikasi dibuka lewat https dan coba lagi.', 'bad'); }
+  } catch (e) { toast('Notifikasi gagal diaktifkan' + (e && e.message ? ' (' + String(e.message).slice(0, 120) + ')' : '') + '. Coba buka aplikasi lewat Chrome lalu ulangi.', 'bad'); }
   finally { if (b) b.disabled = false; render(); }
 }
 async function pushMatikan(b) {
@@ -5709,7 +5728,7 @@ function alarmMulai(x) {
   el.innerHTML = `<div class="sos-alarm-box"><div class="sos-alarm-ico" aria-hidden="true">🚨</div><b>SOS · ${esc(x.jenis || 'Darurat')}</b>
     <p>${esc(rumahLbl(x.wargaId) || 'Rumah tidak diketahui')} · ${esc(tglJam(x.waktu))}${x.pesan ? '<br>"' + esc(x.pesan) + '"' : ''}</p>
     ${berbunyi ? '' : '<p class="sos-alarm-tip">🔇 Suara belum aktif. Ketuk tombol di bawah untuk menyalakan sirene.</p>'}
-    <div class="sos-alarm-acts">${berbunyi ? '' : '<button type="button" class="btn" data-act="sos-alarm-bunyi">🔊 Nyalakan suara</button>'}<button type="button" class="btn" data-act="sos-alarm-diam">Matikan alarm</button>${bisa('keamanan') ? `<button type="button" class="btn pri" data-act="sos-alarm-tangani" data-id="${esc(x.id)}">Tangani</button>` : ''}</div></div>`;
+    <div class="sos-alarm-acts">${berbunyi ? '' : '<button type="button" class="btn" data-act="sos-alarm-bunyi">🔊 Nyalakan suara</button>'}<button type="button" class="btn" data-act="sos-alarm-diam" title="Hanya mematikan bunyi SOS ini; SOS berikutnya tetap berbunyi">Matikan bunyi</button>${bisa('keamanan') ? `<button type="button" class="btn pri" data-act="sos-alarm-tangani" data-id="${esc(x.id)}">Tangani</button>` : ''}</div></div>`;
   const induk = dlg.open ? dlg : document.body; if (el.parentNode !== induk) induk.appendChild(el);
   // bila aplikasi di latar belakang, tampilkan juga notifikasi sistem
   try { if (document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker)

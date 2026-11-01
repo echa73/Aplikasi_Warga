@@ -504,7 +504,7 @@ function render() {
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.documentElement.lang = bhsAktif() ? 'en' : 'id';
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + (S.tab === 'ringkasan' && !isWarga() && lihat('keamanan') ? panelNotif('pengurus') : '') + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + (S.tab === 'ringkasan' && !isWarga() && lihat('keamanan') ? panelNotif('pengurus') + sosRingkas() : '') + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -5718,11 +5718,33 @@ function alarmMulai(x) {
 function alarmCek() {
   if (!sudahMasuk() || S.terkunci || isWarga() || !lihat('keamanan') || (S.set.sosUjiPemilik && S.sesi !== 'pemilik')) { if (ALARM.aktif) alarmStop(); ALARM.awal = true; return; }
   const aktif = daruratAktif(), ids = new Set(aktif.map(x => x.id));
-  if (ALARM.aktif && !ids.has(ALARM.aktif)) alarmStop();
+  if (ALARM.aktif && !ids.has(ALARM.aktif)) {
+    const x = S.darurat.find(d => d.id === ALARM.aktif), el = document.getElementById('sosAlarm');
+    alarmDiam(); ALARM.aktif = null;
+    if (x && el) { const st = x.status === 'Dibatalkan' ? 'Dibatalkan oleh warga' : x.status === 'Ditangani' ? 'Sudah ditangani' + (x.ditangani && x.ditangani.oleh ? ' oleh ' + x.ditangani.oleh : '') : x.status;
+      el.classList.add('selesai'); const acts = el.querySelector('.sos-alarm-acts'), tip = el.querySelector('.sos-alarm-tip'); if (tip) tip.remove();
+      if (acts) acts.outerHTML = `<p class="sos-alarm-st">✓ ${esc(st)}${x.ditangani && x.ditangani.waktu ? ' · ' + esc(jamDT(x.ditangani.waktu)) : ''}</p><div class="sos-alarm-acts"><button type="button" class="btn pri" data-act="sos-alarm-diam">Tutup</button></div>`; }
+    else if (el) el.remove();
+  }
   // saat pertama dibuka: SOS aktif yang masih baru (≤ 30 menit) tetap dibunyikan
   const baru = aktif.filter(x => !ALARM.dikenal.has(x.id) && (!ALARM.awal || Date.now() - new Date(x.waktu).getTime() < 30 * 60e3));
   aktif.forEach(x => ALARM.dikenal.add(x.id)); ALARM.awal = false;
   if (baru.length) alarmMulai(baru[0]);
+}
+function sosRiwayatRows(L) {
+  const chip = st => st === 'Ditangani' ? 'ok' : st === 'Dibatalkan' ? 'mute' : st === 'Aktif' ? 'bad' : 'warn';
+  return `<div class="rows">${L.map(x => `<div class="row" style="align-items:flex-start"><span class="sos-dot sm ${x.status === 'Aktif' ? '' : 'mati'}" aria-hidden="true"></span><div class="grow">
+    <div class="t">${esc(x.jenis || 'Darurat')} · ${esc(rumahLbl(x.wargaId) || 'Rumah tidak diketahui')}</div>
+    <div class="s">Dikirim ${esc(tglJam(x.waktu))}</div>
+    ${x.pesan ? `<div class="sos-pesan">“${esc(x.pesan)}”</div>` : '<div class="s"><i>Tanpa pesan</i></div>'}
+    ${x.ditangani ? `<div class="s">${x.status === 'Dibatalkan' ? 'Dibatalkan' : 'Ditangani'} ${esc(x.ditangani.oleh || '')} · ${esc(jamDT(x.ditangani.waktu))}${x.ditangani.catatan ? ' · ' + esc(x.ditangani.catatan) : ''}</div>` : ''}</div>
+    <span class="chip ${chip(x.status)}">${esc(x.status)}</span></div>`).join('')}</div>`;
+}
+function sosRingkas() {
+  if (isWarga() || !lihat('keamanan')) return '';
+  const L = [...S.darurat].sort((a, b) => String(b.waktu).localeCompare(String(a.waktu))).slice(0, 3);
+  if (!L.length) return '';
+  return `<div class="panel"><h3>SOS terakhir <small><button class="btn ghost sm" data-act="tab" data-k="keamanan">Riwayat lengkap →</button></small></h3>${sosRiwayatRows(L)}</div>`;
 }
 function daruratBanner() {
   if (!lihat('keamanan')) return '';
@@ -5743,7 +5765,7 @@ function kmPos() {
   const sk = shiftSekarang(), j = S.jaga.find(x => x.id === sk.tanggal + '_' + sk.shift);
   const bln = nowPer(), kj = S.kejadian.filter(k => String(k.waktu).slice(0, 7) === bln).length;
   const dalam = S.tamu.filter(t => !t.keluar), dipos = S.paket.filter(p => p.status !== 'Diambil'), titip = S.titip.filter(t => t.status !== 'Selesai');
-  const riwayatSos = S.darurat.filter(x => x.status !== 'Aktif').sort((a, b) => String(b.waktu).localeCompare(String(a.waktu))).slice(0, 3);
+  const riwayatSos = S.darurat.filter(x => x.status !== 'Aktif').sort((a, b) => String(b.waktu).localeCompare(String(a.waktu))).slice(0, 8);
   return `${daruratAktif().length ? '' : '<div class="aman-ok"><span aria-hidden="true">✓</span> Tidak ada panggilan darurat aktif</div>'}
   <div class="tiles">
     <div class="tile"><span class="ti b">${ico('warga')}</span><span class="lbl">Tamu di dalam</span><span class="val">${dalam.length}</span><span class="sub">${S.tamu.filter(t => String(t.masuk).startsWith(todayISO())).length} tamu hari ini</span></div>
@@ -5759,7 +5781,7 @@ function kmPos() {
     ${nomorPanel(bisa('keamanan'))}
   </div>
   ${titip.length ? `<div class="panel"><h3>Rumah yang dititipkan <small><button class="btn ghost sm" data-act="kmtab" data-k="titip">Lihat semua →</button></small></h3><div class="rows">${titip.slice(0, 5).map(t => `<div class="row"><span class="house">${esc((wById(t.wargaId) || {}).blok || '?')}</span><div class="grow"><div class="t">${esc((wById(t.wargaId) || {}).nama || '')}</div><div class="s">${esc(tgl(t.dari))} – ${esc(tgl(t.sampai))} · cek terakhir ${esc(t.cek && t.cek.length ? tglJam(t.cek[t.cek.length - 1].t) : 'belum')}</div></div></div>`).join('')}</div></div>` : ''}
-  ${riwayatSos.length ? `<div class="panel"><h3>Panggilan darurat terakhir</h3><div class="rows">${riwayatSos.map(x => `<div class="row"><div class="grow"><div class="t">${esc(x.jenis)} · ${esc(rumahLbl(x.wargaId))}</div><div class="s">${esc(tglJam(x.waktu))}${x.ditangani ? ` · ditangani ${esc(x.ditangani.oleh)} ${esc(jamDT(x.ditangani.waktu))}${x.ditangani.catatan ? ' · ' + esc(x.ditangani.catatan) : ''}` : ''}</div></div><span class="chip ok">${esc(x.status)}</span></div>`).join('')}</div></div>` : ''}`;
+  ${riwayatSos.length ? `<div class="panel"><h3>Riwayat panggilan darurat (SOS) <small>8 terakhir</small></h3>${sosRiwayatRows(riwayatSos)}</div>` : ''}`;
 }
 function kmTamu() {
   const q = S.kmQ.trim().toLowerCase(), t0 = todayISO();

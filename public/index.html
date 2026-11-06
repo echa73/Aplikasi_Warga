@@ -1013,6 +1013,9 @@ body:not(.in) main.wrap{max-width:none;padding:0!important;margin:0;display:bloc
 .auth-copy li{display:flex;align-items:center;gap:10px;font-size:.92rem;color:rgb(255 255 255 / .9)}
 .auth-copy li::before{content:"";width:18px;height:18px;border-radius:50%;flex:none;background:#F5C842 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23145233' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/12px no-repeat}
 .auth-art .scene{position:absolute;left:0;right:0;bottom:0;width:100%;height:58%;pointer-events:none}
+/* matahari/bulan dipisah dari .scene (yang terpotong di layar lebar-pendek) → selalu utuh, tetap di atas bukit */
+.auth-art{container-type:inline-size}
+.auth-art .langit{position:absolute;width:50cqw;height:50cqw;left:calc(78.3% - 25cqw);bottom:calc(min(45cqw, 58% - 7.4cqw - 14px) - 25cqw);overflow:visible;pointer-events:none}
 .auth-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 24px;background:var(--bg)}
 .auth-main .login{margin:0;width:100%;max-width:420px;padding:32px;border-radius:16px;background:var(--surface);border:1px solid var(--line);
   box-shadow:0 1px 2px rgb(23 72 45 / .05),0 20px 50px -24px rgb(23 72 45 / .28)}
@@ -1029,6 +1032,7 @@ body:not(.in) main.wrap{max-width:none;padding:0!important;margin:0;display:bloc
   .auth-copy ul{display:none}
   .auth-art .scene{height:50%}
   .auth-art .scene .benda-langit{display:none}
+  .auth-art .langit{display:none}
   .auth-art::after{display:none;content:"";position:absolute;right:26px;top:auto;bottom:calc(36% + 18px);width:38px;height:38px;border-radius:50%;background:var(--m-bg,#F5C842);box-shadow:var(--m-sh,0 0 0 10px rgb(245 200 66 / .18),0 0 0 22px rgb(245 200 66 / .08))}
   .auth-brand{padding-right:64px}
   .auth-main{justify-content:flex-start;padding:0 16px 32px;margin-top:-28px;background:transparent;position:relative;z-index:1}

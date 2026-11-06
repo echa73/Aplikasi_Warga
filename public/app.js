@@ -1560,8 +1560,8 @@ function authArt() {
     <div class="auth-copy"><h1>Lingkungan yang tertata,<br>warga yang terhubung.</h1>
       <ul><li>Iuran dan kas RT yang transparan</li><li>Keamanan dan pos jaga terpantau</li><li>Layanan warga dalam satu aplikasi</li></ul>
       ${sapa ? `<p class="tema-sapa" title="Tema ${esc(t.nama)}">${esc(sapa)}</p>` : ''}</div>
-    <svg class="scene" viewBox="0 0 600 400" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Ilustrasi perumahan">
-      <g class="benda-langit">${bendaLangit(t)}</g><g class="tema-hias" transform="translate(0 18)">${t.hias ? t.hias() : ''}</g>
+    ${t.benda ? `<svg class="langit" viewBox="320 -20 300 300" aria-hidden="true"><g class="benda-langit">${bendaLangit(t)}</g></svg>` : ''}
+    <svg class="scene" viewBox="0 0 600 400" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Ilustrasi perumahan"><g class="tema-hias" transform="translate(0 18)">${t.hias ? t.hias() : ''}</g>
       <path d="M0 290 C110 240 220 262 330 276 C440 290 520 238 600 248 V400 H0Z" fill="#2E8F5B"/>
       ${rumah}${pohon}
       <path d="M0 322 C150 288 270 318 380 328 C480 338 540 310 600 318 V400 H0Z" fill="#17603C"/>

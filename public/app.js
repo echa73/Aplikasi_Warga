@@ -35,7 +35,7 @@ const HUNI = ['Pemilik','Kontrak / sewa','Keluarga pemilik'];
 
 /* ---------- state ---------- */
 const S = {
-  infoPub: null, mintaSurat: [], warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [], notulen: [], ntQ: '',
+  infoPub: null, mintaSurat: [], warga: [], iuran: [], keluhan: [], kas: [], keuangan: [], pengajuan: [], pjFilter: 'menunggu', sumbangan: [], donasi: [], salur: [], struktur: null, pekerja: [], gaji: [], gjTab: 'gaji', gjPer: nowPer(), gjTh: new Date().getFullYear(), cctv: [], cctvCek: [], lapak: [], lpTab: 'semua', lpKat: '', lpQ: '', lpSort: 'baru', rohani: [], qurban: [], bersih: [], blok: [], brTab: 'beranda', brTgl: todayISO(), brKgF: 'datang', rhTab: 'beranda', rhAgF: 'datang', rhAgama: '', qbTh: new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0), sbSel: null, sbTab: 'penyumbang', sbFilter: 'aktif', sbQ: '', sbPub: null, sbMz: null, pengumuman: [], surat: [], notulen: [], ntQ: '',
   set: {nama: 'Villani 5', iuranBulanan: 50000, rt: '', rw: '', kelurahan: '', kecamatan: '', kota: '', ketua: '', ketuaRw: '', saldoAwal: 0, saldoTgl: ''},
   kasPer: nowPer(), infoFilter: 'semua', suratQ: '', kmTab: 'pos', kmQ: '', tamuF: 'dalam', paketF: 'pos', kmMinggu: (() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })(), tamu: [], paket: [], titip: [], kejadian: [], jaga: [], darurat: [], nomorDarurat: [], lapMode: 'bulan', lapPer: nowPer(), lapTh: new Date().getFullYear(), lapQ: Math.floor(new Date().getMonth() / 3) + 1, lapDari: '', lapSampai: '', pgMode: 'bulan', pgPer: nowPer(), pgTh: new Date().getFullYear(), pgQ: '', pgKat: '', akunWarga: [], loginMode: 'pengurus', wUserDraft: '', nikBuka: new Set(),
   tab: 'ringkasan', mode: 'memuat', readOnly: false,
@@ -65,7 +65,7 @@ const DEFAULT_ROLES = [
 const LEGACY = {'Ketua RT': 'ketua', 'Pengurus': 'pengurus', 'Bendahara': 'bendahara', 'Sekretaris': 'sekretaris', 'Lihat saja': 'lihat'};
 const rolesAll = () => S.peran.length ? [...S.peran].sort((a, b) => (a.urut ?? 99) - (b.urut ?? 99) || String(a.nama).localeCompare(String(b.nama))) : DEFAULT_ROLES;
 const roleById = id => rolesAll().find(r => r.id === id);
-const AREA = {notulen: 'surat', mintaSurat: 'surat', blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
+const AREA = {notulen: 'surat', mintaSurat: 'surat', blok: 'admin', bersih: 'kebersihan', pekerja: 'gaji', gaji: 'gaji', qurban: 'rohani', lapak: 'lapak', donasi: 'sumbangan', salur: 'sumbangan', keuangan: 'kas', pengajuan: 'pengeluaran', pengumuman: 'info', pengurus: 'admin', peran: 'admin', akunWarga: 'admin', cctv: 'admin', cctvCek: 'admin', tamu: 'keamanan', paket: 'keamanan', titip: 'keamanan', kejadian: 'keamanan', jaga: 'jaga', darurat: 'keamanan', nomorDarurat: 'keamanan'};
 const areaOf = c => AREA[c] || c;
 const bolehPemilik = () => !!S.owner;
 const bisaKelola = () => S.sesi === 'pemilik' && bolehPemilik();
@@ -116,7 +116,7 @@ let DB = null;
 const SUPA_URL = 'https://newvddbfrcyoxxblmmby.supabase.co';
 const SUPA_KEY = 'sb_publishable_K6jRKltMlpE7-IMRJQGkkw_2eZtxPvs';
 const WARGA_DOMAIN = 'warga.kasuari.app';
-const KOLEKSI_SB = ['mintaSurat', 'warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'notulen', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga'];
+const KOLEKSI_SB = ['mintaSurat', 'warga', 'iuran', 'keluhan', 'kas', 'keuangan', 'pengajuan', 'sumbangan', 'donasi', 'salur', 'rohani', 'qurban', 'bersih', 'lapak', 'pekerja', 'gaji', 'blok', 'pengumuman', 'surat', 'notulen', 'tamu', 'paket', 'titip', 'kejadian', 'jaga', 'darurat', 'nomorDarurat', 'pengurus', 'peran', 'akunWarga', 'cctv', 'cctvCek'];
 let SB = null, SB_CH = null, SET0 = null;
 const CACHE = {};
 let sbTmr = null;
@@ -2101,7 +2101,7 @@ function roleInfoHtml(rid, jab) {
   return warn + esc(izinRingkas(r));
 }
 function vAdmin() {
-  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['blok', `Koordinator blok ${blokList().length}`], ['online', 'Pengguna online'], ['log', 'Log aktivitas']]
+  const segs = [['pengurus', `Pengurus ${S.pengurus.length}`], ['role', `Role & hak akses ${rolesAll().length}`], ['akun', `Akun warga ${S.akunWarga.length}`], ['blok', `Koordinator blok ${blokList().length}`], ['online', 'Pengguna online'], ['cctv', 'CCTV'], ['log', 'Log aktivitas']]
     .map(([k, l]) => `<button type="button" data-act="admtab" data-k="${k}" aria-pressed="${S.admTab === k}">${l}</button>`).join('');
   const head = `<div class="sec-head"><div><h2>Admin</h2><p>Atur siapa pengurusnya, apa jabatannya, dan menu apa saja yang boleh mereka buka.</p></div>
     ${S.admTab === 'pengurus' ? '<button class="btn pri" data-act="pgr-new">+ Tambah pengurus</button>' : S.admTab === 'role' ? '<button class="btn pri" data-act="role-new">+ Tambah role</button>' : S.admTab === 'akun' ? '<button class="btn pri" data-act="akun-new">+ Buat akun warga</button>' : S.admTab === 'blok' ? '<button class="btn pri" data-act="blok-new">+ Tambah blok</button>' : ''}</div>
@@ -2111,6 +2111,7 @@ function vAdmin() {
   if (S.admTab === 'akun') return head + vAdminAkun();
   if (S.admTab === 'log') return head + vAdminLog();
   if (S.admTab === 'online') return head + vAdminOnline();
+  if (S.admTab === 'cctv') return head + vAdminCctv();
   if (S.admTab === 'blok') return head + vAdminBlok();
   if (S.admTab === 'permintaan') return head + vAdminMinta();
   const list = [...S.pengurus].sort((a, b) => (a.aktif === false) - (b.aktif === false) || JABATAN.indexOf(a.jabatan) - JABATAN.indexOf(b.jabatan) || String(a.nama).localeCompare(String(b.nama)));
@@ -2132,7 +2133,7 @@ function vAdmin() {
     <div class="panel" style="display:grid;gap:6px"><h3>Cara pengurus bisa masuk</h3>
     <p class="muted" style="margin:0">Setiap pengurus masuk dengan email dan password yang Anda buatkan di sini, dari HP atau laptop mana pun. Menu yang terlihat mengikuti role masing-masing. Pengurus yang dinonaktifkan langsung tidak bisa masuk. Pengurus yang lupa password bisa memakai "Lupa password?" di layar login, atau Anda reset dari tombol Ubah.</p></div>`;
 }
-const LOG_KOL = {notulen: 'Notulensi rapat', mintaSurat: 'Permohonan surat', sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
+const LOG_KOL = {cctv: 'CCTV', cctvCek: 'Cek CCTV', notulen: 'Notulensi rapat', mintaSurat: 'Permohonan surat', sesi: 'Sesi login', pekerja: 'Data pekerja', gaji: 'Slip gaji', lapak: 'Lapak warga', rohani: 'Kerohanian', qurban: 'Qurban', sumbangan: 'Program sumbangan', donasi: 'Sumbangan masuk', salur: 'Penyaluran sumbangan', akun: 'Akun login', warga: 'Data warga', iuran: 'Iuran', kas: 'Kas', keluhan: 'Keluhan', pengumuman: 'Pengumuman', surat: 'Surat', tamu: 'Buku tamu', paket: 'Paket', titip: 'Titip rumah', kejadian: 'Kejadian', jaga: 'Jadwal jaga', darurat: 'Darurat', nomorDarurat: 'Nomor darurat', pengurus: 'Pengurus', peran: 'Role', akunWarga: 'Akun warga', pengaturan: 'Pengaturan'};
 const LOG_AKSI = {insert: ['Tambah', 'ok'], update: ['Ubah', 'info'], delete: ['Hapus', 'bad'], ganti_password: ['Ganti password', 'info'], reset_password: ['Reset password', 'warn'], keluarkan_sesi: ['Akhiri sesi', 'bad']};
 /* ---------- Pengguna online (detak tiap 1 menit; dilihat Pemilik di Admin) ---------- */
 const ON = {last: 0, menu: '', data: null, err: '', memuat: false, tmr: null};
@@ -2195,6 +2196,139 @@ function openKillSesi(uid0, pid, nama, dev) {
       catch (e) { pesanDlg('Gagal: ' + pesanAuth(e)); return false; }
       S.logAkt = null; setTimeout(() => muatOnline(true), 300); return true;
     }});
+}
+/* ---------- CCTV (Admin · Pemilik) ----------
+   Tahap 1: daftar titik kamera, info sistem (DVR/NVR + aplikasi), cek harian, laporan ke WhatsApp, tombol buka aplikasi/web CCTV.
+   Tahap 2 (menyusul): video live di dalam aplikasi lewat mini PC di pos (go2rtc) + Cloudflare Tunnel.
+   Data di koleksi 'cctv' (kamera + dok '_sistem') dan 'cctvCek' (satu dokumen per ronde cek). RLS: hanya Pemilik. */
+const CCTV_ST = {normal: ['Normal', 'ok'], masalah: ['Bermasalah', 'warn'], mati: ['Mati / tidak tampil', 'bad'], belum: ['Belum dicek', 'mute']};
+const CCTV_MASALAH = ['Gambar buram / kotor', 'Tidak tampil / no signal', 'Malam gelap / IR mati', 'Arah kamera bergeser', 'Rekaman tidak tersimpan', 'Jam / tanggal salah'];
+const linkAman = u => /^https:\/\/[^\s"'<>]+$/i.test(String(u || '').trim());
+const cctvSistem = () => (S.cctv || []).find(x => x.id === '_sistem') || {};
+const cctvKamera = () => (S.cctv || []).filter(x => x.id !== '_sistem').sort((a, b) => (Number(a.ch) || 999) - (Number(b.ch) || 999) || String(a.nama).localeCompare(String(b.nama)));
+const cctvRonde = () => [...(S.cctvCek || [])].sort((a, b) => String(b.waktu || '').localeCompare(String(a.waktu || '')));
+function cctvTerakhir(id) {
+  for (const r of cctvRonde()) { const h = r.hasil && r.hasil[id]; if (h) return {...h, waktu: r.waktu, oleh: r.olehNama}; }
+  return null;
+}
+const cctvStatus = k => k.nonaktif ? 'nonaktif' : ((cctvTerakhir(k.id) || {}).status || 'belum');
+const waktuPendek = iso => { try { return new Date(iso).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}); } catch (e) { return ''; } };
+function vAdminCctv() {
+  const sis = cctvSistem(), K = cctvKamera(), aktif = K.filter(k => !k.nonaktif), R = cctvRonde(), akhir = R[0];
+  const hit = s => aktif.filter(k => cctvStatus(k) === s).length;
+  const hariIni = akhir && String(akhir.waktu || '').slice(0, 10) === todayISO();
+  const intro = `<p class="muted" style="margin:0 0 10px;font-size:.88rem">Catat titik kamera CCTV kluster, cek kondisinya tiap hari, dan buka aplikasi CCTV dari sini. Menu ini hanya terlihat oleh Pemilik.</p>`;
+  const stat = `<div class="cc-stat">
+    <div><b>${aktif.length}</b><span>Kamera aktif</span></div>
+    <div class="ok"><b>${hit('normal')}</b><span>Normal</span></div>
+    <div class="warn"><b>${hit('masalah')}</b><span>Bermasalah</span></div>
+    <div class="bad"><b>${hit('mati')}</b><span>Mati</span></div>
+    <div><b>${akhir ? esc(waktuPendek(akhir.waktu)) : '–'}</b><span>Cek terakhir${akhir && akhir.olehNama ? ' · ' + esc(akhir.olehNama) : ''}</span></div></div>`;
+  const pengingat = aktif.length && !hariIni ? `<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>CCTV belum dicek hari ini.</span><button class="btn sm pri" data-act="cctv-cek">Cek sekarang</button></div>` : '';
+  const sistem = `<div class="card cc-sis"><div class="cc-sis-h"><h3 style="margin:0">Sistem CCTV</h3><button class="btn sm" data-act="cctv-sistem">${sis.merek || sis.aplikasi ? 'Ubah' : 'Isi info sistem'}</button></div>
+    ${sis.merek || sis.aplikasi || sis.lokasi ? `<dl class="cc-dl">
+      ${sis.merek ? `<dt>Perekam (DVR/NVR)</dt><dd>${esc(sis.merek)}${sis.kanal ? ` · ${esc(sis.kanal)} channel` : ''}</dd>` : ''}
+      ${sis.lokasi ? `<dt>Lokasi perekam</dt><dd>${esc(sis.lokasi)}</dd>` : ''}
+      ${sis.aplikasi ? `<dt>Aplikasi di HP</dt><dd>${esc(sis.aplikasi)}</dd>` : ''}
+      ${sis.simpan ? `<dt>Lama rekaman tersimpan</dt><dd>±${esc(sis.simpan)} hari</dd>` : ''}
+      ${sis.teknisi ? `<dt>Teknisi / vendor</dt><dd>${esc(sis.teknisi)}${sis.teknisiHp ? ` · <a href="${esc(waLink(sis.teknisiHp, `Halo, dari pengurus ${lingk()} soal CCTV.`))}" target="_blank" rel="noopener">${esc(sis.teknisiHp)}</a>` : ''}</dd>` : ''}
+      ${sis.catatan ? `<dt>Catatan</dt><dd style="white-space:pre-line">${esc(sis.catatan)}</dd>` : ''}</dl>` : '<p class="muted" style="margin:6px 0 0;font-size:.86rem">Belum diisi. Tanyakan ke seksi keamanan: merek perekam (DVR/NVR), aplikasi HP yang dipakai, dan siapa teknisinya.</p>'}
+    ${linkAman(sis.link) ? `<div class="toolbar" style="margin:10px 0 0"><a class="btn pri" href="${esc(sis.link)}" target="_blank" rel="noopener">📹 Buka tampilan CCTV</a></div>` : ''}</div>`;
+  const kartu = K.length ? `<div class="cc-grid">${K.map(k => {
+      const st = cctvStatus(k), [lbl, cls] = k.nonaktif ? ['Nonaktif', 'mute'] : CCTV_ST[st], t = cctvTerakhir(k.id);
+      return `<div class="cc-kam${k.nonaktif ? ' off' : ''}"><div class="cc-kam-h"><span class="cc-ch">${k.ch ? 'CH ' + esc(k.ch) : '📹'}</span><div class="grow"><b>${esc(k.nama)}</b>${k.lokasi ? `<div class="muted" style="font-size:.78rem">${esc(k.lokasi)}</div>` : ''}</div><span class="chip ${cls} plain">${esc(lbl)}</span></div>
+        ${t ? `<div class="muted" style="font-size:.78rem">Dicek ${esc(waktuPendek(t.waktu))}${t.oleh ? ' · ' + esc(t.oleh) : ''}${t.catatan ? `<div style="color:var(--ink)">“${esc(t.catatan)}”</div>` : ''}</div>` : ''}
+        <div class="racts">${linkAman(k.link) ? `<a class="btn sm" href="${esc(k.link)}" target="_blank" rel="noopener">Lihat</a>` : ''}${!k.nonaktif ? `<button class="btn sm" data-act="cctv-cek1" data-id="${esc(k.id)}">Cek</button>` : ''}<button class="btn sm ghost" data-act="cctv-kam" data-id="${esc(k.id)}">Ubah</button></div></div>`; }).join('')}</div>`
+    : '<div class="empty">Belum ada titik kamera.<button class="btn pri" data-act="cctv-kam">+ Tambah kamera</button></div>';
+  const riwayat = R.length ? `<details class="card cc-riw"${R.length <= 3 ? ' open' : ''}><summary><b>Riwayat cek</b> <span class="muted">(${R.length})</span></summary>
+    ${R.slice(0, 15).map(r => { const h = Object.values(r.hasil || {}), bad = h.filter(x => x.status !== 'normal').length;
+      return `<div class="row"><div class="grow"><div class="t">${esc(waktuPendek(r.waktu))} · ${esc(r.olehNama || '')}</div><div class="s">${h.length} kamera dicek · ${bad ? `<span style="color:var(--bad)">${bad} bermasalah</span>` : 'semua normal'}${r.catatan ? ' · ' + esc(r.catatan) : ''}</div></div>
+      <button class="btn sm ghost" data-act="cctv-ronde" data-id="${esc(r.id)}">Detail</button></div>`; }).join('')}</details>` : '';
+  const tahap2 = `<details class="card cc-t2"><summary><b>Tahap 2: video live langsung di aplikasi</b> <span class="chip mute plain">menyusul</span></summary>
+    <p style="font-size:.88rem;margin:8px 0">Supaya video tampil langsung di menu ini (tanpa buka aplikasi merek CCTV), perlu:</p>
+    <ol style="font-size:.86rem;margin:0 0 8px;padding-left:20px;display:grid;gap:4px">
+      <li>Perekam DVR/NVR yang mendukung <b>RTSP</b> (hampir semua merek: Hikvision, Dahua, dll.).</li>
+      <li>Satu <b>mini PC / STB bekas</b> di pos, nyala 24 jam di jaringan yang sama dengan DVR (±Rp300–700 rb).</li>
+      <li>Program gratis <b>go2rtc</b> (mengubah RTSP jadi video web) + <b>Cloudflare Tunnel</b> gratis (aman, tanpa buka port router).</li>
+      <li>Internet di pos dengan upload minimal ±2 Mbps per kamera yang ditonton.</li></ol>
+    <p class="muted" style="font-size:.82rem;margin:0">Setelah perangkat siap, kabari pengelola teknis aplikasi. Video hanya bisa dibuka oleh Pemilik (atau peran yang Anda izinkan) dan tidak pernah disimpan di aplikasi.</p></details>`;
+  const aksi = `<div class="toolbar">${aktif.length ? '<button class="btn pri" data-act="cctv-cek">✓ Cek semua kamera</button>' : ''}<button class="btn" data-act="cctv-kam">+ Tambah kamera</button>${akhir ? `<a class="btn wa" href="${esc(waShare(teksCctv()))}" target="_blank" rel="noopener">Kirim laporan ke WhatsApp</a>` : ''}</div>`;
+  return intro + stat + pengingat + aksi + sistem + `<h3 style="margin:18px 0 8px">Titik kamera</h3>` + kartu + riwayat + tahap2;
+}
+function teksCctv() {
+  const K = cctvKamera().filter(k => !k.nonaktif), akhir = cctvRonde()[0];
+  const baris = K.map(k => { const t = cctvTerakhir(k.id), st = t ? CCTV_ST[t.status][0].split(' /')[0] : 'Belum dicek';
+    return `${t && t.status === 'normal' ? '✅' : t ? '⚠️' : '▫️'} ${k.ch ? 'CH' + k.ch + ' ' : ''}${k.nama}: ${st}${t && t.catatan ? ' (' + t.catatan + ')' : ''}`; });
+  return `*Laporan Cek CCTV ${lingk()}*\n${akhir ? tglPanjang(akhir.waktu) + ', ' + new Date(akhir.waktu).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : ''}\n\n${baris.join('\n')}${akhir && akhir.catatan ? '\n\nCatatan: ' + akhir.catatan : ''}\n\n${pengirim()}`;
+}
+function openCctvSistem() {
+  if (!bisaKelola()) return;
+  const s = cctvSistem();
+  openDlg({title: 'Info sistem CCTV', area: 'admin',
+    body: `<div class="grid2"><div class="fld"><label for="cs_m">Merek / tipe perekam</label><input id="cs_m" name="merek" maxlength="60" value="${esc(s.merek || '')}" placeholder="mis. Hikvision DVR 8 channel"></div>
+      <div class="fld"><label for="cs_k">Jumlah channel</label><input id="cs_k" name="kanal" inputmode="numeric" maxlength="3" value="${esc(s.kanal || '')}" placeholder="8"></div></div>
+      <div class="grid2"><div class="fld"><label for="cs_l">Lokasi perekam</label><input id="cs_l" name="lokasi" maxlength="60" value="${esc(s.lokasi || '')}" placeholder="mis. Pos satpam depan"></div>
+      <div class="fld"><label for="cs_a">Aplikasi di HP</label><input id="cs_a" name="aplikasi" maxlength="40" value="${esc(s.aplikasi || '')}" placeholder="mis. Hik-Connect, EZVIZ, Imou Life"></div></div>
+      <div class="fld"><label for="cs_u">Link tampilan CCTV (opsional)</label><input id="cs_u" name="link" type="url" maxlength="300" value="${esc(s.link || '')}" placeholder="https://…"><span class="hint">Alamat web/cloud CCTV yang diawali <b>https://</b>. Jangan tulis password di sini.</span></div>
+      <div class="grid2"><div class="fld"><label for="cs_s">Rekaman tersimpan (hari)</label><input id="cs_s" name="simpan" inputmode="numeric" maxlength="3" value="${esc(s.simpan || '')}" placeholder="mis. 14"></div>
+      <div class="fld"><label for="cs_t">Teknisi / vendor</label><input id="cs_t" name="teknisi" maxlength="60" value="${esc(s.teknisi || '')}"></div></div>
+      <div class="fld"><label for="cs_th">No. HP teknisi</label><input id="cs_th" name="teknisiHp" inputmode="tel" maxlength="16" value="${esc(s.teknisiHp || '')}" placeholder="08…"></div>
+      <div class="fld"><label for="cs_c">Catatan</label><textarea id="cs_c" name="catatan" rows="2" maxlength="400" placeholder="mis. Password DVR dipegang Ketua RT & Seksi Keamanan">${esc(s.catatan || '')}</textarea><span class="hint">Demi keamanan, password DVR/aplikasi jangan disimpan di aplikasi ini.</span></div>`,
+    onSubmit: async f => {
+      const link = String(f.link || '').trim();
+      if (link && !linkAman(link)) { pesanDlg('Link harus diawali https://', 'cs_u'); return false; }
+      if (/pass(word)?\s*[:=]|sandi\s*[:=]/i.test(f.catatan || '')) { pesanDlg('Jangan simpan password di catatan.', 'cs_c'); return false; }
+      const ok = await put('cctv', '_sistem', {jenis: 'sistem', merek: f.merek.trim(), kanal: f.kanal.replace(/\D/g, ''), lokasi: f.lokasi.trim(), aplikasi: f.aplikasi.trim(), link, simpan: f.simpan.replace(/\D/g, ''), teknisi: f.teknisi.trim(), teknisiHp: f.teknisiHp.replace(/[^\d+]/g, ''), catatan: f.catatan.trim()});
+      if (ok) toast('Info sistem CCTV disimpan.'); return ok;
+    }});
+}
+function openCctvKamera(id) {
+  if (!bisaKelola()) return;
+  const k = id ? (S.cctv || []).find(x => x.id === id) : null;
+  openDlg({title: k ? 'Ubah kamera' : 'Tambah kamera', area: 'admin', submitLabel: k ? 'Simpan' : 'Tambah kamera',
+    body: `<div class="grid2"><div class="fld"><label for="ck_n">Nama titik <span class="req">*</span></label><input id="ck_n" name="nama" required maxlength="50" value="${esc(k ? k.nama : '')}" placeholder="mis. Gerbang utama"></div>
+      <div class="fld"><label for="ck_c">Channel di DVR</label><input id="ck_c" name="ch" inputmode="numeric" maxlength="3" value="${esc(k ? k.ch || '' : '')}" placeholder="1"></div></div>
+      <div class="fld"><label for="ck_l">Lokasi / arah pandang</label><input id="ck_l" name="lokasi" maxlength="80" value="${esc(k ? k.lokasi || '' : '')}" placeholder="mis. Menghadap jalan masuk, tiang depan pos"></div>
+      <div class="fld"><label for="ck_u">Link lihat kamera ini (opsional)</label><input id="ck_u" name="link" type="url" maxlength="300" value="${esc(k ? k.link || '' : '')}" placeholder="https://…"><span class="hint">Kosongkan bila dilihat lewat aplikasi HP.</span></div>
+      <label class="ck" style="font-weight:500"><input type="checkbox" name="nonaktif" ${k && k.nonaktif ? 'checked' : ''}> Nonaktif (rusak lama / dilepas). Tidak ikut dicek</label>`,
+    onSubmit: async f => {
+      const link = String(f.link || '').trim();
+      if (link && !linkAman(link)) { pesanDlg('Link harus diawali https://', 'ck_u'); return false; }
+      const ok = await put('cctv', k ? k.id : uid(), {jenis: 'kamera', nama: f.nama.trim(), ch: f.ch.replace(/\D/g, ''), lokasi: f.lokasi.trim(), link, nonaktif: !!f.nonaktif, dibuat: (k && k.dibuat) || new Date().toISOString()});
+      if (ok) toast(k ? 'Kamera diperbarui.' : 'Kamera ditambahkan.'); return ok;
+    },
+    onDelete: k ? async () => { const ok = await del('cctv', k.id); if (ok) toast('Kamera dihapus.'); return ok; } : null, deleteLabel: 'Hapus kamera'});
+}
+function openCctvCek(hanyaId) {
+  if (!bisaKelola()) return;
+  const K = cctvKamera().filter(k => !k.nonaktif && (!hanyaId || k.id === hanyaId));
+  if (!K.length) { toast('Belum ada kamera aktif.', 'bad'); return; }
+  const opsi = K.map(k => { const t = cctvTerakhir(k.id), v = 'normal';
+    return `<div class="cc-cek" data-id="${esc(k.id)}"><div class="cc-cek-h"><b>${k.ch ? 'CH ' + esc(k.ch) + ' · ' : ''}${esc(k.nama)}</b>${t ? `<span class="muted" style="font-size:.76rem">terakhir: ${esc(CCTV_ST[t.status][0])}</span>` : ''}</div>
+      <div class="cc-seg" role="radiogroup" aria-label="Kondisi ${esc(k.nama)}">${['normal', 'masalah', 'mati'].map(s => `<label><input type="radio" name="st_${esc(k.id)}" value="${s}" ${s === v ? 'checked' : ''}><span>${esc(CCTV_ST[s][0].split(' /')[0])}</span></label>`).join('')}</div>
+      <input type="text" name="ct_${esc(k.id)}" maxlength="120" list="ccMasalah" placeholder="Catatan (bila bermasalah)"></div>`; }).join('');
+  openDlg({title: hanyaId ? 'Cek kamera' : `Cek ${K.length} kamera`, area: 'admin', submitLabel: 'Simpan hasil cek', lebar: !hanyaId,
+    body: `<p class="muted" style="margin:0 0 8px;font-size:.86rem">Buka aplikasi CCTV, lihat tiap kamera: gambar jelas? jam benar? rekaman tersimpan? Semua sudah diset <b>Normal</b>. Ubah yang bermasalah saja.</p>
+      <datalist id="ccMasalah">${CCTV_MASALAH.map(m => `<option value="${esc(m)}">`).join('')}</datalist>${opsi}
+      ${hanyaId ? '' : '<div class="fld" style="margin-top:8px"><label for="cc_cat">Catatan umum (opsional)</label><input id="cc_cat" name="catatan" maxlength="200" placeholder="mis. DVR sempat mati listrik jam 02.00"></div>'}`,
+    onSubmit: async f => {
+      const hasil = {};
+      for (const k of K) { const st = f['st_' + k.id] || 'normal', ct = String(f['ct_' + k.id] || '').trim();
+        if (st !== 'normal' && !ct) { pesanDlg(`Isi catatan untuk ${k.nama} (apa masalahnya).`); return false; }
+        hasil[k.id] = {status: st, catatan: ct, nama: k.nama}; }
+      const ok = await put('cctvCek', uid(), {waktu: new Date().toISOString(), hasil, catatan: String(f.catatan || '').trim(), olehNama: (S.me && S.me.name) || 'Pemilik'});
+      if (ok) { const bad = Object.values(hasil).filter(h => h.status !== 'normal').length; toast(bad ? `Tersimpan · ${bad} kamera bermasalah.` : 'Tersimpan · semua kamera normal.'); }
+      return ok;
+    }});
+}
+function openCctvRonde(id) {
+  const r = (S.cctvCek || []).find(x => x.id === id); if (!r) return;
+  const h = Object.entries(r.hasil || {});
+  openDlg({title: 'Hasil cek CCTV', body: `<p class="muted" style="margin:0 0 8px">${esc(tglPanjang(r.waktu))}, ${esc(new Date(r.waktu).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}))} · ${esc(r.olehNama || '')}</p>
+    ${h.map(([kid, x]) => { const k = (S.cctv || []).find(c => c.id === kid); const [l, c] = CCTV_ST[x.status] || CCTV_ST.belum;
+      return `<div class="row"><div class="grow"><div class="t">${esc(k ? k.nama : x.nama || 'Kamera dihapus')}</div>${x.catatan ? `<div class="s">${esc(x.catatan)}</div>` : ''}</div><span class="chip ${c} plain">${esc(l)}</span></div>`; }).join('')}
+    ${r.catatan ? `<p style="margin:10px 0 0"><b>Catatan:</b> ${esc(r.catatan)}</p>` : ''}`,
+    onDelete: bisaKelola() ? async () => { const ok = await del('cctvCek', r.id); if (ok) toast('Hasil cek dihapus.'); return ok; } : null, deleteLabel: 'Hapus hasil cek'});
 }
 function vAdminOnline() {
   if (ON.data == null) { setTimeout(() => muatOnline(), 0); return '<div class="skel">Memuat pengguna online…</div>'; }
@@ -7057,6 +7191,11 @@ document.addEventListener('click', async e => {
   else if (a === 'minta-batal') { try { await DB.collection('permintaan').doc(S.me.id).delete(); } catch (err) { fail(err); } }
   else if (a === 'admtab') { S.admTab = b.dataset.k; if (b.dataset.k === 'log') S.logAkt = null; render(); }
   else if (a === 'log-muat') muatLog();
+  else if (a === 'cctv-sistem') openCctvSistem();
+  else if (a === 'cctv-kam') openCctvKamera(b.dataset.id);
+  else if (a === 'cctv-cek') openCctvCek();
+  else if (a === 'cctv-cek1') openCctvCek(b.dataset.id);
+  else if (a === 'cctv-ronde') openCctvRonde(b.dataset.id);
   else if (a === 'pgr-new') openPengurus();
   else if (a === 'pgr-edit') openPengurus(b.dataset.id);
   else if (a === 'role-new') openRole();

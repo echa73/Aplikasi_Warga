@@ -481,3 +481,8 @@ create policy "warga lihat program sumbangan" on public.dokumen
 --   klaim_sesi(true) menghapus sesi lain; akun dengan 2 langkah (TOTP) wajib aal2 dulu ('perlu_mfa').
 --   "Batal" → signOut sesi baru. privat.sesi_berakhir mencatat sesi yang dikeluarkan (7 hari);
 --   alasan_sesi_berakhir() dipakai perangkat lama untuk menampilkan pesan yang tepat.
+
+-- CCTV (Admin · Pemilik), tanpa migrasi:
+--   koleksi 'cctv' (kamera + dokumen '_sistem') dan 'cctvCek' (hasil cek per ronde) tidak terdaftar di
+--   privat.boleh_baca / boleh_tulis → otomatis HANYA Pemilik yang bisa baca/tulis. Password DVR tidak disimpan.
+--   Tahap 2 (video live): go2rtc di mini PC pos + Cloudflare Tunnel; perlu tambah frame-src/media-src di CSP.

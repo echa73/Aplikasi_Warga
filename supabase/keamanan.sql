@@ -486,3 +486,8 @@ create policy "warga lihat program sumbangan" on public.dokumen
 --   koleksi 'cctv' (kamera + dokumen '_sistem') dan 'cctvCek' (hasil cek per ronde) tidak terdaftar di
 --   privat.boleh_baca / boleh_tulis → otomatis HANYA Pemilik yang bisa baca/tulis. Password DVR tidak disimpan.
 --   Tahap 2 (video live): go2rtc di mini PC pos + Cloudflare Tunnel; perlu tambah frame-src/media-src di CSP.
+
+-- CCTV untuk pengurus (migrasi cctv_lihat_pengurus)
+--   privat.izin_cctv(): izin role 'cctv' (fallback: izin 'keamanan'). Semua role yang ada diberi 'lihat'.
+--   cctv_lihat(): hanya field aman (aplikasi, link, kamera aktif + status cek terakhir). Merek DVR, teknisi,
+--   catatan, kamera nonaktif & riwayat lengkap tetap khusus Pemilik (koleksi cctv/cctvCek tidak bisa dibaca pengurus).

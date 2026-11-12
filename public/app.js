@@ -46,7 +46,7 @@ const S = {
   sesi: null, pilih: null, keamanan: {}, pinGagal: 0, pinKunci: 0
 };
 let U = null;
-const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['gaji', 'Pekerja & gaji'], ['keamanan', 'Keamanan (satpam)'], ['jaga', 'Jadwal jaga satpam'], ['kebersihan', 'Kebersihan lingkungan'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['lapak', 'Lapak Warga'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
+const MENU_IZIN = [['ringkasan', 'Beranda / ringkasan'], ['portal', 'Rumah saya (data diri)'], ['warga', 'Data warga'], ['iuran', 'Iuran'], ['kas', 'Kas RT'], ['pengeluaran', 'Pengeluaran kas'], ['laporan', 'Laporan keuangan'], ['sumbangan', 'Sumbangan'], ['gaji', 'Pekerja & gaji'], ['keamanan', 'Keamanan (satpam)'], ['jaga', 'Jadwal jaga satpam'], ['cctv', 'Lihat CCTV'], ['kebersihan', 'Kebersihan lingkungan'], ['keluhan', 'Keluhan'], ['info', 'Pengumuman'], ['rohani', 'Kerohanian'], ['lapak', 'Lapak Warga'], ['surat', 'Surat'], ['pengaturan', 'Pengaturan']];
 const LVL = {tidak: 0, lihat: 1, kelola: 2};
 const LVL_LBL = {tidak: 'Tidak bisa buka', lihat: 'Lihat saja', kelola: 'Lihat & ubah'};
 const MENU_IZIN_UI = MENU_IZIN.filter(([m]) => m !== 'portal'); // Rumah saya khusus tampilan warga
@@ -94,7 +94,7 @@ function izin(area) {
   const v = izinRole(r, area);
   return LVL[v] !== undefined ? v : 'tidak';
 }
-function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan' || m === 'gaji') ? iz.kas : (m === 'rohani' || m === 'lapak') ? iz.info : m === 'kebersihan' ? iz.keluhan : m === 'jaga' ? iz.keamanan : undefined; }
+function izinRole(r, m) { const iz = (r && r.izin) || {}; return iz[m] !== undefined ? iz[m] : (m === 'pengeluaran' || m === 'laporan' || m === 'sumbangan' || m === 'gaji') ? iz.kas : (m === 'rohani' || m === 'lapak') ? iz.info : m === 'kebersihan' ? iz.keluhan : m === 'jaga' ? iz.keamanan : m === 'cctv' ? (iz.keamanan === 'kelola' ? 'lihat' : iz.keamanan) : undefined; }
 const lihat = area => LVL[izin(area)] >= 1;
 function bisa(area) { if (S.readOnly) return false; return izin(area) === 'kelola'; }
 const hanyaLihat = () => !['admin', ...MENU_IZIN.map(m => m[0])].some(bisa);
@@ -233,7 +233,7 @@ function resetSesi() {
   for (const k of Object.keys(CACHE)) delete CACHE[k];
   KOLEKSI_SB.forEach(sinkron); sinkron('pengaturan');
   S.sesi = null; S.profil = null; S.authUser = null; S.me = null; S.owner = false; S.profilList = []; S.mfaPerlu = null; S.mfaInfo = null; S.mfaErr = ''; S.struktur = null; S.terkunci = false; S.modeWarga = false; S.sesiAsli = null;
-  S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; clearInterval(idleTmr);
+  S.pilih = null; S.nikBuka && S.nikBuka.clear(); S.loaded = true; S.logAkt = null; S.cctvP = null; clearInterval(idleTmr);
   const t = document.getElementById('toasts'); if (t) t.innerHTML = '';
 }
 /* 1 akun 1 perangkat: sesi baru ditolak selama akun masih login di perangkat lain */
@@ -403,9 +403,9 @@ window.addEventListener('resize', () => { const n = window.innerWidth < 640; if 
 const kelTerbuka = () => S.keluhan.filter(k => k.status !== 'Selesai');
 
 /* ---------- render ---------- */
-const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['notulen','Notulensi rapat','Notulen'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
-const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'notulen' ? bolehRapatC() : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : k === 'surat' ? (isWarga() || lihat('surat')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
-const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat', 'notulen']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
+const TABS = [['ringkasan','Ringkasan','Beranda'],['portal','Rumah saya','Rumah'],['struktur','Struktur Kepengurusan','Struktur'],['warga','Data warga','Warga'],['iuran','Iuran','Iuran'],['kas','Kas RT','Kas'],['pengajuan','Pengajuan dana','Ajuan'],['sumbangan','Sumbangan','Sumbang'],['gaji','Pekerja & gaji','Gaji'],['pengeluaran','Pengeluaran','Biaya'],['laporan','Laporan keuangan','Laporan'],['keluhan','Keluhan','Keluhan'],['keamanan','Keamanan','Aman'],['cctv','CCTV','CCTV'],['bersih','Kebersihan','Bersih'],['info','Pengumuman','Info'],['rohani','Kerohanian','Rohani'],['lapak','Lapak Warga','Lapak'],['surat','Surat','Surat'],['notulen','Notulensi rapat','Notulen'],['pengaturan','Pengaturan','Atur'],['admin','Admin','Admin'],['lapor','Keluhan saya','Lapor'],['aman','Keamanan','Aman']];
+const tabBoleh = k => k === 'struktur' ? !!S.sesi : k === 'cctv' ? bolehCctvP() : k === 'notulen' ? bolehRapatC() : k === 'bersih' ? (isWarga() || lihat('kebersihan')) : k === 'pengajuan' ? bolehAjukan() : k === 'sumbangan' ? (isWarga() || lihat('sumbangan')) : k === 'gaji' ? (!isWarga() && (lihat('gaji') || S.gaji.some(x => x.akunId === (S.me && S.me.id)))) : k === 'rohani' ? (isWarga() || lihat('rohani')) : k === 'lapak' ? (isWarga() || !!roleSaya()) : k === 'surat' ? (isWarga() || lihat('surat')) : (k === 'lapor' || k === 'aman') ? isWarga() : k === 'portal' ? isWarga() : k === 'admin' ? bisaKelola() : lihat(k);
+const GRUP = [['Utama', ['ringkasan', 'portal', 'struktur']], ['Warga', ['warga', 'iuran', 'keluhan', 'info', 'rohani', 'surat', 'notulen']], ['Keuangan', ['kas', 'sumbangan', 'gaji', 'pengajuan', 'pengeluaran', 'laporan']], ['Lingkungan', ['keamanan', 'cctv', 'bersih', 'lapak']], ['Sistem', ['pengaturan', 'admin']]];
 const GRUP_IDX = {}; GRUP.forEach(([, ks], gi) => ks.forEach((k, i) => { GRUP_IDX[k] = gi * 20 + i; }));
 const grupOf = k => (GRUP.find(([, ks]) => ks.includes(k)) || [])[0];
 const PRIMER_P = ['ringkasan', 'warga', 'iuran', 'keluhan', 'keamanan', 'info', 'kas', 'surat'], PRIMER_W = ['portal', 'aman', 'lapor', 'info'];
@@ -430,6 +430,7 @@ const ICON = {
   pengaturan: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 14H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   admin: '<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
   keamanan: '<path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><circle cx="12" cy="11" r="2.5"/><path d="M12 13.5V16"/>',
+  cctv: '<path d="M3 7h11l4 3v2l-4 3H3z"/><circle cx="8" cy="11" r="2"/><path d="M6 15v4M3 19h6"/>',
   aman: '<path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/><circle cx="12" cy="11" r="2.5"/><path d="M12 13.5V16"/>',
   paket: '<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9M7.8 5.3l8.5 4.5"/>',
   laporan: '<path d="M6 2.5h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1z"/><path d="M14 2.5v4h4"/><path d="M8.5 17v-3M12 17v-6M15.5 17v-4.5"/>',
@@ -509,7 +510,7 @@ function render() {
   if (render.lastTab !== S.tab) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); render.lastTab = S.tab; clearTimeout(render.tEnter); render.tEnter = setTimeout(() => main.classList.remove('enter'), 450); }
   document.documentElement.lang = bhsAktif() ? 'en' : 'id';
   document.title = (sudahMasuk() && lihat('keamanan') && daruratAktif().length ? '🚨 DARURAT · ' : '') + 'Warga Kasuari';
-  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + (S.tab === 'ringkasan' && !isWarga() && lihat('keamanan') ? panelNotif('pengurus') + sosRingkas() : '') + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan})[S.tab]();
+  main.innerHTML = daruratBanner() + modeBar() + kunciTawaran() + (S.tab === 'ringkasan' && !isWarga() && lihat('keamanan') ? panelNotif('pengurus') + sosRingkas() : '') + ({ringkasan: () => (S.sesi === 'pemilik' && S.mfaInfo && !S.mfaInfo.aktif ? '<div class="notice" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>🔐 Amankan akun Pemilik dengan verifikasi dua langkah.</span><button class="btn sm" data-act="mfa-on">Aktifkan sekarang</button></div>' : '') + vRingkasan() + panelLokasi(), aman: () => vAman() + panelNotif('warga') + panelLokasi({blok: (wargaSaya() || {}).blok || '', judul: 'Alamat untuk petugas darurat', ringkas: true, labelBagi: 'Kirim alamat darurat via WhatsApp', teksBagi: `*DARURAT – mohon bantuan ke alamat:*\nBlok ${(wargaSaya() || {}).blok || ''}, ${lokasiRT().alamat}\n\nPeta: ${petaUrl(lokasiRT())}`}), warga: vWarga, iuran: vIuran, kas: vKas, keluhan: vKeluhan, info: vInfo, surat: () => isWarga() ? vSuratWarga() : vSurat(), notulen: vNotulen, pengaturan: vPengaturan, admin: vAdmin, pengeluaran: vPengeluaran, pengajuan: vPengajuan, sumbangan: vSumbangan, gaji: vGaji, struktur: vStruktur, rohani: vRohani, bersih: vBersih, lapak: vLapak, laporan: vLaporan, portal: vPortal, lapor: vLapor, keamanan: vKeamanan, cctv: vCctv})[S.tab]();
   if (aid && !$('#dlg').open) { const el = document.getElementById(aid); if (el) { el.focus(); try { if (sel) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
 }
 
@@ -2330,6 +2331,41 @@ function openCctvRonde(id) {
     ${r.catatan ? `<p style="margin:10px 0 0"><b>Catatan:</b> ${esc(r.catatan)}</p>` : ''}`,
     onDelete: bisaKelola() ? async () => { const ok = await del('cctvCek', r.id); if (ok) toast('Hasil cek dihapus.'); return ok; } : null, deleteLabel: 'Hapus hasil cek'});
 }
+/* CCTV untuk pengurus: hanya lihat (tanpa info sistem/teknisi/pengaturan). Data dari RPC cctv_lihat(). */
+const bolehCctvP = () => !!S.sesi && S.sesi !== 'pemilik' && !isWarga() && lihat('cctv');
+async function muatCctvLihat(diam) {
+  if (S.cctvP === 'memuat') return;
+  if (!diam || !S.cctvP) { S.cctvP = 'memuat'; render(); }
+  try { const {data, error} = await SB.rpc('cctv_lihat'); if (error) throw error; S.cctvP = data || {}; }
+  catch (e) { S.cctvP = {err: /izin|42501|Tidak diizinkan/i.test(String((e && e.message) || '') + (e && e.code)) ? 'Role Anda tidak punya akses lihat CCTV.' : 'Gagal memuat. Periksa koneksi lalu coba lagi.'}; }
+  if (S.tab === 'cctv' && !dlg.open) render();
+}
+function vCctv() {
+  const head = `<div class="sec-head"><div><h2>CCTV</h2><p>Lihat kamera CCTV kluster dan kondisinya dari cek terakhir.</p></div><button class="btn" data-act="cctv-segar">↻ Muat ulang</button></div>`;
+  const D = S.cctvP;
+  if (!D) { setTimeout(() => muatCctvLihat(), 0); return head + '<div class="skel">Memuat CCTV…</div>'; }
+  if (D === 'memuat') return head + '<div class="skel">Memuat CCTV…</div>';
+  if (D.err) return head + `<div class="notice">${esc(D.err)}</div>`;
+  const sis = D.sistem || {}, K = D.kamera || [], cek = D.cek;
+  const hit = s => K.filter(k => (k.status || 'belum') === s).length;
+  const stat = `<div class="cc-stat">
+    <div><b>${K.length}</b><span>Kamera</span></div>
+    <div class="ok"><b>${hit('normal')}</b><span>Normal</span></div>
+    <div class="warn"><b>${hit('masalah')}</b><span>Bermasalah</span></div>
+    <div class="bad"><b>${hit('mati')}</b><span>Mati</span></div>
+    <div><b>${cek ? esc(waktuPendek(cek.waktu)) : '–'}</b><span>Cek terakhir${cek && cek.oleh ? ' · ' + esc(cek.oleh) : ''}</span></div></div>`;
+  const buka = linkAman(sis.link) || sis.aplikasi ? `<div class="card cc-sis" style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+      <div><b>Cara melihat rekaman</b><div class="muted" style="font-size:.86rem">${sis.aplikasi ? `Lewat aplikasi <b>${esc(sis.aplikasi)}</b> di HP.` : ''}${linkAman(sis.link) ? ' Atau buka tampilan web CCTV.' : ''} Minta akses login ke Pemilik / seksi keamanan bila belum punya.</div></div>
+      ${linkAman(sis.link) ? `<a class="btn pri" href="${esc(sis.link)}" target="_blank" rel="noopener">📹 Buka tampilan CCTV</a>` : ''}</div>` : '';
+  const kartu = K.length ? `<div class="cc-grid">${K.map(k => { const [lbl, cls] = CCTV_ST[k.status] || CCTV_ST.belum;
+      return `<div class="cc-kam"><div class="cc-kam-h"><span class="cc-ch">${k.ch ? 'CH ' + esc(k.ch) : '📹'}</span><div class="grow"><b>${esc(k.nama || '')}</b>${k.lokasi ? `<div class="muted" style="font-size:.78rem">${esc(k.lokasi)}</div>` : ''}</div><span class="chip ${cls} plain">${esc(lbl)}</span></div>
+        ${k.waktu ? `<div class="muted" style="font-size:.78rem">Dicek ${esc(waktuPendek(k.waktu))}${k.catatan ? `<div style="color:var(--ink)">“${esc(k.catatan)}”</div>` : ''}</div>` : ''}
+        ${linkAman(k.link) ? `<div class="racts"><a class="btn sm" href="${esc(k.link)}" target="_blank" rel="noopener">Lihat kamera</a></div>` : ''}</div>`; }).join('')}</div>`
+    : '<div class="empty">Belum ada kamera yang didaftarkan Pemilik.</div>';
+  const masalah = K.filter(k => k.status === 'masalah' || k.status === 'mati');
+  const lapor = masalah.length ? `<div class="notice" style="margin-top:12px">${masalah.length} kamera perlu perbaikan: ${masalah.map(k => esc(k.nama)).join(', ')}. Laporan perbaikan diteruskan oleh Pemilik / seksi keamanan.</div>` : '';
+  return head + stat + buka + `<h3 style="margin:18px 0 8px">Titik kamera</h3>` + kartu + lapor;
+}
 function vAdminOnline() {
   if (ON.data == null) { setTimeout(() => muatOnline(), 0); return '<div class="skel">Memuat pengguna online…</div>'; }
   const menuLbl = k => (TABS.find(t => t[0] === k) || [k, k])[1];
@@ -2570,7 +2606,7 @@ function openRole(id) {
     body: `<div class="fld"><label for="rl_nama">Nama role <span class="req">*</span></label><input type="text" id="rl_nama" name="nama" required value="${esc(x.nama)}" placeholder="mis. Seksi Keamanan"></div>
     <div class="fld"><label for="rl_ket">Keterangan</label><input type="text" id="rl_ket" name="ket" value="${esc(x.ket)}" placeholder="Tugas singkat role ini"></div>
     <div class="fld"><label>Hak akses per menu</label>
-      <div class="izin-grid">${MENU_IZIN_UI.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Lihat + moderasi' : 'Lihat saja') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
+      <div class="izin-grid">${MENU_IZIN_UI.map(([m, l]) => `<label for="iz_${m}">${esc(l)}</label><select id="iz_${m}" name="iz_${m}">${(m === 'ringkasan' || m === 'portal' || m === 'cctv' ? ['tidak', 'lihat'] : m === 'lapak' ? ['lihat', 'kelola'] : ['tidak', 'lihat', 'kelola']).map(v => `<option value="${v}" ${(izinRole(x, m) || (m === 'lapak' ? 'lihat' : 'tidak')) === v ? 'selected' : ''}>${m === 'lapak' ? (v === 'kelola' ? 'Lihat + moderasi' : 'Lihat saja') : LVL_LBL[v]}</option>`).join('')}</select>`).join('')}</div>
       <span class="hint">Menu yang "Tidak bisa buka" disembunyikan dari pengurus dengan role ini. Menu Admin hanya untuk Pemilik.</span></div>
     ${dipakai ? `<p class="muted" style="margin:0;font-size:.84rem">Dipakai oleh ${dipakai} pengurus. Perubahan langsung berlaku untuk mereka.</p>` : ''}`,
     onSubmit: async d => {
@@ -6961,7 +6997,7 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
   const a = b.dataset.act;
   if (b.tagName === 'SELECT') return;
-  if (a === 'tab') { e.preventDefault(); if (!tabBoleh(b.dataset.k)) return; if (dlg.open) dlg.close(); S.tab = b.dataset.k; if (S.tab === 'struktur') muatStruktur(true); render(); window.scrollTo(0, 0); }
+  if (a === 'tab') { e.preventDefault(); if (!tabBoleh(b.dataset.k)) return; if (dlg.open) dlg.close(); S.tab = b.dataset.k; if (S.tab === 'struktur') muatStruktur(true); if (S.tab === 'cctv' && S.cctvP && S.cctvP !== 'memuat') muatCctvLihat(true); render(); window.scrollTo(0, 0); }
   else if (a === 'lainnya') openLainnya();
   else if (a === 'kwitansi') openKwitansi(b.dataset.id);
   else if (a === 'salin') salin(b.dataset.teks || '');
@@ -7192,6 +7228,7 @@ document.addEventListener('click', async e => {
   else if (a === 'admtab') { S.admTab = b.dataset.k; if (b.dataset.k === 'log') S.logAkt = null; render(); }
   else if (a === 'log-muat') muatLog();
   else if (a === 'cctv-sistem') openCctvSistem();
+  else if (a === 'cctv-segar') muatCctvLihat();
   else if (a === 'cctv-kam') openCctvKamera(b.dataset.id);
   else if (a === 'cctv-cek') openCctvCek();
   else if (a === 'cctv-cek1') openCctvCek(b.dataset.id);
